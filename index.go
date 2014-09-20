@@ -60,10 +60,12 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 		PageTitle string
 		Channels []indexChannel
 		More bool
+		Admin bool
 	}{
 		PageTitle: "IRC-Chat Norge",
 		Channels: channels,
 		More: more,
+		Admin: loginAuth(req),
 	}
 
 	tpath := conf.AssetsPath + "/templates.html"

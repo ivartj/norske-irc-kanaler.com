@@ -15,6 +15,7 @@ type config struct {
 	AssetsPath string `yaml:"assets-path"`
 	LogPath string `yaml:"log-path"`
 	Approval bool `yaml:"approval"`
+	Password string `yaml:"password"`
 }
 
 var conf *config = &config{}
@@ -46,7 +47,7 @@ func confParse(filename string) {
 func confSanityCheck(conf *config) {
 	switch conf.ServeMethod {
 	case "":
-		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'method' field value. Specify either 'http' or 'fastcgi'.")
+		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'method' field value. Specify either 'http' or 'fastcgi'.\n")
 		os.Exit(1)
 	case "http":
 		if conf.HttpPort == 0 || conf.HttpPort > 65545 {
@@ -55,21 +56,26 @@ func confSanityCheck(conf *config) {
 		}
 	case "fastcgi":
 		if conf.FastcgiPath == "" {
-			fmt.Fprintln(os.Stderr, "Configuration error: Missing 'fastcgi-path' field value.")
+			fmt.Fprintln(os.Stderr, "Configuration error: Missing 'fastcgi-path' field value.\n")
 			os.Exit(1)
 		}
 	default:
-		fmt.Fprintln(os.Stderr, "Configuration error: Unrecognized 'method' field value.")
+		fmt.Fprintln(os.Stderr, "Configuration error: Unrecognized 'method' field value.\n")
 		os.Exit(1)
 	}
 
 	if conf.DatabasePath == "" {
-		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'database-path' field value.")
+		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'database-path' field value.\n")
 		os.Exit(1)
 	}
 
 	if conf.AssetsPath == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'assets-path' field value.")
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'assets-path' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.Password == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'password' field value.\n")
 		os.Exit(1)
 	}
 }

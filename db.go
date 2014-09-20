@@ -65,6 +65,55 @@ type dbChannel struct {
 	errmsg string
 }
 
+func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
+	stmt, err := c.Query(`
+		select
+			weblink,
+			description,
+			numusers,
+			lastcheck,
+			errmsg
+		from
+			channels
+		where
+			name is ? and server is ?;
+	`, name, server)
+	defer stmt.Close()
+
+	if err != nil {
+		log.Panicf("Unable to retrieve channel '%s@%s'.\n", name, server)
+	}
+
+	var (
+		weblink string
+		description string
+		numusers int
+		lastcheck string
+		errmsg string
+	)
+
+	stmt.Scan(&weblink, &description, &numusers, &lastcheck, &errmsg)
+	t, _ := time.Parse("2006-01-02 15:04:05", lastcheck)
+	ch := &dbChannel{ name, server, weblink, description, numusers, true, t, errmsg }
+	return ch
+}
+
+func dbEditChannel(c *sql.Conn, originalName, originalServer string, name, server, weblink, description string) {
+	err := c.Exec(`
+		update channels
+		set
+			name = ?,
+			server = ?,
+			weblink = ?,
+			description = ?
+		where
+			name is ? and server is ?;
+	`, name, server, weblink, description, originalName, originalServer)
+	if err != nil {
+		log.Panicf("Failed to update channel '%s@%s': %s.\n", originalName, originalServer, err.Error())
+	}
+}
+
 func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 	stmt, err := c.Query(`
 		select

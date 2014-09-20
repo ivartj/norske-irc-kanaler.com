@@ -24,6 +24,7 @@
 
 {{define "index"}}
 {{template "head" .}}
+			{{with $global := .}}
 			<h1>IRC-Chat Norge</h1>
 			Norskspråklige IRC-chatterom.<br>
 			{{range .Channels}}
@@ -34,7 +35,12 @@
 				{{.Description}}
 				<br>
 				<span class="channel-grey">{{.Status}}</span>
+				{{if $global.Admin}}
+				<br>
+				<a href="/edit?name={{.Name}}&server={{.Server}}">Rediger</a>
+				{{end}}
 			</div>
+			{{end}}
 			{{end}}
 {{template "foot" .}}
 {{end}}
@@ -93,6 +99,81 @@
 						</li>
 					</ol>
 					<input type="submit" value="Send inn">
+				</fieldset>
+			</form>
+{{template "foot" .}}
+{{end}}
+
+
+{{define "login"}}
+{{template "head" .}}
+			<form method="post" action="/login">
+				<fieldset>
+					<legend>Logg inn</legend>
+					{{if .Message}}<p>{{.Message}}</p>{{end}}
+					<ol>
+						<li>
+							<label for="login-password">Passord: </label>
+							<input type="password"
+							       id="login-password"
+							       name="password"
+							       placeholder="Passord">
+						</li>
+					</ol>
+					<input type="submit" value="Logg inn">
+				</fieldset>
+			</form>
+{{template "foot" .}}
+{{end}}
+
+{{define "edit"}}
+{{template "head" .}}
+			<form method="post" action="/edit">
+				<input type="hidden"
+				       name="original-name"
+				       value="{{.OriginalName}}">
+				<input type="hidden"
+				       name="original-server"
+				       value="{{.OriginalServer}}">
+				<fieldset>
+					<legend>Rediger kanal</legend>
+					{{if .Message}}<p>{{.Message}}</p>{{end}}
+					<ol>
+						<li>
+							<label for="submit-name">Kanalnavn: </label>
+							<input
+							       type="text"
+							       id="submit-name"
+							       name="name"
+							       value="{{.Name}}"
+							       placeholder="#kanal"
+							       required>
+						</li>
+						<li>
+							<label for="submit-server">IRC-nettverk: </label>
+							<input type="text"
+							       id="submit-server"
+							       name="server"
+							       value="{{.Server}}"
+							       placeholder="irc.eksempel.net"
+							       required>
+						</li>
+						<li>
+							<label for="submit-weblink">Webchat-URL: </label>
+							<input type="text"
+							       id="submit-weblink"
+							       value="{{.WebLink}}"
+							       name="weblink">
+						</li>
+						<li>
+							<label for="submit-description">Beskrivelse:</label><br>
+							<textarea name="description"
+							          id="submit-description"
+							          maxlength="160"
+							          required>{{.Description}}</textarea>
+						</li>
+					</ol>
+					<input type="submit" value="Endre">
 				</fieldset>
 			</form>
 {{template "foot" .}}

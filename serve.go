@@ -15,6 +15,10 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		indexServe(w, req)
 	case "/submit":
 		submitServe(w, req)
+	case "/login":
+		loginServe(w, req)
+	case "/edit":
+		editServe(w, req)
 	default:
 		http.NotFound(w, req)
 	}
