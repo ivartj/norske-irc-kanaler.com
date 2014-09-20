@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func dbInit(conf *config) {
+func dbInit() {
 	c := dbOpen(conf)
 	defer c.Close()
 	err := c.Exec(`

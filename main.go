@@ -68,7 +68,7 @@ func chdir() {
 	}
 }
 
-func openlog(conf *config) {
+func openlog() {
 	if(conf.LogPath == "") {
 		return
 	}
@@ -83,8 +83,8 @@ func openlog(conf *config) {
 func main() {
 	mainArgs()
 	chdir()
-	conf := confParse(mainConfFilename)
-	openlog(conf)
-	dbInit(conf)
-	serve(conf)
+	confParse(mainConfFilename)
+	openlog()
+	dbInit()
+	serve()
 }

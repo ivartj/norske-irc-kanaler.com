@@ -8,7 +8,7 @@ import (
 )
 
 type config struct {
-	Method string `yaml:"method"`
+	ServeMethod string `yaml:"serve-method"`
 	FastcgiPath string `yaml:"fastcgi-path"`
 	HttpPort uint `yaml:"http-port"`
 	DatabasePath string `yaml:"database-path"`
@@ -16,8 +16,9 @@ type config struct {
 	LogPath string `yaml:"log-path"`
 }
 
-func confParse(filename string) *config {
-	conf := &config{}
+var conf *config = &config{}
+
+func confParse(filename string) {
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -39,11 +40,10 @@ func confParse(filename string) *config {
 	}
 
 	confSanityCheck(conf)
-	return conf
 }
 
 func confSanityCheck(conf *config) {
-	switch conf.Method {
+	switch conf.ServeMethod {
 	case "":
 		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'method' field value. Specify either 'http' or 'fastcgi'.")
 		os.Exit(1)
@@ -72,3 +72,4 @@ func confSanityCheck(conf *config) {
 		os.Exit(1)
 	}
 }
+

@@ -9,22 +9,22 @@ import (
 	"net/http/fcgi"
 )
 
-func serveExact(conf *config, w http.ResponseWriter, req *http.Request) {
+func serveExact(w http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case "/":
-		indexServe(conf, w, req)
+		indexServe(w, req)
 	default:
 		http.NotFound(w, req)
 	}
 }
 
-func serve(conf *config) {
+func serve() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(conf.AssetsPath + "/static"))))
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		serveExact(conf, w, req)
+		serveExact(w, req)
 	}))
 
-	switch conf.Method {
+	switch conf.ServeMethod {
 	case "http":
 		log.Fatal(http.ListenAndServe(":" + fmt.Sprintf("%d", conf.HttpPort), nil))
 	case "fastcgi":
