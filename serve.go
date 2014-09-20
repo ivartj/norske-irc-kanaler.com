@@ -13,6 +13,8 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case "/":
 		indexServe(w, req)
+	case "/submit":
+		submitServe(w, req)
 	default:
 		http.NotFound(w, req)
 	}
@@ -20,9 +22,7 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 
 func serve() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(conf.AssetsPath + "/static"))))
-	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		serveExact(w, req)
-	}))
+	http.HandleFunc("/", serveExact)
 
 	switch conf.ServeMethod {
 	case "http":

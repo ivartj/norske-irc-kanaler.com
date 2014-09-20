@@ -1,0 +1,100 @@
+{{define "head"}}
+<!doctype html>
+<html lang="no">
+	<head>
+		<meta charset="utf-8">
+		<title>{{.PageTitle}}</title>
+		<link rel="stylesheet"
+		      href="/static/styles.css"
+		      type="text/css">
+	</head>
+	<body>
+		<div id="wrap">
+{{end}}
+
+{{define "foot"}}
+			<div id="footer">
+				<a href="#">Hjelp med IRC-chat</a> - 
+				<a href="/submit">Foreslå chatterom</a>
+			</div>
+		</div>
+	</body>
+</html>
+{{end}}
+
+{{define "index"}}
+{{template "head" .}}
+			<h1>IRC-Chat Norge</h1>
+			Norskspråklige IRC-chatterom.<br>
+			{{range .Channels}}
+			<div class="channel">
+				<a href="{{.WebLink}}" class="channel-name channel-link">{{.Name}}</a>
+				<span class="channel-grey">{{.Server}}</span>
+				<br>
+				{{.Description}}
+				<br>
+				<span class="channel-grey">{{.Status}}</span>
+			</div>
+			{{end}}
+{{template "foot" .}}
+{{end}}
+
+{{define "page"}}
+{{template "head" .}}
+			<div class="channel">
+				<a href="#" class="channel-name channel-link">#norsk</a>
+				<span class="channel-grey">irc.freenode.net</span>
+				<br>
+				Kanal for dem som vil lære eller forfine norskkunnskapene.
+				<br>
+				<span class="channel-grey">36 brukere</span>
+			</div>
+{{template "foot" .}}
+{{end}}
+
+{{define "submit"}}
+{{template "head" .}}
+			<form method="post" action="/submit">
+				<fieldset>
+					<legend>Forslag til IRC-chatterom</legend>
+					<ol>
+						<li>
+							<label for="submit-name">Kanalnavn: </label>
+							<input
+							       type="text"
+							       id="submit-name"
+							       name="name"
+							       value="{{.Name}}"
+							       placeholder="#kanal"
+							       required>
+						</li>
+						<li>
+							<label for="submit-server">IRC-nettverk: </label>
+							<input type="text"
+							       id="submit-server"
+							       name="server"
+							       value="{{.Server}}"
+							       placeholder="irc.eksempel.net"
+							       required>
+						</li>
+						<li>
+							<label for="submit-weblink">Webchat-URL: </label>
+							<input type="text"
+							       id="submit-weblink"
+							       value="{{.WebLink}}"
+							       name="weblink">
+						</li>
+						<li>
+							<label for="submit-description">Beskrivelse:</label><br>
+							<textarea name="description"
+							          id="submit-description"
+							          maxlength="160"
+							          required>{{.Description}}</textarea>
+						</li>
+					</ol>
+					<input type="submit" value="Send inn">
+				</fieldset>
+			</form>
+{{template "foot" .}}
+{{end}}
+

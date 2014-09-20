@@ -14,6 +14,7 @@ type config struct {
 	DatabasePath string `yaml:"database-path"`
 	AssetsPath string `yaml:"assets-path"`
 	LogPath string `yaml:"log-path"`
+	Approval bool `yaml:"approval"`
 }
 
 var conf *config = &config{}

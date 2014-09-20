@@ -88,3 +88,46 @@ hr {
 	padding-top: 0.5em;
 	display: table;
 }
+
+/* Most of the following form stylings are borrowed from
+ * http://alistapart.com/article/prettyaccessibleforms
+ */
+
+form {
+	margin-top: 1em;
+}
+
+form fieldset {
+	margin-bottom: 10px;
+}
+
+form legend {
+	padding: 0 2px;
+	font-weight: bold;
+}
+
+form label {
+	display: inline-block;
+	line-height: 1.8;
+	vertical-align: top;
+}
+
+form fieldset ol {
+	margin: 0;
+	padding: 0;
+}
+
+form fieldset li {
+	list-style: none;
+	padding: 5px;
+	margin: 0;
+}
+
+form label {
+	width: 120px;
+}
+
+form textarea {
+	height: 9em;
+	width: 30em;
+}

@@ -8,7 +8,7 @@ import (
 )
 
 func dbInit() {
-	c := dbOpen(conf)
+	c := dbOpen()
 	defer c.Close()
 	err := c.Exec(`
 		create table if not exists channels (
@@ -45,7 +45,7 @@ func dbInit() {
 	}
 }
 
-func dbOpen(conf *config) *sql.Conn {
+func dbOpen() *sql.Conn {
 	c, err := sql.Open(conf.DatabasePath)
 	if err != nil {
 		log.Panicf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error())
@@ -75,7 +75,7 @@ func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 			numusers,
 			lastcheck,
 			errmsg,
-			count(*)
+			(select count(*) from channels_approved)
 		from
 			channels_approved
 		limit
@@ -107,7 +107,7 @@ func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 		numchannels int
 	)
 
-	for ; err == nil; err = stmt.Next() {
+	for err = nil; err == nil; err = stmt.Next() {
 		stmt.Scan(&name, &server, &weblink, &description, &numusers, &lastcheck, &errmsg, &numchannels)
 		t, _ := time.Parse("2006-01-02 15:04:05", lastcheck)
 		ch := dbChannel{ name, server, weblink, description, numusers, true, t, errmsg }
@@ -117,3 +117,14 @@ func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 	return channels, numchannels
 }
 
+func dbAddChannel(c *sql.Conn, name, server, weblink, description string, numusers int) {
+	err := c.Exec(`
+		insert into channels
+			(name, server, weblink, description, numusers, approved, lastcheck, errmsg)
+		values
+			(?, ?, ?, ?, ?, ?, datetime(), '');
+	`, name, server, weblink, description, numusers, !conf.Approval)
+	if err != nil {
+		log.Panicf("Failed to add channel to database: %s.\n", err.Error())
+	}
+}
