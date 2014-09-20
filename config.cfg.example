@@ -1,0 +1,6 @@
+method: http
+http-port: 65535
+fastcgi-path: fastcgi.sock
+database-path: data.db
+assets-path: assets
+log-path: log

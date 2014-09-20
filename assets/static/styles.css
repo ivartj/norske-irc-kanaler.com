@@ -1,0 +1,90 @@
+body {
+	font-family: 'Courier New', monospace;
+	margin: 0;
+	line-height: 1.4em;
+	padding: 0;
+}
+
+h1, h2, h3, h4 {
+	color: #090;
+	margin-bottom: 0;
+}
+
+#wrap {
+	height: 100%;
+	max-width: 35em;
+	margin: 0 auto;
+}
+
+hr {
+	background-color: black;
+	height: 1px;
+	border: 0;
+}
+
+.block {
+	padding: 1em;
+	overflow: hidden;
+}
+
+.dark {
+	background-color: #052;
+	color: white;
+}
+
+.channel {
+	margin: 1em 0;
+}
+
+.channel-left {
+	float: left;
+}
+
+.channel-right {
+	float: right;
+}
+
+.channel-status {
+	padding: 0.5em;
+	color: #555;
+	background-color: white;
+	border: 1px solid #0f0;
+	text-align: center;
+}
+
+.channel-info {
+	max-width: 30em;
+	padding-left: 0.5em;
+}
+
+.channel-link {
+	text-decoration: none;
+}
+
+.channel-weblink {
+	
+}
+
+.channel-both {
+	clear: both;
+}
+
+.channel-name {
+	color: #090 ! important;
+	text-decoration: underline ! important;
+}
+
+.channel-col-1, .channel-col-2 {
+	vertical-align: top;
+}
+
+.channel-grey {
+	color: #999 ! important;
+	text-decoration: none ! important;
+}
+
+#footer {
+	border-top: 1px solid #090;
+	padding-top: 0.5em;
+	display: table;
+}
