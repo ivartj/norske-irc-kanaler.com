@@ -3,12 +3,13 @@ package main
 import (
 	"net/http"
 	"html/template"
-	"log"
+	"fmt"
+	"net/url"
 )
 
 func editServe(w http.ResponseWriter, req *http.Request) {
 	if loginAuth(req) == false {
-		http.NotFound(w, req)
+		http.Redirect(w, req, "/login?redirect=" + url.QueryEscape(req.URL.Path + "?" + req.URL.RawQuery), 307)
 		return
 	}
 
@@ -58,11 +59,11 @@ func editServe(w http.ResponseWriter, req *http.Request) {
 	tpath := conf.AssetsPath + "/templates.html"
 	t, err := template.ParseFiles(tpath)
 	if err != nil {
-		log.Panicf("Failed to parse template file '%s': %s.\n", tpath, err.Error())
+		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
 	}
 
 	err = t.ExecuteTemplate(w, "edit", &data)
 	if err != nil {
-		log.Panicf("Failed to execute template file '%s': %s\n", tpath, err.Error())
+		panic(fmt.Errorf("Failed to execute template file '%s': %s\n", tpath, err.Error()))
 	}
 }

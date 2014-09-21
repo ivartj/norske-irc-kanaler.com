@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"log"
+	"runtime/debug"
 	"net"
 	"net/http"
 	"net/http/fcgi"
@@ -13,7 +14,9 @@ func serveRecovery(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		x := recover()
 		if x != nil {
-			errorServe(w, req, fmt.Sprintf("%v", x))
+			msg := fmt.Sprintf("%s: %s\n", x, debug.Stack())
+			log.Printf("%s", msg)
+			errorServe(w, req, msg)
 		}
 	}()
 	http.DefaultServeMux.ServeHTTP(w, req)
@@ -31,6 +34,10 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		logoutServe(w, req)
 	case "/edit":
 		editServe(w, req)
+	case "/approve":
+		approveServe(w, req)
+	case "/delete":
+		deleteServe(w, req)
 	default:
 		http.NotFound(w, req)
 	}

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"html/template"
 	"fmt"
-	sql "code.google.com/p/go-sqlite/go1/sqlite3"
+	"net/url"
 )
 
-type indexChannel struct{
+type approveChannel struct {
 	Name string
 	Server string
 	WebLink string
@@ -15,54 +15,37 @@ type indexChannel struct{
 	Status string
 }
 
-func indexGetChannels(c *sql.Conn) ([]indexChannel, bool) {
-	more := false
+func approveServe(w http.ResponseWriter, req *http.Request) {
 
-	dbchs, numtotal := dbGetApprovedChannels(c, 0, 15)
-	if numtotal > 15 {
-		more = true
+	if loginAuth(req) == false {
+		http.Redirect(w, req, "/login?redirect=" + url.QueryEscape(req.URL.Path + "?" + req.URL.RawQuery), 307)
+		return
 	}
-
-	chs := make([]indexChannel, len(dbchs))
-	for i, v := range dbchs {
-		status := ""
-		if v.errmsg == "" {
-			if v.numusers == 1 {
-				status = "1 bruker innlogget"
-			} else {
-				status = fmt.Sprintf("%d brukere innlogget", v.numusers)
-			}
-			status += " " + timeAgo(v.lastcheck)
-		} else {
-			status = v.errmsg + " " + timeAgo(v.lastcheck)
-		}
-		chs[i] = indexChannel{
-			Name: v.name,
-			Server: v.server,
-			WebLink: v.weblink,
-			Description: v.description,
-			Status: status,
-		}
-	}
-
-	return chs, more
-}
-
-func indexServe(w http.ResponseWriter, req *http.Request) {
-	c := dbOpen()
-	defer c.Close()
 
 	data := struct{
 		PageTitle string
-		Channels []indexChannel
+		Channels []approveChannel
+		Admin bool
+		ApproveName string
+		ApproveServer string
+		Message string
 		MoreNext bool
 		MorePrev bool
 		PageNext int
 		PagePrev int
-		Admin bool
-	}{
-		PageTitle: "IRC-Chat Norge",
+	} {
+		PageTitle: "Kanalgodkjenning",
 		Admin: loginAuth(req),
+	}
+
+	c := dbOpen()
+	defer c.Close()
+
+	data.ApproveName = req.URL.Query().Get("name")
+	data.ApproveServer = req.URL.Query().Get("server")
+	if data.ApproveName != "" && data.ApproveServer != "" {
+		dbApproveChannel(c, data.ApproveName, data.ApproveServer)
+		data.Message = "Kanalen er godkjent!"
 	}
 
 	pagestr := req.URL.Query().Get("page")
@@ -72,17 +55,13 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 		page = 1
 	}
 
-	if page != 1 {
-		data.PageTitle = fmt.Sprintf("Side %d", page)
-	}
-
-	dbchs, total := dbGetApprovedChannels(c, (page - 1) * 15, 15)
+	dbchs, total := dbGetUnapprovedChannels(c, (page - 1) * 15, 15)
 	data.MoreNext = total > page * 15
 	data.MorePrev = page > 1
 	data.PageNext = page + 1
 	data.PagePrev = page - 1
 
-	chs := make([]indexChannel, len(dbchs))
+	chs := make([]approveChannel, len(dbchs))
 	for i, v := range dbchs {
 		status := ""
 		if v.errmsg == "" {
@@ -95,7 +74,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 		} else {
 			status = v.errmsg + " " + timeAgo(v.lastcheck)
 		}
-		chs[i] = indexChannel{
+		chs[i] = approveChannel{
 			Name: v.name,
 			Server: v.server,
 			WebLink: v.weblink,
@@ -103,6 +82,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 			Status: status,
 		}
 	}
+
 	data.Channels = chs
 
 	tpath := conf.AssetsPath + "/templates.html"
@@ -110,7 +90,8 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
 	}
-	err = t.ExecuteTemplate(w, "index", &data)
+
+	err = t.ExecuteTemplate(w, "approve", &data)
 	if err != nil {
 		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
 	}

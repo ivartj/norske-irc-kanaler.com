@@ -2,7 +2,7 @@ package main
 
 import (
 	sql "code.google.com/p/go-sqlite/go1/sqlite3"
-	"log"
+	"fmt"
 	"time"
 	"io"
 )
@@ -30,7 +30,6 @@ func dbInit() {
 			weblink, 
 			description,
 			numusers,
-			approved,
 			lastcheck,
 			errmsg
 		from
@@ -39,16 +38,32 @@ func dbInit() {
 			approved is not 0
 		order by
 			numusers desc;
+
+		create view if not exists channels_unapproved as
+		select
+			name,
+			server,
+			weblink,
+			description,
+			numusers,
+			lastcheck,
+			errmsg
+		from
+			channels
+		where
+			approved is 0
+		order by
+			lastcheck desc;
 	`)
 	if err != nil {
-		log.Fatalf("Failed to create schema: %s", err.Error())
+		panic(fmt.Errorf("Failed to create schema: %s", err.Error()))
 	}
 }
 
 func dbOpen() *sql.Conn {
 	c, err := sql.Open(conf.DatabasePath)
 	if err != nil {
-		log.Panicf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error())
+		panic(fmt.Errorf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error()))
 	}
 
 	return c
@@ -78,15 +93,15 @@ func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
 		where
 			name is ? and server is ?;
 	`, name, server)
-	defer stmt.Close()
 
 	if err == io.EOF {
 		return nil
 	}
 
 	if err != nil {
-		log.Panicf("Unable to retrieve channel '%s@%s'.\n", name, server)
+		panic(fmt.Errorf("Unable to retrieve channel '%s@%s'.\n", name, server))
 	}
+	defer stmt.Close()
 
 	var (
 		weblink string
@@ -96,7 +111,10 @@ func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
 		errmsg string
 	)
 
-	stmt.Scan(&weblink, &description, &numusers, &lastcheck, &errmsg)
+	err = stmt.Scan(&weblink, &description, &numusers, &lastcheck, &errmsg)
+	if err != nil {
+		panic(err)
+	}
 	t, _ := time.Parse("2006-01-02 15:04:05", lastcheck)
 	ch := &dbChannel{ name, server, weblink, description, numusers, true, t, errmsg }
 	return ch
@@ -114,11 +132,52 @@ func dbEditChannel(c *sql.Conn, originalName, originalServer string, name, serve
 			name is ? and server is ?;
 	`, name, server, weblink, description, originalName, originalServer)
 	if err != nil {
-		log.Panicf("Failed to update channel '%s@%s': %s.\n", originalName, originalServer, err.Error())
+		panic(fmt.Errorf("Failed to update channel '%s@%s': %s.\n", originalName, originalServer, err.Error()))
 	}
 }
 
 func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+	return dbGetChannels(c, off, len, true)
+}
+
+func dbGetUnapprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+	return dbGetChannels(c, off, len, false)
+}
+
+func dbDeleteChannel(c *sql.Conn, name, server string) {
+	err := c.Exec(`
+		delete from channels
+		where
+			name = ? and server = ?;
+	`, name, server)
+	if err != nil {
+		panic(fmt.Errorf("Failed to delete channel '%s@%s': %s", name, server, err.Error()))
+	}
+}
+
+func dbApproveChannel(c *sql.Conn, name, server string) {
+	err := c.Exec(`
+		update channels
+		set
+			approved = 1
+		where
+			name = ? and server = ?;
+	`, name, server)
+	if err != nil {
+		panic(fmt.Errorf("Failed to approve channel '%s@%s': %s", name, server, err.Error()))
+	}
+}
+
+func dbGetChannels(c *sql.Conn, off, len int, approved bool) ([]dbChannel, int) {
+
+	table := ""
+	switch approved {
+	case true:
+		table = "channels_approved"
+	case false:
+		table = "channels_unapproved"
+	}
+
 	stmt, err := c.Query(`
 		select
 			name,
@@ -128,9 +187,9 @@ func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 			numusers,
 			lastcheck,
 			errmsg,
-			(select count(*) from channels_approved)
+			(select count(*) from ` + table + `)
 		from
-			channels_approved
+			` + table + `
 		limit
 			?
 		offset
@@ -142,7 +201,7 @@ func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 	}
 
 	if err != nil {
-		log.Panicf("Failed to query channels from database: %s.\n", err.Error())
+		panic(fmt.Errorf("Failed to query channels from database: %s.\n", err.Error()))
 	}
 
 	defer stmt.Close()
@@ -178,6 +237,6 @@ func dbAddChannel(c *sql.Conn, name, server, weblink, description string, numuse
 			(?, ?, ?, ?, ?, ?, datetime(), '');
 	`, name, server, weblink, description, numusers, !conf.Approval)
 	if err != nil {
-		log.Panicf("Failed to add channel to database: %s.\n", err.Error())
+		panic(fmt.Errorf("Failed to add channel to database: %s.\n", err.Error()))
 	}
 }

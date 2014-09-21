@@ -32,9 +32,13 @@
 {{define "index"}}
 {{template "head" .}}
 			{{with $global := .}}
+			{{if .MorePrev}}
+			{{template "nav" .}}
+			{{else}}
 			<h1>IRC-chat Norge</h1>
 			Norskspråklige IRC-chatterom.<br>
 			{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
+			{{end}}
 			{{range .Channels}}
 			<div class="channel">
 				<a href="{{.WebLink}}" class="channel-name channel-link">{{.Name}}</a>
@@ -45,10 +49,42 @@
 				<span class="channel-grey">{{.Status}}</span>
 				{{if $global.Admin}}
 				<br>
-				<a href="/edit?name={{.Name}}&server={{.Server}}">Rediger</a>
+				<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+				<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
 				{{end}}
 			</div>
 			{{end}}
+			{{if .MorePrev}}<a href="/?page={{.PagePrev}}">Forrige</a>{{end}}
+			{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
+			{{if .MoreNext}}<a href="/?page={{.PageNext}}">Neste</a>{{end}}
+			{{end}}
+{{template "foot" .}}
+{{end}}
+
+{{define "approve"}}
+{{template "head" .}}
+{{template "nav" .}}
+			{{with $snobal := .}}
+			{{if .Message}}<p>{{.Message}}</p>{{end}}
+			{{range .Channels}}
+			<div class="channel">
+				<a href="{{.WebLink}}" class="channel-name channel-link">{{.Name}}</a>
+				<span class="channel-grey">{{.Server}}</span>
+				<br>
+				{{.Description}}
+				<br>
+				<span class="channel-grey">{{.Status}}</span>
+				{{if $snobal.Admin}}
+				<br>
+				<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+				<a href="/approve?name={{.Name}}&server={{.Server}}">godkjen</a> -
+				<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
+				{{end}}
+			</div>
+			{{end}}
+			{{if .MorePrev}}<a href="/approve?page={{.PagePrev}}">Forrige</a>{{end}}
+			{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
+			{{if .MoreNext}}<a href="/approve?page={{.PageNext}}">Neste</a>{{end}}
 			{{end}}
 {{template "foot" .}}
 {{end}}
@@ -123,6 +159,11 @@
 				<fieldset>
 					<legend>Logg inn</legend>
 					{{if .Message}}<p>{{.Message}}</p>{{end}}
+					{{if .Success}}<p><a href="{{.Redirect}}">Tilbake</a></p>
+					{{else}}
+					<input type="hidden"
+					       name="redirect"
+					       value="{{.Redirect}}">
 					<ol>
 						<li>
 							<label for="login-password">Passord: </label>
@@ -133,6 +174,7 @@
 						</li>
 					</ol>
 					<input type="submit" value="Logg inn">
+					{{end}}
 				</fieldset>
 			</form>
 {{template "foot" .}}
@@ -198,5 +240,13 @@
 			<h2>En feil oppstod!</h2>
 			<pre lang="en">{{.Message}}</pre>
 			<p>Feilen har blitt loggført.</p>
+{{template "foot" .}}
+{{end}}
+
+{{define "delete"}}
+{{template "head" .}}
+{{template "nav" .}}
+			{{if .Message}}<p>{{.Message}}</p>{{end}}
+			<p><a href="{{.Redirect}}">Tilbake.</a></p>
 {{template "foot" .}}
 {{end}}

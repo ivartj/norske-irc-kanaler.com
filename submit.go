@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 	"html/template"
-	"log"
+	"fmt"
 )
 
 func submitServe(w http.ResponseWriter, req *http.Request) {
@@ -38,10 +38,10 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 	tpath := conf.AssetsPath + "/templates.html"
 	t, err := template.ParseFiles(tpath)
 	if err != nil {
-		log.Panicf("Failed to parse template file '%s': %s.\n", tpath, err.Error())
+		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
 	}
 	err = t.ExecuteTemplate(w, "submit", &data)
 	if err != nil {
-		log.Panicf("Failed to execute template file '%s': %s.\n", tpath, err.Error())
+		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
 	}
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 	"html/template"
-	"log"
+	"fmt"
 	"crypto/rand"
 	"encoding/base64"
 )
@@ -16,7 +16,7 @@ func loginNewSessionID() string {
 	bytes := make([]byte, bytelen)
 	_, err := rand.Read(bytes)
 	if err != nil {
-		log.Panicf("Failed to create random new session ID: %s.\n", err.Error());
+		panic(fmt.Errorf("Failed to create random new session ID: %s.\n", err.Error()));
 	}
 	loginSessionID = base64.URLEncoding.EncodeToString(bytes)
 	return loginSessionID
@@ -38,11 +38,15 @@ func loginServe(w http.ResponseWriter, req *http.Request) {
 	data := struct{
 		PageTitle string
 		Message string
+		Success bool
+		Redirect string
 	}{
 		PageTitle: "Innlogging",
 	}
 
-	if req.Method == "POST" {
+	switch req.Method {
+	case "POST":
+		data.Redirect = req.FormValue("redirect")
 		if req.FormValue("password") != conf.Password {
 			data.Message = "Feil passord."
 		} else {
@@ -52,15 +56,22 @@ func loginServe(w http.ResponseWriter, req *http.Request) {
 				HttpOnly: true,
 			})
 			data.Message = "Innlogging vellykket."
+			data.Success = true
 		}
+	case "GET":
+		data.Redirect = req.URL.Query().Get("redirect")
 	}
+		
 
 
 	tpath := conf.AssetsPath + "/templates.html"
 	t, err := template.ParseFiles(tpath)
 	if err != nil {
-		log.Panicf("Failed to parse template file '%s': %s\n", tpath, err.Error())
+		panic(fmt.Errorf("Failed to parse template file '%s': %s\n", tpath, err.Error()))
 	}
 
 	err = t.ExecuteTemplate(w, "login", &data)
+	if err != nil {
+		panic(fmt.Errorf("Failed to execute template file '%s': %s\n", tpath, err.Error()))
+	}
 }
