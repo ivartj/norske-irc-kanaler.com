@@ -12,6 +12,13 @@
 		<div id="wrap">
 {{end}}
 
+{{define "nav"}}
+			<nav>
+				<a href="/">IRC-chat Norge</a> /
+				<strong>{{.PageTitle}}</strong>
+			</nav>
+{{end}}
+
 {{define "foot"}}
 			<div id="footer">
 				<a href="#">Hjelp med IRC-chat</a> - 
@@ -25,8 +32,9 @@
 {{define "index"}}
 {{template "head" .}}
 			{{with $global := .}}
-			<h1>IRC-Chat Norge</h1>
+			<h1>IRC-chat Norge</h1>
 			Norskspråklige IRC-chatterom.<br>
+			{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
 			{{range .Channels}}
 			<div class="channel">
 				<a href="{{.WebLink}}" class="channel-name channel-link">{{.Name}}</a>
@@ -60,9 +68,11 @@
 
 {{define "submit"}}
 {{template "head" .}}
+{{template "nav" .}}
 			<form method="post" action="/submit">
 				<fieldset>
 					<legend>Forslag til IRC-chatterom</legend>
+					{{if .Message}}<p>{{.Message}}</p>{{end}}
 					<ol>
 						<li>
 							<label for="submit-name">Kanalnavn: </label>
@@ -88,6 +98,7 @@
 							<input type="text"
 							       id="submit-weblink"
 							       value="{{.WebLink}}"
+							       placeholder="http://"
 							       name="weblink">
 						</li>
 						<li>
@@ -107,6 +118,7 @@
 
 {{define "login"}}
 {{template "head" .}}
+{{template "nav" .}}
 			<form method="post" action="/login">
 				<fieldset>
 					<legend>Logg inn</legend>
@@ -128,6 +140,7 @@
 
 {{define "edit"}}
 {{template "head" .}}
+{{template "nav" .}}
 			<form method="post" action="/edit">
 				<input type="hidden"
 				       name="original-name"
@@ -179,3 +192,11 @@
 {{template "foot" .}}
 {{end}}
 
+{{define "error"}}
+{{template "head" .}}
+{{template "nav" .}}
+			<h2>En feil oppstod!</h2>
+			<pre lang="en">{{.Message}}</pre>
+			<p>Feilen har blitt loggført.</p>
+{{template "foot" .}}
+{{end}}

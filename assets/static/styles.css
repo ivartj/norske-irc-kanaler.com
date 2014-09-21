@@ -1,8 +1,6 @@
 body {
 	font-family: 'Courier New', monospace;
-	margin: 0;
 	line-height: 1.4em;
-	padding: 0;
 }
 
 h1, h2, h3, h4 {
@@ -130,4 +128,10 @@ form label {
 form textarea {
 	height: 9em;
 	width: 30em;
+}
+
+pre {
+	white-space: pre-wrap;
+	border: 2px solid red;
+	color: red;
 }

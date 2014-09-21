@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 )
 
+// set to "" on logout
 var loginSessionID string = ""
 
 func loginNewSessionID() string {

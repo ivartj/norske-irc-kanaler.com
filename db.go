@@ -80,6 +80,10 @@ func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
 	`, name, server)
 	defer stmt.Close()
 
+	if err == io.EOF {
+		return nil
+	}
+
 	if err != nil {
 		log.Panicf("Unable to retrieve channel '%s@%s'.\n", name, server)
 	}

@@ -9,6 +9,16 @@ import (
 	"net/http/fcgi"
 )
 
+func serveRecovery(w http.ResponseWriter, req *http.Request) {
+	defer func() {
+		x := recover()
+		if x != nil {
+			errorServe(w, req, fmt.Sprintf("%v", x))
+		}
+	}()
+	http.DefaultServeMux.ServeHTTP(w, req)
+}
+
 func serveExact(w http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case "/":
@@ -17,6 +27,8 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		submitServe(w, req)
 	case "/login":
 		loginServe(w, req)
+	case "/logout":
+		logoutServe(w, req)
 	case "/edit":
 		editServe(w, req)
 	default:
@@ -25,12 +37,12 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 }
 
 func serve() {
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(conf.AssetsPath + "/static"))))
-	http.HandleFunc("/", serveExact)
+	http.DefaultServeMux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(conf.AssetsPath + "/static"))))
+	http.DefaultServeMux.HandleFunc("/", serveExact)
 
 	switch conf.ServeMethod {
 	case "http":
-		log.Fatal(http.ListenAndServe(":" + fmt.Sprintf("%d", conf.HttpPort), nil))
+		log.Fatal(http.ListenAndServe(":" + fmt.Sprintf("%d", conf.HttpPort), http.HandlerFunc(serveRecovery)))
 	case "fastcgi":
 
 		// TODO check that it is a socket
@@ -41,6 +53,6 @@ func serve() {
 			fmt.Fprintf(os.Stderr, "Failed to listen on Fastcgi path '%s': %s.\n", conf.FastcgiPath, err.Error())
 			os.Exit(1)
 		}
-		log.Fatal(fcgi.Serve(l, http.DefaultServeMux))
+		log.Fatal(fcgi.Serve(l, http.HandlerFunc(serveRecovery)))
 	}
 }
