@@ -9,6 +9,10 @@ import (
 
 func submitChannel(c *sql.Conn, name, server, weblink, description string) string {
 
+	if weblink == "" {
+		weblink = chanSuggestWebLink(name, server)
+	}
+
 	err := chanValidate(name, server)
 	if err != nil {
 		return err.Error()

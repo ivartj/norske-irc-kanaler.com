@@ -4,6 +4,7 @@ import (
 	"ircnorge/irc"
 	"strings"
 	"errors"
+	"net/url"
 	"fmt"
 	"log"
 	"time"
@@ -17,6 +18,17 @@ func chanCheckLoop() {
 	for {
 		chanCheckAll()
 		time.Sleep(time.Minute)
+	}
+}
+
+func chanSuggestWebLink(name, server string) string {
+	switch server {
+	case "irc.freenode.net":
+		return fmt.Sprintf("https://webchat.freenode.net/?channels=%s", url.QueryEscape(name))
+	case "irc.efnet.org":
+		return fmt.Sprintf("http://chat.efnet.org:9090/?channels=%s&Login=Login", url.QueryEscape(name))
+	default:
+		return fmt.Sprintf("http://mibbit.com/?channel=%s&server=%s", url.QueryEscape(name), url.QueryEscape(server))
 	}
 }
 

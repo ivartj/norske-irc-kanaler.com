@@ -41,7 +41,7 @@
 			{{end}}
 			{{range .Channels}}
 			<div class="channel">
-				<a href="{{.WebLink}}" class="channel-name channel-link">{{.Name}}</a>
+				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
 				<span class="channel-grey">{{.Server}}</span>
 				<br>
 				{{.Description}}
@@ -68,7 +68,7 @@
 			{{if .Message}}<p>{{.Message}}</p>{{end}}
 			{{range .Channels}}
 			<div class="channel">
-				<a href="{{.WebLink}}" class="channel-name channel-link">{{.Name}}</a>
+				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
 				<span class="channel-grey">{{.Server}}</span>
 				<br>
 				{{.Description}}
