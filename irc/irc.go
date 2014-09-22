@@ -18,7 +18,7 @@ type Conn struct{
 }
 
 func Connect(server, nick string) (*Conn, error) {
-	sock, err := net.DialTimeout("tcp", server + ":6667", time.Second * 5)
+	sock, err := net.DialTimeout("tcp", server + ":6667", time.Second * 30)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to '%s': %s", server, err.Error())
 	}
@@ -38,6 +38,13 @@ func Connect(server, nick string) (*Conn, error) {
 	for ; err == nil; msg, err = c.NextMessage() {
 		if msg.Command == "001" {
 			goto out
+		}
+		if msg.Command == "PING" {
+			pong := "PONG"
+			for _, v := range msg.Args {
+				pong += " " + v
+			}
+			fmt.Fprintf(c.sock, "%s\r\n", pong)
 		}
 		if CodeIsError(msg.Command) {
 			err = errors.New(CodeString(msg.Command))
@@ -82,6 +89,13 @@ func (c *Conn) Join(channel string) (*Channel, error) {
 			goto out
 		}
 
+		if msg.Command == "PING" {
+			pong := "PONG"
+			for _, v := range msg.Args {
+				pong += " " + v
+			}
+			fmt.Fprintf(c.sock, "%s\r\n", pong)
+		}
 		if CodeIsError(msg.Command) {
 			err = errors.New(CodeString(msg.Command))
 			goto out

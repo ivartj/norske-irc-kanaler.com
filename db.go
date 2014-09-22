@@ -171,7 +171,7 @@ func dbUncheck(c *sql.Conn, name, server string) {
 	err := c.Exec(`
 		update channels
 		set
-			checked = 0,
+			checked = 0
 		where
 			name is ? and server is ?;
 	`, name, server)
