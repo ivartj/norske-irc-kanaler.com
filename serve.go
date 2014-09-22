@@ -38,6 +38,8 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		approveServe(w, req)
 	case "/delete":
 		deleteServe(w, req)
+	case "/help":
+		helpServe(w, req)
 	default:
 		http.NotFound(w, req)
 	}

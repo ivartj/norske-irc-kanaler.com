@@ -21,7 +21,7 @@
 
 {{define "foot"}}
 			<div id="footer">
-				<a href="#">Hjelp med IRC-chat</a> - 
+				<a href="/help">Hjelp med IRC-chat</a> - 
 				<a href="/submit">Foreslå chatterom</a>
 			</div>
 		</div>
@@ -248,5 +248,12 @@
 {{template "nav" .}}
 			{{if .Message}}<p>{{.Message}}</p>{{end}}
 			<p><a href="{{.Redirect}}">Tilbake.</a></p>
+{{template "foot" .}}
+{{end}}
+
+{{define "help"}}
+{{template "head" .}}
+{{template "nav" .}}
+{{.Content}}
 {{template "foot" .}}
 {{end}}

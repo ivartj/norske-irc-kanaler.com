@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"html/template"
 	"fmt"
-	sql "code.google.com/p/go-sqlite/go1/sqlite3"
 )
 
 type indexChannel struct{
@@ -13,39 +12,6 @@ type indexChannel struct{
 	WebLink string
 	Description string
 	Status string
-}
-
-func indexGetChannels(c *sql.Conn) ([]indexChannel, bool) {
-	more := false
-
-	dbchs, numtotal := dbGetApprovedChannels(c, 0, 15)
-	if numtotal > 15 {
-		more = true
-	}
-
-	chs := make([]indexChannel, len(dbchs))
-	for i, v := range dbchs {
-		status := ""
-		if v.errmsg == "" {
-			if v.numusers == 1 {
-				status = "1 bruker innlogget"
-			} else {
-				status = fmt.Sprintf("%d brukere innlogget", v.numusers)
-			}
-			status += " " + timeAgo(v.lastcheck)
-		} else {
-			status = v.errmsg + " " + timeAgo(v.lastcheck)
-		}
-		chs[i] = indexChannel{
-			Name: v.name,
-			Server: v.server,
-			WebLink: v.weblink,
-			Description: v.description,
-			Status: status,
-		}
-	}
-
-	return chs, more
 }
 
 func indexServe(w http.ResponseWriter, req *http.Request) {
@@ -84,17 +50,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 
 	chs := make([]indexChannel, len(dbchs))
 	for i, v := range dbchs {
-		status := ""
-		if v.errmsg == "" {
-			if v.numusers == 1 {
-				status = "1 bruker innlogget"
-			} else {
-				status = fmt.Sprintf("%d brukere innlogget", v.numusers)
-			}
-			status += " " + timeAgo(v.lastcheck)
-		} else {
-			status = v.errmsg + " " + timeAgo(v.lastcheck)
-		}
+		status := chanStatus(&v)
 		chs[i] = indexChannel{
 			Name: v.name,
 			Server: v.server,

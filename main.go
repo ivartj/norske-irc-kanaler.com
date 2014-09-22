@@ -86,5 +86,6 @@ func main() {
 	confParse(mainConfFilename)
 	openlog()
 	dbInit()
+	go chanCheckLoop()
 	serve()
 }

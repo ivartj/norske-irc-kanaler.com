@@ -4,7 +4,29 @@ import (
 	"net/http"
 	"html/template"
 	"fmt"
+	sql "code.google.com/p/go-sqlite/go1/sqlite3"
 )
+
+func submitChannel(c *sql.Conn, name, server, weblink, description string) string {
+
+	err := chanValidate(name, server)
+	if err != nil {
+		return err.Error()
+	}
+
+	ch := dbGetChannel(c, name, server)
+	if ch != nil {
+		return "Takk. Forslaget har allerede blitt sendt inn."
+	}
+
+	dbAddChannel(c, name, server, weblink, description, 0)
+
+	if conf.Approval {
+		return "Takk for forslag! Forslaget vil publiseres etter godkjenning av administrator."
+	} else {
+		return "Takk for forslag! Forslaget er publisert."
+	}
+}
 
 func submitServe(w http.ResponseWriter, req *http.Request) {
 	data := struct{
@@ -26,13 +48,7 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 		c := dbOpen()
 		defer c.Close()
 
-		ch := dbGetChannel(c, data.Name, data.Server)
-		if ch == nil {
-			dbAddChannel(c, data.Name, data.Server, data.WebLink, data.Description, 0)
-			data.Message = "Takk for forslag! Forslaget vil publiseres etter godkjenning av administrator."
-		} else {
-			data.Message = "Takk. Forslaget har allerede blitt sendt inn."
-		}
+		data.Message = submitChannel(c, data.Name, data.Server, data.WebLink, data.Description)
 	}
 
 	tpath := conf.AssetsPath + "/templates.html"

@@ -63,17 +63,7 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 
 	chs := make([]approveChannel, len(dbchs))
 	for i, v := range dbchs {
-		status := ""
-		if v.errmsg == "" {
-			if v.numusers == 1 {
-				status = "1 bruker innlogget"
-			} else {
-				status = fmt.Sprintf("%d brukere innlogget", v.numusers)
-			}
-			status += " " + timeAgo(v.lastcheck)
-		} else {
-			status = v.errmsg + " " + timeAgo(v.lastcheck)
-		}
+		status := chanStatus(&v)
 		chs[i] = approveChannel{
 			Name: v.name,
 			Server: v.server,
