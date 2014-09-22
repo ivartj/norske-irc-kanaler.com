@@ -31,7 +31,7 @@ func Connect(server, nick string) (*Conn, error) {
 	fmt.Fprintf(sock, "NICK %s\r\n", nick)
 	fmt.Fprintf(sock, "USER %s 0 * :IRC-chat Norge (www.ircnorge.org)\r\n", nick)
 
-	sock.SetReadDeadline(time.Now().Add(time.Second * 10))
+	sock.SetReadDeadline(time.Now().Add(time.Minute))
 
 	msg, err := c.NextMessage()
 
@@ -69,7 +69,7 @@ func (c *Conn) Join(channel string) (*Channel, error) {
 		Names: []string{},
 	}
 
-	c.sock.SetReadDeadline(time.Now().Add(time.Second * 10))
+	c.sock.SetReadDeadline(time.Now().Add(time.Minute))
 
 	msg, err := c.NextMessage()
 	for ; err == nil; msg, err = c.NextMessage() {

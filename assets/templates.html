@@ -50,7 +50,8 @@
 				{{if $global.Admin}}
 				<br>
 				<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-				<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
+				<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
+				<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
 				{{end}}
 			</div>
 			{{end}}

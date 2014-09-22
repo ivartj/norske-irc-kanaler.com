@@ -167,6 +167,19 @@ func dbUpdateStatus(c *sql.Conn, name, server string, numusers int, errmsg strin
 	}
 }
 
+func dbUncheck(c *sql.Conn, name, server string) {
+	err := c.Exec(`
+		update channels
+		set
+			checked = 0,
+		where
+			name is ? and server is ?;
+	`, name, server)
+	if err != nil {
+		panic(fmt.Errorf("Failed to uncheck channel: %s", err.Error()))
+	}
+}
+
 func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
 	return dbGetChannels(c, off, len, true)
 }
