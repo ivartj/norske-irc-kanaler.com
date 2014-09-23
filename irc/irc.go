@@ -134,7 +134,7 @@ func msgScan(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	end := 0
 
 	// prefix
-	if data[0] == ':' {
+	if data[0] != ' ' {
 		start = 0
 	}
 
