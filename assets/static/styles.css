@@ -3,7 +3,7 @@ body {
 	line-height: 1.4em;
 	margin: 0;
 	padding: 0;
-	background-color: #ddf;
+	background-color: #eee;
 }
 
 h1, h2, h3, h4 {
@@ -13,21 +13,38 @@ h1, h2, h3, h4 {
 
 .wrap {
 	max-width: 35em;
-	margin: 1em auto;
-	border: 1px solid #99f;
+	margin: 0 auto 1em auto;
+	border: 1px solid #bbb;
+	border-width: 0 1px 1px 1px;
 	padding: 1em;
 	background-color: white;
 }
 
-#banner {
-	background-color: #ca2b2a;
-	text-align: center;
-	color: white;
-	font-weight: bold;
-	border: 1px solid #900;
+.header {
+	background-color: #203;
+	border-bottom: 1px solid #990;
 }
 
-#banner h1 {
+.header-mid {
+	background-color: #ca2b2a;
+	color: white;
+	max-width: 35em;
+	margin: 0 auto;
+	padding: 0 1em;
+	border: 1px solid #d9a;
+	border-width: 0 1px
+}
+
+.header-mid a:visited, .header-mid a:link {
+	color: white;
+}
+
+.header-banner {
+	font-weight: bold;
+	text-align: center;
+}
+
+.header-banner h1 {
 	color: white;
 }
 

@@ -11,14 +11,16 @@
 		      type="text/css">
 	</head>
 	<body>
-		<div class="wrap">
 {{end}}
 
 {{define "nav"}}
-			<nav>
+		<div class="header">
+			<nav class="header-mid">
 				<a href="/">IRC-chat Norge</a> /
 				<strong>{{.PageTitle}}</strong>
 			</nav>
+		</div>
+		<div class="wrap">
 {{end}}
 
 {{define "foot"}}
@@ -33,17 +35,20 @@
 
 {{define "index"}}
 {{template "head" .}}
-			{{with $global := .}}
-			{{if .MorePrev}}
-			{{template "nav" .}}
-			{{else}}
-			<div id="banner">
+		{{with $global := .}}
+		{{if .MorePrev}}
+		{{template "nav" .}}
+		{{else}}
+		<div class="header">
+			<div class="header-mid header-banner">
 				<img src="/static/logo.png" alt="Logo">
 				<h1>IRC-chat Norge</h1>
 				Norskspråklige IRC-chatterom
 			</div>
+		</div>
+		<div class="wrap">
 			{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
-			{{end}}
+		{{end}}
 			{{range .Channels}}
 			<div class="channel">
 				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
@@ -252,6 +257,7 @@
 {{define "delete"}}
 {{template "head" .}}
 {{template "nav" .}}
+		<div class="wrap">
 			{{if .Message}}<p>{{.Message}}</p>{{end}}
 			<p><a href="{{.Redirect}}">Tilbake.</a></p>
 {{template "foot" .}}
