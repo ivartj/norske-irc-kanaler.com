@@ -3,7 +3,7 @@ body {
 	line-height: 1.4em;
 	margin: 0;
 	padding: 0;
-	background-color: #eee;
+	background-color: #ddd;
 }
 
 h1, h2, h3, h4 {
@@ -14,14 +14,10 @@ h1, h2, h3, h4 {
 .wrap {
 	max-width: 35em;
 	margin: 0 auto 1em auto;
-	border: 1px solid #bbb;
-	border-width: 0 1px 1px 1px;
-	padding: 1em;
-	background-color: white;
 }
 
 .header {
-	background-color: #203;
+	background-color: #879;
 	border-bottom: 1px solid #990;
 }
 
@@ -30,7 +26,7 @@ h1, h2, h3, h4 {
 	color: white;
 	max-width: 35em;
 	margin: 0 auto;
-	padding: 0 1em;
+	padding: 0 0.5em;
 	border: 1px solid #d9a;
 	border-width: 0 1px
 }
@@ -54,18 +50,12 @@ hr {
 	border: 0;
 }
 
-.block {
-	padding: 1em;
-	overflow: hidden;
-}
-
-.dark {
-	background-color: #052;
-	color: white;
-}
-
-.channel {
+fieldset, article, .channel {
 	margin: 1em 0;
+	padding: 1em;
+	border: 1px solid #bbb;
+	border-width: 1px 1px 1px 1px;
+	background-color: white;
 }
 
 .channel-left {

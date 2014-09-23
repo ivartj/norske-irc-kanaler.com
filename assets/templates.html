@@ -118,7 +118,6 @@
 {{template "nav" .}}
 			<form method="post" action="/submit">
 				<fieldset>
-					<legend>Forslag til IRC-chatterom</legend>
 					{{if .Message}}<p>{{.Message}}</p>{{end}}
 					<ol>
 						<li>
@@ -168,7 +167,6 @@
 {{template "nav" .}}
 			<form method="post" action="/login">
 				<fieldset>
-					<legend>Logg inn</legend>
 					{{if .Message}}<p>{{.Message}}</p>{{end}}
 					{{if .Success}}<p><a href="{{.Redirect}}">Tilbake</a></p>
 					{{else}}
@@ -202,7 +200,6 @@
 				       name="original-server"
 				       value="{{.OriginalServer}}">
 				<fieldset>
-					<legend>Rediger kanal</legend>
 					{{if .Message}}<p>{{.Message}}</p>{{end}}
 					<ol>
 						<li>
@@ -266,6 +263,8 @@
 {{define "help"}}
 {{template "head" .}}
 {{template "nav" .}}
+			<article>
 {{.Content}}
+			</article>
 {{template "foot" .}}
 {{end}}
