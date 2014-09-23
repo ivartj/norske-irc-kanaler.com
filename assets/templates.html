@@ -4,6 +4,8 @@
 	<head>
 		<meta charset="utf-8">
 		<title>{{.PageTitle}}</title>
+		<meta name="viewport"
+		      content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet"
 		      href="/static/styles.css"
 		      type="text/css">
@@ -38,7 +40,7 @@
 			<div id="banner">
 				<img src="/static/logo.png" alt="Logo">
 				<h1>IRC-chat Norge</h1>
-				Norskspråklige IRC-chatterom.
+				Norskspråklige IRC-chatterom
 			</div>
 			{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
 			{{end}}
