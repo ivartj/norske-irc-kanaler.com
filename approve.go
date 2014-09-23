@@ -13,6 +13,7 @@ type approveChannel struct {
 	WebLink string
 	Description string
 	Status string
+	Error bool
 }
 
 func approveServe(w http.ResponseWriter, req *http.Request) {
@@ -63,13 +64,14 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 
 	chs := make([]approveChannel, len(dbchs))
 	for i, v := range dbchs {
-		status := chanStatus(&v)
+		status, ok := chanStatus(&v)
 		chs[i] = approveChannel{
 			Name: v.name,
 			Server: v.server,
 			WebLink: v.weblink,
 			Description: v.description,
 			Status: status,
+			Error: !ok,
 		}
 	}
 

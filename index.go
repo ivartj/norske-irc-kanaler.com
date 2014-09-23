@@ -12,6 +12,7 @@ type indexChannel struct{
 	WebLink string
 	Description string
 	Status string
+	Error bool
 }
 
 func indexServe(w http.ResponseWriter, req *http.Request) {
@@ -50,13 +51,14 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 
 	chs := make([]indexChannel, len(dbchs))
 	for i, v := range dbchs {
-		status := chanStatus(&v)
+		status, ok := chanStatus(&v)
 		chs[i] = indexChannel{
 			Name: v.name,
 			Server: v.server,
 			WebLink: v.weblink,
 			Description: v.description,
 			Status: status,
+			Error: !ok,
 		}
 	}
 	data.Channels = chs

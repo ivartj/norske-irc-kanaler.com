@@ -9,7 +9,7 @@
 		      type="text/css">
 	</head>
 	<body>
-		<div id="wrap">
+		<div class="wrap">
 {{end}}
 
 {{define "nav"}}
@@ -35,18 +35,21 @@
 			{{if .MorePrev}}
 			{{template "nav" .}}
 			{{else}}
-			<h1>IRC-chat Norge</h1>
-			Norskspråklige IRC-chatterom.<br>
+			<div id="banner">
+				<img src="/static/logo.png" alt="Logo">
+				<h1>IRC-chat Norge</h1>
+				Norskspråklige IRC-chatterom.
+			</div>
 			{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
 			{{end}}
 			{{range .Channels}}
 			<div class="channel">
 				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
-				<span class="channel-grey">{{.Server}}</span>
+				[<span class="channel-server">{{.Server}}</span>]
 				<br>
 				{{.Description}}
 				<br>
-				<span class="channel-grey">{{.Status}}</span>
+				<span class="channel-{{if .Error}}error{{else}}status{{end}}">{{.Status}}</span>
 				{{if $global.Admin}}
 				<br>
 				<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
@@ -70,7 +73,7 @@
 			{{range .Channels}}
 			<div class="channel">
 				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
-				<span class="channel-grey">{{.Server}}</span>
+				[<span class="channel-server">{{.Server}}</span>]
 				<br>
 				{{.Description}}
 				<br>

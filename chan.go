@@ -32,21 +32,23 @@ func chanSuggestWebLink(name, server string) string {
 	}
 }
 
-func chanStatus(ch *dbChannel) string {
+func chanStatus(ch *dbChannel) (string, bool) {
 	status := ""
 	switch {
 	case !ch.checked:
-		status = "Ennå ikke undersøkt"
+		return "Ennå ikke undersøkt", true
 	case ch.errmsg == "" && ch.numusers == 1:
 		status = "1 bruker innlogget"
 		status += " " + timeAgo(ch.lastcheck)
+		return status, true
 	case ch.errmsg == "":
 		status = fmt.Sprintf("%d brukere innlogget", ch.numusers)
 		status += " " + timeAgo(ch.lastcheck)
+		return status, true
 	default:
-		status = "Feil: " + ch.errmsg + " (" + timeAgo(ch.lastcheck) + ")"
+		status = "Feilmelding ved samling av informasjon: " + ch.errmsg + " (" + timeAgo(ch.lastcheck) + "), " + timeAgo(ch.lastcheck)
+		return status, false
 	}
-	return status
 }
 
 func chanCheckAll() {

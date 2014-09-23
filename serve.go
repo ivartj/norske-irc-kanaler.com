@@ -42,6 +42,8 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		uncheckServe(w, req)
 	case "/help":
 		helpServe(w, req)
+	case "/favicon.ico":
+		http.ServeFile(w, req, conf.AssetsPath + "/favicon.ico")
 	default:
 		http.NotFound(w, req)
 	}

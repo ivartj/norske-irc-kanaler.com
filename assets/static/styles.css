@@ -1,17 +1,34 @@
 body {
 	font-family: 'Courier New', monospace;
 	line-height: 1.4em;
+	margin: 0;
+	padding: 0;
+	background-color: #ddf;
 }
 
 h1, h2, h3, h4 {
-	color: #090;
-	margin-bottom: 0;
+	color: #009;
+	margin: 0;
 }
 
-#wrap {
-	height: 100%;
+.wrap {
 	max-width: 35em;
-	margin: 0 auto;
+	margin: 1em auto;
+	border: 1px solid #99f;
+	padding: 1em;
+	background-color: white;
+}
+
+#banner {
+	background-color: #ca2b2a;
+	text-align: center;
+	color: white;
+	font-weight: bold;
+	border: 1px solid #900;
+}
+
+#banner h1 {
+	color: white;
 }
 
 hr {
@@ -42,14 +59,6 @@ hr {
 	float: right;
 }
 
-.channel-status {
-	padding: 0.5em;
-	color: #555;
-	background-color: white;
-	border: 1px solid #0f0;
-	text-align: center;
-}
-
 .channel-info {
 	max-width: 30em;
 	padding-left: 0.5em;
@@ -76,15 +85,23 @@ hr {
 	vertical-align: top;
 }
 
-.channel-grey {
+.channel-error {
+	color: #f00 ! important;
+	text-decoration: none ! important;
+}
+
+.channel-status {
 	color: #999 ! important;
 	text-decoration: none ! important;
 }
 
+.channel-server {
+	color: #777;
+}
+
 #footer {
-	border-top: 1px solid #090;
+	border-top: 1px solid #900;
 	padding-top: 0.5em;
-	display: table;
 }
 
 /* Most of the following form stylings are borrowed from
@@ -134,4 +151,8 @@ pre {
 	white-space: pre-wrap;
 	border: 2px solid red;
 	color: red;
+}
+
+nav {
+	margin-bottom: 1em;
 }
