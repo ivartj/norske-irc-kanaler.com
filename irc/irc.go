@@ -29,7 +29,7 @@ func Connect(server, nick string) (*Conn, error) {
 	c := &Conn{sock, nick, scan}
 
 	fmt.Fprintf(sock, "NICK %s\r\n", nick)
-	fmt.Fprintf(sock, "USER %s 0 * :IRC-chat Norge (www.ircnorge.org)\r\n", nick)
+	fmt.Fprintf(sock, "USER %s 0 * :%s\r\n", nick, nick)
 
 	sock.SetReadDeadline(time.Now().Add(time.Minute))
 
@@ -87,6 +87,12 @@ func (c *Conn) Join(channel string) (*Channel, error) {
 				ch.Names = strings.Split(msg.Args[len(msg.Args) - 1], " ")
 			}
 			goto out
+		}
+
+		switch msg.Command {
+		case "422": fallthrough // ERR_NOMOTD
+		case "331": // ERR_NOTOPIC
+			continue
 		}
 
 		if msg.Command == "PING" {
