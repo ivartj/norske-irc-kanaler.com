@@ -20,6 +20,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 	defer c.Close()
 
 	data := struct{
+		SiteTitle string
 		PageTitle string
 		Channels []indexChannel
 		MoreNext bool
@@ -28,6 +29,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 		PagePrev int
 		Admin bool
 	}{
+		SiteTitle: conf.WebsiteTitle,
 		PageTitle: "IRC-Chat Norge",
 		Admin: loginAuth(req),
 	}

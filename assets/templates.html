@@ -16,7 +16,7 @@
 {{define "nav"}}
 		<div class="header">
 			<nav class="header-mid">
-				<a href="/">IRC-chat Norge</a> /
+				<a href="/">{{.SiteTitle}}</a> /
 				<strong>{{.PageTitle}}</strong>
 			</nav>
 		</div>
@@ -42,8 +42,7 @@
 		<div class="header">
 			<div class="header-mid header-banner">
 				<img src="/static/logo.png" alt="Logo">
-				<h1>IRC-chat Norge</h1>
-				Norskspråklige IRC-chatterom
+				<h1>{{.SiteTitle}}</h1>
 			</div>
 		</div>
 		<div class="wrap">

@@ -17,7 +17,7 @@ type Conn struct{
 	scan *bufio.Scanner
 }
 
-func Connect(server, nick string) (*Conn, error) {
+func Connect(server, nick, realname string) (*Conn, error) {
 	sock, err := net.DialTimeout("tcp", server + ":6667", time.Second * 30)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to '%s': %s", server, err.Error())
@@ -29,7 +29,7 @@ func Connect(server, nick string) (*Conn, error) {
 	c := &Conn{sock, nick, scan}
 
 	fmt.Fprintf(sock, "NICK %s\r\n", nick)
-	fmt.Fprintf(sock, "USER %s 0 * :%s\r\n", nick, nick)
+	fmt.Fprintf(sock, "USER %s 0 * :%s\r\n", nick, realname)
 
 	sock.SetReadDeadline(time.Now().Add(time.Minute))
 

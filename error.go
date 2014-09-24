@@ -8,10 +8,12 @@ import (
 
 func errorServe(w http.ResponseWriter, req *http.Request, msg string) {
 	data := struct{
+		SiteTitle string
 		PageTitle string
 		Admin bool
 		Message string
 	}{
+		SiteTitle: conf.WebsiteTitle,
 		PageTitle: "Feilmelding",
 		Admin: loginAuth(req),
 		Message: msg,

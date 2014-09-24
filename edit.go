@@ -14,6 +14,7 @@ func editServe(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := struct{
+		SiteTitle string
 		PageTitle string
 		OriginalName string
 		OriginalServer string
@@ -23,6 +24,7 @@ func editServe(w http.ResponseWriter, req *http.Request) {
 		Description string
 		Message string
 	}{
+		SiteTitle: conf.WebsiteTitle,
 		PageTitle: "Rediger kanal",
 	}
 

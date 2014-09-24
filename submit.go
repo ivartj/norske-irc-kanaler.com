@@ -34,6 +34,7 @@ func submitChannel(c *sql.Conn, name, server, weblink, description string) strin
 
 func submitServe(w http.ResponseWriter, req *http.Request) {
 	data := struct{
+		SiteTitle string
 		PageTitle string
 		Name string
 		Server string
@@ -41,6 +42,7 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 		Description string
 		Message string
 	}{
+		SiteTitle: conf.WebsiteTitle,
 		PageTitle: "Foreslå IRC-chatterom",
 	}
 

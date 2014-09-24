@@ -24,9 +24,11 @@ func helpGetContent() template.HTML {
 
 func helpServe(w http.ResponseWriter, req *http.Request) {
 	data := struct{
+		SiteTitle string
 		PageTitle string
 		Content template.HTML
 	}{
+		SiteTitle: conf.WebsiteTitle,
 		PageTitle: "Hjelp med IRC-chat",
 		Content: helpGetContent(),
 	}

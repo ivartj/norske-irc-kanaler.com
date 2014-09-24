@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-const (
-	nickname string		= "ablegoyer"
-)
-
 func chanCheckLoop() {
 	for {
 		chanCheckAll()
@@ -25,10 +21,10 @@ func chanSuggestWebLink(name, server string) string {
 	switch server {
 	case "irc.freenode.net":
 		return fmt.Sprintf("https://webchat.freenode.net/?channels=%s", url.QueryEscape(name))
-	case "irc.efnet.org":
+	case "irc.efnet.pl":
 		return fmt.Sprintf("http://chat.efnet.org:9090/?channels=%s&Login=Login", url.QueryEscape(name))
 	default:
-		return fmt.Sprintf("http://mibbit.com/?channel=%s&server=%s", url.QueryEscape(name), url.QueryEscape(server))
+		return fmt.Sprintf("http://kiwiirc.com/%s/%s", url.QueryEscape(server), name)
 	}
 }
 
@@ -98,7 +94,7 @@ func chanValidate(name, server string) error {
 
 func chanCheck(name, server string) (int, error) {
 
-	c, err := irc.Connect(server, nickname)
+	c, err := irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname)
 	if err != nil {
 		return 0, err
 	}

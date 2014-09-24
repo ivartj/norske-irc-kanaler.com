@@ -8,6 +8,9 @@ import (
 )
 
 type config struct {
+	WebsiteTitle string `yaml:"website-title"`
+	IRCBotNickname string `yaml:"irc-bot-nickname"`
+	IRCBotRealname string `yaml:"irc-bot-realname"`
 	ServeMethod string `yaml:"serve-method"`
 	FastcgiPath string `yaml:"fastcgi-path"`
 	HttpPort uint `yaml:"http-port"`
@@ -76,6 +79,21 @@ func confSanityCheck(conf *config) {
 
 	if conf.Password == "" {
 		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'password' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.WebsiteTitle == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-title' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.IRCBotNickname == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-nickname' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.IRCBotRealname == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-realname' field value.\n")
 		os.Exit(1)
 	}
 }

@@ -14,12 +14,14 @@ func deleteServe(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := struct{
+		SiteTitle string
 		PageTitle string
 		Name string
 		Server string
 		Message string
 		Redirect string
 	}{
+		SiteTitle: conf.WebsiteTitle,
 		PageTitle: "Sletting av kanal",
 		Name: req.URL.Query().Get("name"),
 		Server: req.URL.Query().Get("server"),
