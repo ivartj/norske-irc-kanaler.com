@@ -62,7 +62,7 @@ func chanCheckAll() {
 	for _, v := range chs {
 		if v.checked {
 			dur := time.Now().Sub(v.lastcheck)
-			if dur < time.Hour * 24 * 7 {
+			if dur < time.Hour * 24 {
 				continue
 			}
 		}
