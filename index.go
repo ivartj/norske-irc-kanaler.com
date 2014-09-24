@@ -30,7 +30,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 		Admin bool
 	}{
 		SiteTitle: conf.WebsiteTitle,
-		PageTitle: "IRC-Chat Norge",
+		PageTitle: conf.WebsiteTitle,
 		Admin: loginAuth(req),
 	}
 
