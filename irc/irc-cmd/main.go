@@ -6,13 +6,13 @@ import (
 )
 
 func main() {
-	c, err := irc.Connect("irc.undernet.org", "asbestos12345")
+	c, err := irc.Connect("irc.efnet.pl", "asbestos12345", "asbestos12345")
 	if err != nil {
 		panic(err)
 	}
 	defer c.Quit()
 
-	ch, err := c.Join("#norge")
+	ch, err := c.Join("#hardware.no")
 	if err != nil {
 		panic(err)
 	}

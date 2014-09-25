@@ -84,8 +84,13 @@ func (c *Conn) Join(channel string) (*Channel, error) {
 		// RPL_NAMREPLY
 		if msg.Command == "353" {
 			if len(msg.Args) != 0 {
-				ch.Names = strings.Split(msg.Args[len(msg.Args) - 1], " ")
+				ch.Names = append(ch.Names, strings.Split(msg.Args[len(msg.Args) - 1], " ")...)
 			}
+			continue
+		}
+
+		// RPL_ENDOFNAMES
+		if msg.Command == "366" {
 			goto out
 		}
 
