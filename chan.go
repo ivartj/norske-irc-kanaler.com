@@ -37,7 +37,7 @@ func chanSuggestWebLink(name, server string) string {
 	case "irc.efnet.pl":
 		return fmt.Sprintf("http://chat.efnet.org:9090/?channels=%s&Login=Login", url.QueryEscape(name))
 	default:
-		return fmt.Sprintf("http://kiwiirc.com/%s/%s", url.QueryEscape(server), name)
+		return fmt.Sprintf("http://kiwiirc.com/client/%s/%s", url.QueryEscape(server), name)
 	}
 }
 
