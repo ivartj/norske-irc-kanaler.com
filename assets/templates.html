@@ -16,19 +16,29 @@
 {{end}}
 
 {{define "nav"}}
-		<div class="header">
-			<nav class="header-mid">
-				<a href="/">{{.SiteTitle}}</a> /
-				<strong>{{.PageTitle}}</strong>
-			</nav>
-		</div>
-		<div class="wrap">
+		<div class="content">
+			<div class="bar">
+				<nav class="bar-mid">
+					<a href="/">{{.SiteTitle}}</a> /
+					<strong>{{.PageTitle}}</strong>
+				</nav>
+			</div>
+			<div class="wrap">
 {{end}}
 
 {{define "foot"}}
-			<div id="footer">
-				<a href="/help">Hjelp med IRC-chat</a> - 
-				<a href="/submit">Foreslå chatterom</a>
+			</div>
+			<div class="bar footer-hidden">
+				<div class="bar-mid">
+					<a href="/help">Hjelp med IRC-chat</a> - 
+					<a href="/submit">Legg til chatterom</a>
+				</div>
+			</div>
+			<div class="bar footer">
+				<div class="bar-mid">
+					<a href="/help">Hjelp med IRC-chat</a> - 
+					<a href="/submit">Legg til chatterom</a>
+				</div>
 			</div>
 		</div>
 	</body>
@@ -41,124 +51,118 @@
 		{{if .MorePrev}}
 		{{template "nav" .}}
 		{{else}}
-		<div class="header">
-			<div class="header-mid header-banner">
-				<img src="/static/logo.png" alt="Logo">
-				<h1>{{.SiteTitle}}</h1>
+		<div class="content">
+			<div class="bar">
+				<div class="bar-mid bar-banner">
+					<img src="/static/logo.png" alt="Logo">
+					<h1>{{.SiteTitle}}</h1>
+				</div>
 			</div>
-		</div>
-		<div class="wrap">
-			{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
-		{{end}}
-			{{range .Channels}}
-			<div class="channel">
-				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
-				[<span class="channel-server">{{.Server}}</span>]
-				<br>
-				{{.Description}}
-				<br>
-				<span class="channel-{{if .Error}}error{{else}}status{{end}}">{{.Status}}</span>
-				{{if $global.Admin}}
-				<br>
-				<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-				<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
-				<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
+			<div class="description">
+				{{.SiteDescription}}<br>
+				Klikk <a href="/help">her</a> hvis du ikke er kjent med IRC.
+			</div>
+			<div class="wrap">
+				{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
+			{{end}}
+				{{range .Channels}}
+				<div class="channel">
+					<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
+					[<span class="channel-server">{{.Server}}</span>]
+					<br>
+					{{.Description}}
+					<br>
+					<span class="channel-{{if .Error}}error{{else}}status{{end}}">{{.Status}}</span>
+					{{if $global.Admin}}
+					<br>
+					<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+					<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
+					<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
+					{{end}}
+				</div>
 				{{end}}
-			</div>
-			{{end}}
-			{{if .MorePrev}}<a href="/?page={{.PagePrev}}">Forrige</a>{{end}}
-			{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
-			{{if .MoreNext}}<a href="/?page={{.PageNext}}">Neste</a>{{end}}
-			{{end}}
+				<nav class="pagenav">
+					{{if .MorePrev}}<a href="/?page={{.PagePrev}}">Forrige</a>{{end}}
+					{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
+					{{if .MoreNext}}<a href="/?page={{.PageNext}}">Neste</a>{{end}}
+				</nav>
+				{{end}}
 {{template "foot" .}}
 {{end}}
 
 {{define "approve"}}
 {{template "head" .}}
 {{template "nav" .}}
-			{{with $snobal := .}}
-			{{if .Message}}<p>{{.Message}}</p>{{end}}
-			{{range .Channels}}
-			<div class="channel">
-				<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
-				[<span class="channel-server">{{.Server}}</span>]
-				<br>
-				{{.Description}}
-				<br>
-				<span class="channel-grey">{{.Status}}</span>
-				{{if $snobal.Admin}}
-				<br>
-				<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-				<a href="/approve?name={{.Name}}&server={{.Server}}">godkjen</a> -
-				<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
+				{{with $snobal := .}}
+				{{if .Message}}<p>{{.Message}}</p>{{end}}
+				{{range .Channels}}
+				<div class="channel">
+					<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
+					[<span class="channel-server">{{.Server}}</span>]
+					<br>
+					{{.Description}}
+					<br>
+					<span class="channel-grey">{{.Status}}</span>
+					{{if $snobal.Admin}}
+					<br>
+					<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+					<a href="/approve?name={{.Name}}&server={{.Server}}">godkjen</a> -
+					<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
+					{{end}}
+				</div>
 				{{end}}
-			</div>
-			{{end}}
-			{{if .MorePrev}}<a href="/approve?page={{.PagePrev}}">Forrige</a>{{end}}
-			{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
-			{{if .MoreNext}}<a href="/approve?page={{.PageNext}}">Neste</a>{{end}}
-			{{end}}
-{{template "foot" .}}
-{{end}}
-
-{{define "page"}}
-{{template "head" .}}
-			<div class="channel">
-				<a href="#" class="channel-name channel-link">#norsk</a>
-				<span class="channel-grey">irc.freenode.net</span>
-				<br>
-				Kanal for dem som vil lære eller forfine norskkunnskapene.
-				<br>
-				<span class="channel-grey">36 brukere</span>
-			</div>
+				{{if .MorePrev}}<a href="/approve?page={{.PagePrev}}">Forrige</a>{{end}}
+				{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
+				{{if .MoreNext}}<a href="/approve?page={{.PageNext}}">Neste</a>{{end}}
+				{{end}}
 {{template "foot" .}}
 {{end}}
 
 {{define "submit"}}
 {{template "head" .}}
 {{template "nav" .}}
-			<form method="post" action="/submit">
-				<fieldset>
-					{{if .Message}}<p>{{.Message}}</p>{{end}}
-					<ol>
-						<li>
-							<label for="submit-name">Kanalnavn: </label>
-							<input
-							       type="text"
-							       id="submit-name"
-							       name="name"
-							       value="{{.Name}}"
-							       placeholder="#kanal"
-							       required>
-						</li>
-						<li>
-							<label for="submit-server">IRC-nettverk: </label>
-							<input type="text"
-							       id="submit-server"
-							       name="server"
-							       value="{{.Server}}"
-							       placeholder="irc.eksempel.net"
-							       required>
-						</li>
-						<li>
-							<label for="submit-weblink">Webchat-URL: </label>
-							<input type="text"
-							       id="submit-weblink"
-							       value="{{.WebLink}}"
-							       placeholder="http://"
-							       name="weblink">
-						</li>
-						<li>
-							<label for="submit-description">Beskrivelse:</label><br>
-							<textarea name="description"
-							          id="submit-description"
-							          maxlength="160"
-							          required>{{.Description}}</textarea>
-						</li>
-					</ol>
-					<input type="submit" value="Send inn">
-				</fieldset>
-			</form>
+				<form method="post" action="/submit">
+					<fieldset>
+						{{if .Message}}<p>{{.Message}}</p>{{end}}
+						<ol>
+							<li>
+								<label for="submit-name">Kanalnavn: </label>
+								<input
+								       type="text"
+								       id="submit-name"
+								       name="name"
+								       value="{{.Name}}"
+								       placeholder="#kanal"
+								       required>
+							</li>
+							<li>
+								<label for="submit-server">IRC-nettverk: </label>
+								<input type="text"
+								       id="submit-server"
+								       name="server"
+								       value="{{.Server}}"
+								       placeholder="irc.eksempel.net"
+								       required>
+							</li>
+							<li>
+								<label for="submit-weblink">Webchat-URL: </label>
+								<input type="text"
+								       id="submit-weblink"
+								       value="{{.WebLink}}"
+								       placeholder="http://"
+								       name="weblink">
+							</li>
+							<li>
+								<label for="submit-description">Beskrivelse:</label><br>
+								<textarea name="description"
+									  id="submit-description"
+									  maxlength="160"
+									  required>{{.Description}}</textarea>
+							</li>
+						</ol>
+						<input type="submit" value="Send inn">
+					</fieldset>
+				</form>
 {{template "foot" .}}
 {{end}}
 
@@ -166,106 +170,105 @@
 {{define "login"}}
 {{template "head" .}}
 {{template "nav" .}}
-			<form method="post" action="/login">
-				<fieldset>
-					{{if .Message}}<p>{{.Message}}</p>{{end}}
-					{{if .Success}}<p><a href="{{.Redirect}}">Tilbake</a></p>
-					{{else}}
-					<input type="hidden"
-					       name="redirect"
-					       value="{{.Redirect}}">
-					<ol>
-						<li>
-							<label for="login-password">Passord: </label>
-							<input type="password"
-							       id="login-password"
-							       name="password"
-							       placeholder="Passord">
-						</li>
-					</ol>
-					<input type="submit" value="Logg inn">
-					{{end}}
-				</fieldset>
-			</form>
+				<form method="post" action="/login">
+					<fieldset>
+						{{if .Message}}<p>{{.Message}}</p>{{end}}
+						{{if .Success}}<p><a href="{{.Redirect}}">Tilbake</a></p>
+						{{else}}
+						<input type="hidden"
+						       name="redirect"
+						       value="{{.Redirect}}">
+						<ol>
+							<li>
+								<label for="login-password">Passord: </label>
+								<input type="password"
+								       id="login-password"
+								       name="password"
+								       placeholder="Passord">
+							</li>
+						</ol>
+						<input type="submit" value="Logg inn">
+						{{end}}
+					</fieldset>
+				</form>
 {{template "foot" .}}
 {{end}}
 
 {{define "edit"}}
 {{template "head" .}}
 {{template "nav" .}}
-			<form method="post" action="/edit">
-				<input type="hidden"
-				       name="original-name"
-				       value="{{.OriginalName}}">
-				<input type="hidden"
-				       name="original-server"
-				       value="{{.OriginalServer}}">
-				<fieldset>
-					{{if .Message}}<p>{{.Message}}</p>{{end}}
-					<ol>
-						<li>
-							<label for="submit-name">Kanalnavn: </label>
-							<input
-							       type="text"
-							       id="submit-name"
-							       name="name"
-							       value="{{.Name}}"
-							       placeholder="#kanal"
-							       required>
-						</li>
-						<li>
-							<label for="submit-server">IRC-nettverk: </label>
-							<input type="text"
-							       id="submit-server"
-							       name="server"
-							       value="{{.Server}}"
-							       placeholder="irc.eksempel.net"
-							       required>
-						</li>
-						<li>
-							<label for="submit-weblink">Webchat-URL: </label>
-							<input type="text"
-							       id="submit-weblink"
-							       value="{{.WebLink}}"
-							       name="weblink">
-						</li>
-						<li>
-							<label for="submit-description">Beskrivelse:</label><br>
-							<textarea name="description"
-							          id="submit-description"
-							          maxlength="160"
-							          required>{{.Description}}</textarea>
-						</li>
-					</ol>
-					<input type="submit" value="Endre">
-				</fieldset>
-			</form>
+				<form method="post" action="/edit">
+					<input type="hidden"
+					       name="original-name"
+					       value="{{.OriginalName}}">
+					<input type="hidden"
+					       name="original-server"
+					       value="{{.OriginalServer}}">
+					<fieldset>
+						{{if .Message}}<p>{{.Message}}</p>{{end}}
+						<ol>
+							<li>
+								<label for="submit-name">Kanalnavn: </label>
+								<input
+								       type="text"
+								       id="submit-name"
+								       name="name"
+								       value="{{.Name}}"
+								       placeholder="#kanal"
+								       required>
+							</li>
+							<li>
+								<label for="submit-server">IRC-nettverk: </label>
+								<input type="text"
+								       id="submit-server"
+								       name="server"
+								       value="{{.Server}}"
+								       placeholder="irc.eksempel.net"
+								       required>
+							</li>
+							<li>
+								<label for="submit-weblink">Webchat-URL: </label>
+								<input type="text"
+								       id="submit-weblink"
+								       value="{{.WebLink}}"
+								       name="weblink">
+							</li>
+							<li>
+								<label for="submit-description">Beskrivelse:</label><br>
+								<textarea name="description"
+									  id="submit-description"
+									  maxlength="160"
+									  required>{{.Description}}</textarea>
+							</li>
+						</ol>
+						<input type="submit" value="Endre">
+					</fieldset>
+				</form>
 {{template "foot" .}}
 {{end}}
 
 {{define "error"}}
 {{template "head" .}}
 {{template "nav" .}}
-			<h2>En feil oppstod!</h2>
-			<pre lang="en">{{.Message}}</pre>
-			<p>Feilen har blitt loggført.</p>
+				<h2>En feil oppstod!</h2>
+				<pre lang="en">{{.Message}}</pre>
+				<p>Feilen har blitt loggført.</p>
 {{template "foot" .}}
 {{end}}
 
 {{define "delete"}}
 {{template "head" .}}
 {{template "nav" .}}
-		<div class="wrap">
-			{{if .Message}}<p>{{.Message}}</p>{{end}}
-			<p><a href="{{.Redirect}}">Tilbake.</a></p>
+				<p>{{.Message}}</p>
+				<p><a href="{{.Redirect}}">Tilbake.</a></p>
 {{template "foot" .}}
 {{end}}
 
 {{define "help"}}
 {{template "head" .}}
 {{template "nav" .}}
-			<article>
+				<article>
 {{.Content}}
-			</article>
+				</article>
 {{template "foot" .}}
 {{end}}

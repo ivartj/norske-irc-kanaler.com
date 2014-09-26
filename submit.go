@@ -45,7 +45,7 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 		Message string
 	}{
 		serveCommon: serveCommonData(req),
-		PageTitle: "Foreslå IRC-chatterom",
+		PageTitle: "Legg til IRC-chatterom",
 	}
 
 	if req.Method == "POST" {

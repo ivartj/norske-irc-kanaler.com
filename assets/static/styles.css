@@ -1,9 +1,12 @@
+html, body {
+	height: 100%;
+}
+
 body {
 	font-family: 'Courier New', monospace;
 	line-height: 1.4em;
 	margin: 0;
 	padding: 0;
-	background-color: #ddd;
 }
 
 h1, h2, h3, h4 {
@@ -11,37 +14,50 @@ h1, h2, h3, h4 {
 	margin: 0;
 }
 
+
 .wrap {
 	max-width: 35em;
 	margin: 0 auto 1em auto;
 }
 
-.header {
+.bar {
 	background-color: #879;
-	border-bottom: 1px solid #990;
 }
 
-.header-mid {
+.content {
+	min-height: 100%;
+	position: relative;
+	background-color: #ddd;
+}
+
+.description {
+	background-color: #ffd;
+	max-width: 35em;
+	margin: 0 auto;
+	padding: 0.5em;
+
+}
+
+.bar-mid {
 	background-color: #ca2b2a;
 	color: white;
 	max-width: 35em;
 	margin: 0 auto;
 	padding: 0.5em;
-	border: 1px solid #d9a;
-	border-width: 0 1px
 }
 
-.header-mid a:visited, .header-mid a:link {
+.bar-mid a:visited, .bar-mid a:link {
 	color: white;
 }
 
-.header-banner {
+.bar-banner {
 	font-weight: bold;
 	text-align: center;
 }
 
-.header-banner h1 {
+.bar-banner h1 {
 	color: white;
+	line-height: 1.2em;
 }
 
 hr {
@@ -106,9 +122,15 @@ fieldset, article, .channel {
 	color: #777;
 }
 
-#footer {
-	border-top: 1px solid #900;
-	padding-top: 0.5em;
+.footer-hidden {
+	position: static;
+	visibility: hidden;
+}
+
+.footer {
+	width: 100%;
+	position: absolute;
+	bottom: 0;
 }
 
 /* Most of the following form stylings are borrowed from
@@ -160,6 +182,6 @@ pre {
 	color: red;
 }
 
-nav {
-	margin-bottom: 1em;
+.pagenav {
+	padding: 0 0.5em;
 }
