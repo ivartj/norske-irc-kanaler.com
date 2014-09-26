@@ -10,6 +10,20 @@ import (
 	"net/http/fcgi"
 )
 
+type serveCommon struct {
+	SiteTitle string
+	SiteDescription string
+	Admin bool
+}
+
+func serveCommonData(req *http.Request) serveCommon {
+	return serveCommon{
+		SiteTitle: conf.WebsiteTitle,
+		SiteDescription: conf.WebsiteDescription,
+		Admin: loginAuth(req),
+	}
+}
+
 func serveRecovery(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		x := recover()

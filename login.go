@@ -36,13 +36,13 @@ func loginAuth(req *http.Request) bool {
 func loginServe(w http.ResponseWriter, req *http.Request) {
 
 	data := struct{
-		SiteTitle string
+		serveCommon
 		PageTitle string
 		Message string
 		Success bool
 		Redirect string
 	}{
-		SiteTitle: conf.WebsiteTitle,
+		serveCommon: serveCommonData(req),
 		PageTitle: "Innlogging",
 	}
 

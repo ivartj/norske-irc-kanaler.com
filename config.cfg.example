@@ -1,8 +1,13 @@
+website-title: Norske IRC-kanaler
+website-description: Oversikt over norskspråklige IRC-kanaler, også kalt chatterom.
+irc-bot-enable: no
+irc-bot-nickname: norbot5123
+irc-bot-realname: Norske IRC-kanaler (http://norske-irc-kanaler.com)
 serve-method: http
 http-port: 65535
 fastcgi-path: fastcgi.sock
 database-path: data.db
 assets-path: assets
 log-path: log
-approval: yes
+approval: no
 password: lutefisk

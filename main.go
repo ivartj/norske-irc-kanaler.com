@@ -86,6 +86,8 @@ func main() {
 	confParse(mainConfFilename)
 	openlog()
 	dbInit()
-	go chanCheckLoop()
+	if conf.IRCBotEnable {
+		go chanCheckLoop()
+	}
 	serve()
 }

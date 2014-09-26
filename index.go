@@ -20,18 +20,16 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 	defer c.Close()
 
 	data := struct{
-		SiteTitle string
+		serveCommon
 		PageTitle string
 		Channels []indexChannel
 		MoreNext bool
 		MorePrev bool
 		PageNext int
 		PagePrev int
-		Admin bool
 	}{
-		SiteTitle: conf.WebsiteTitle,
+		serveCommon: serveCommonData(req),
 		PageTitle: conf.WebsiteTitle,
-		Admin: loginAuth(req),
 	}
 
 	pagestr := req.URL.Query().Get("page")

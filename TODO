@@ -1,0 +1,15 @@
+ * Configurable if there is to be channel checking, in
+   case it is run from a development machine.
+ * Ensure that each listed channel are unique and valid.
+    - Force all channel names and adresses to be lowercase.
+      This must consider that the {}|^ characters are in IRC
+      lowercase []\~
+    - Handle addresses that point to the same host or are
+      part of the same network.
+    - Remove whitespace from submissions.
+ * Improve multi-page layout.
+ * Make RSS feed of recently submitted channels.
+ * Expand help page, possibly making multiple pages and
+   accommodate their creation through a trivial CMS.
+ * Make an 'Om siden' page describing the intention of
+   the website.

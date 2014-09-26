@@ -24,7 +24,7 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := struct{
-		SiteTitle string
+		serveCommon
 		PageTitle string
 		Channels []approveChannel
 		Admin bool
@@ -36,7 +36,7 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 		PageNext int
 		PagePrev int
 	} {
-		SiteTitle: conf.WebsiteTitle,
+		serveCommon: serveCommonData(req),
 		PageTitle: "Kanalgodkjenning",
 		Admin: loginAuth(req),
 	}

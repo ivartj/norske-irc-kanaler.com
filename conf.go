@@ -9,6 +9,8 @@ import (
 
 type config struct {
 	WebsiteTitle string `yaml:"website-title"`
+	WebsiteDescription string `yaml:"website-description"`
+	IRCBotEnable bool `yaml:"irc-bot-enable"`
 	IRCBotNickname string `yaml:"irc-bot-nickname"`
 	IRCBotRealname string `yaml:"irc-bot-realname"`
 	ServeMethod string `yaml:"serve-method"`
@@ -82,11 +84,6 @@ func confSanityCheck(conf *config) {
 		os.Exit(1)
 	}
 
-	if conf.WebsiteTitle == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-title' field value.\n")
-		os.Exit(1)
-	}
-
 	if conf.IRCBotNickname == "" {
 		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-nickname' field value.\n")
 		os.Exit(1)
@@ -94,6 +91,16 @@ func confSanityCheck(conf *config) {
 
 	if conf.IRCBotRealname == "" {
 		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-realname' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.WebsiteTitle == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-title' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.WebsiteDescription == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-description' field value.\n")
 		os.Exit(1)
 	}
 }
