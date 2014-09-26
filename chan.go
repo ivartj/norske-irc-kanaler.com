@@ -10,6 +10,19 @@ import (
 	"time"
 )
 
+var chanIllegalChars map[byte]string = map[byte]string{
+
+// rfc2812 2.3.1 Message format in Augmented BNF
+	'\x00' : "null-terminator",
+	'\a' : "bjelletegnet",
+	'\n' : "linjebrekk",
+	'\r' : "linjeskift",
+	' ' : "mellomrom",
+	',' : "komma",
+	':' : "kolon",
+}
+	
+	
 func chanCheckLoop() {
 	for {
 		chanCheckAll()
@@ -76,13 +89,36 @@ func chanCheckAll() {
 	}
 }
 
+func chanCanonical(name, server string) (string, string) {
+	name = strings.TrimLeft(name, " \t\r\n")
+	name = strings.TrimRight(name, " \t\r\n")
+	server = strings.TrimLeft(server, " \t\r\n")
+	server = strings.TrimRight(server, " ")
+
+	server = strings.TrimRight(server, ".")
+
+	name = strings.ToLower(name)
+	server = strings.ToLower(server)
+
+	// rfc2812 2.2 Character codes
+	name = strings.Replace(name, "[", "{", -1)
+	name = strings.Replace(name, "]", "}", -1)
+	name = strings.Replace(name, "\\", "|", -1)
+	name = strings.Replace(name, "^", "~", -1)
+
+	return name, server
+}
+
 func chanValidate(name, server string) error {
 	if !strings.HasPrefix(name, "#") {
 		return errors.New("Kanalen må ha '#' prefiks")
 	}
 
-	if strings.ContainsRune(name, ' ') {
-		return errors.New("Kanalnavnet kan ikke ha mellomrom")
+	for _, c := range []byte(name) {
+		msg, ok := chanIllegalChars[c]
+		if ok {
+			return errors.New("Kanalnavnet kan ikke inneholde " + msg)
+		}
 	}
 
 	if len(name) > 50 {

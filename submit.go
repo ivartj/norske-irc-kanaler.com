@@ -9,6 +9,8 @@ import (
 
 func submitChannel(c *sql.Conn, name, server, weblink, description string) string {
 
+	name, server = chanCanonical(name, server)
+
 	if weblink == "" {
 		weblink = chanSuggestWebLink(name, server)
 	}
