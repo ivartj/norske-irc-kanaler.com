@@ -85,7 +85,7 @@ func chanCheckAll() {
 			str = err.Error()
 		}
 		dbUpdateStatus(c, v.name, v.server, n, str)
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Minute)
 	}
 }
 
