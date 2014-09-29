@@ -10,6 +10,8 @@ import (
 
 var dbLock *sync.Mutex = &sync.Mutex{}
 
+const dbTimeFmt string = "2006-01-02 15:04:05"
+
 func dbInit() {
 	c := dbOpen()
 	defer c.Close()
@@ -24,6 +26,8 @@ func dbInit() {
 			checked integer not null,
 			lastcheck text not null,
 			errmsg text not null,
+			submitdate text not null,
+			approvedate text not null,
 			primary key (name, server)
 		);
 
@@ -37,13 +41,36 @@ func dbInit() {
 			approved,
 			checked,
 			lastcheck,
-			errmsg
+			errmsg,
+			submitdate,
+			approvedate
 		from
 			channels
 		where
 			approved is not 0
 		order by
 			numusers desc, checked desc;
+
+		create view if not exists channel_latest as
+		select
+			name,
+			server,
+			weblink,
+			description,
+			numusers,
+			approved,
+			checked,
+			lastcheck,
+			checked,
+			errmsg,
+			submitdate,
+			approvedate
+		from
+			channels
+		where
+			approved is not 0
+		order by
+			approvedate desc;
 
 		create view if not exists channels_unapproved as
 		select
@@ -55,13 +82,15 @@ func dbInit() {
 			approved,
 			checked,
 			lastcheck,
-			errmsg
+			errmsg,
+			submitdate,
+			approvedate
 		from
 			channels
 		where
 			approved is 0
 		order by
-			lastcheck desc;
+			submitdate desc;
 	`)
 	if err != nil {
 		panic(fmt.Errorf("Failed to create schema: %s", err.Error()))
@@ -88,6 +117,8 @@ type dbChannel struct {
 	approved bool
 	checked bool
 	lastcheck time.Time
+	submitdate time.Time
+	approvedate time.Time
 	errmsg string
 }
 
@@ -100,7 +131,9 @@ func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
 			approved,
 			checked,
 			lastcheck,
-			errmsg
+			errmsg,
+			submitdate,
+			approvedate
 		from
 			channels
 		where
@@ -124,14 +157,29 @@ func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
 		checked bool
 		lastcheck string
 		errmsg string
+		submitdate string
+		approvedate string
 	)
 
-	err = stmt.Scan(&weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg)
+	err = stmt.Scan(&weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate)
 	if err != nil {
 		panic(err)
 	}
-	t, _ := time.Parse("2006-01-02 15:04:05", lastcheck)
-	ch := &dbChannel{ name, server, weblink, description, numusers, approved, checked, t, errmsg }
+	tLastcheck, _ := time.Parse(dbTimeFmt, lastcheck)
+	tSubmitdate, _ := time.Parse(dbTimeFmt, submitdate)
+	tApprovedate, _ := time.Parse(dbTimeFmt, approvedate)
+	ch := &dbChannel{
+		name: name,
+		server: server,
+		weblink: weblink,
+		description: description,
+		numusers: numusers,
+		approved: approved,
+		checked: checked,
+		lastcheck: tLastcheck,
+		errmsg: errmsg,
+		submitdate: tSubmitdate,
+		approvedate: tApprovedate }
 	return ch
 }
 
@@ -180,14 +228,6 @@ func dbUncheck(c *sql.Conn, name, server string) {
 	}
 }
 
-func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
-	return dbGetChannels(c, off, len, true)
-}
-
-func dbGetUnapprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
-	return dbGetChannels(c, off, len, false)
-}
-
 func dbDeleteChannel(c *sql.Conn, name, server string) {
 	err := c.Exec(`
 		delete from channels
@@ -203,7 +243,8 @@ func dbApproveChannel(c *sql.Conn, name, server string) {
 	err := c.Exec(`
 		update channels
 		set
-			approved = 1
+			approved = 1,
+			approvedate = datetime()
 		where
 			name = ? and server = ?;
 	`, name, server)
@@ -212,15 +253,21 @@ func dbApproveChannel(c *sql.Conn, name, server string) {
 	}
 }
 
-func dbGetChannels(c *sql.Conn, off, len int, approvedTable bool) ([]dbChannel, int) {
+func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+	return dbGetChannels(c, off, len, "approved")
+}
 
-	table := ""
-	switch approvedTable {
-	case true:
-		table = "channels_approved"
-	case false:
-		table = "channels_unapproved"
-	}
+func dbGetUnapprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+	return dbGetChannels(c, off, len, "unapproved")
+}
+
+func dbGetLatestChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+	return dbGetChannels(c, off, len, "latest")
+}
+
+func dbGetChannels(c *sql.Conn, off, len int, tablename string) ([]dbChannel, int) {
+
+	table := "channels_" + tablename
 
 	stmt, err := c.Query(`
 		select
@@ -233,6 +280,8 @@ func dbGetChannels(c *sql.Conn, off, len int, approvedTable bool) ([]dbChannel, 
 			checked,
 			lastcheck,
 			errmsg,
+			submitdate,
+			approvedate,
 			(select count(*) from ` + table + `)
 		from
 			` + table + `
@@ -264,12 +313,16 @@ func dbGetChannels(c *sql.Conn, off, len int, approvedTable bool) ([]dbChannel, 
 		checked bool
 		lastcheck string
 		errmsg string
+		submitdate string
+		approvedate string
 		numchannels int
 	)
 
 	for err = nil; err == nil; err = stmt.Next() {
-		stmt.Scan(&name, &server, &weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &numchannels)
-		t, _ := time.Parse("2006-01-02 15:04:05", lastcheck)
+		stmt.Scan(&name, &server, &weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate, &numchannels)
+		tLastcheck, _ := time.Parse(dbTimeFmt, lastcheck)
+		tSubmitdate, _ := time.Parse(dbTimeFmt, submitdate)
+		tApprovedate, _ := time.Parse(dbTimeFmt, approvedate)
 		ch := dbChannel{
 			name: name,
 			server: server,
@@ -278,8 +331,11 @@ func dbGetChannels(c *sql.Conn, off, len int, approvedTable bool) ([]dbChannel, 
 			numusers: numusers,
 			approved: approved,
 			checked: checked,
-			lastcheck: t,
-			errmsg: errmsg }
+			lastcheck: tLastcheck,
+			errmsg: errmsg,
+			submitdate: tSubmitdate,
+			approvedate: tApprovedate,
+		 }
 		channels = append(channels, ch)
 	}
 
@@ -289,9 +345,9 @@ func dbGetChannels(c *sql.Conn, off, len int, approvedTable bool) ([]dbChannel, 
 func dbAddChannel(c *sql.Conn, name, server, weblink, description string, numusers int) {
 	err := c.Exec(`
 		insert into channels
-			(name, server, weblink, description, numusers, approved, checked, lastcheck, errmsg)
+			(name, server, weblink, description, numusers, approved, checked, lastcheck, errmsg, submitdate, approvedate)
 		values
-			(?, ?, ?, ?, ?, ?, 0, datetime(), '');
+			(?, ?, ?, ?, ?, ?, 0, datetime(), '', datetime(), datetime());
 	`, name, server, weblink, description, numusers, !conf.Approval)
 	if err != nil {
 		panic(fmt.Errorf("Failed to add channel to database: %s.\n", err.Error()))
