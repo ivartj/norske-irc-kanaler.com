@@ -134,7 +134,7 @@ func chanCheck(name, server string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer c.Quit()
+	defer c.Quit(conf.IRCBotQuitMessage)
 
 	ch, err := c.Join(name)
 	if err != nil {

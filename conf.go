@@ -13,6 +13,7 @@ type config struct {
 	IRCBotEnable bool `yaml:"irc-bot-enable"`
 	IRCBotNickname string `yaml:"irc-bot-nickname"`
 	IRCBotRealname string `yaml:"irc-bot-realname"`
+	IRCBotQuitMessage string `yaml:"irc-bot-quit-message"`
 	ServeMethod string `yaml:"serve-method"`
 	FastcgiPath string `yaml:"fastcgi-path"`
 	HttpPort uint `yaml:"http-port"`
@@ -101,6 +102,11 @@ func confSanityCheck(conf *config) {
 
 	if conf.WebsiteDescription == "" {
 		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-description' field value.\n")
+		os.Exit(1)
+	}
+
+	if conf.IRCBotQuitMessage == "" {
+		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-quit-message' field value.\n")
 		os.Exit(1)
 	}
 }

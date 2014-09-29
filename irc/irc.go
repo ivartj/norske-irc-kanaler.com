@@ -124,8 +124,8 @@ out:
 	return ch, nil
 }
 
-func (c *Conn) Quit() {
-	fmt.Fprintf(c.sock, "QUIT\r\n")
+func (c *Conn) Quit(msg string) {
+	fmt.Fprintf(c.sock, "QUIT :%s\r\n", msg)
 	c.sock.Close()
 }
 

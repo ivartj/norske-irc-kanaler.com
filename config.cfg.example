@@ -3,6 +3,7 @@ website-description: Oversikt over norskspråklige IRC-kanaler, også kalt chatt
 irc-bot-enable: no
 irc-bot-nickname: norbot5123
 irc-bot-realname: Norske IRC-kanaler (http://norske-irc-kanaler.com)
+irc-bot-quit-message: Norske IRC-kanaler (http://norske-irc-kanaler.com)
 serve-method: http
 http-port: 65535
 fastcgi-path: fastcgi.sock
