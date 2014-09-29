@@ -65,22 +65,29 @@
 			<div class="wrap">
 				{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
 			{{end}}
+				<ol class="channel-list">
 				{{range .Channels}}
-				<div class="channel">
-					<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
-					[<span class="channel-server">{{.Server}}</span>]
-					<br>
-					{{.Description}}
-					<br>
-					<span class="channel-{{if .Error}}error{{else}}status{{end}}">{{.Status}}</span>
-					{{if $global.Admin}}
-					<br>
-					<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-					<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
-					<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
-					{{end}}
-				</div>
+					<li class="channel" itemscope="http://schema.org/Thing">
+						<a href="{{.WebLink}}"
+						   rel="nofollow"
+						   class="channel-name channel-link"
+						   itemprop="name url">
+							{{.Name}}
+						</a>
+						[<span class="channel-server">{{.Server}}</span>]
+						<div itemprop="description">
+							{{.Description}}
+						</div>
+						<span class="channel-{{if .Error}}error{{else}}status{{end}}">{{.Status}}</span>
+						{{if $global.Admin}}
+						<br>
+						<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+						<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
+						<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
+						{{end}}
+					</li>
 				{{end}}
+				</ol>
 				<nav class="pagenav">
 					{{if .MorePrev}}<a href="/?page={{.PagePrev}}">Forrige</a>{{end}}
 					{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
@@ -95,22 +102,29 @@
 {{template "nav" .}}
 				{{with $snobal := .}}
 				{{if .Message}}<p>{{.Message}}</p>{{end}}
-				{{range .Channels}}
-				<div class="channel">
-					<a href="{{.WebLink}}" rel="nofollow" class="channel-name channel-link">{{.Name}}</a>
-					[<span class="channel-server">{{.Server}}</span>]
-					<br>
-					{{.Description}}
-					<br>
-					<span class="channel-grey">{{.Status}}</span>
-					{{if $snobal.Admin}}
-					<br>
-					<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-					<a href="/approve?name={{.Name}}&server={{.Server}}">godkjen</a> -
-					<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
+				<ol class="channel-list">
+					{{range .Channels}}
+					<li class="channel">
+						<a href="{{.WebLink}}"
+						   rel="nofollow"
+						   class="channel-name channel-link"
+						   itemprop="name url">
+							{{.Name}}
+						</a>
+						[<span class="channel-server">{{.Server}}</span>]
+						<div itemprop="description">
+							{{.Description}}
+						</div>
+						<span class="channel-grey">{{.Status}}</span>
+						{{if $snobal.Admin}}
+						<br>
+						<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+						<a href="/approve?name={{.Name}}&server={{.Server}}">godkjen</a> -
+						<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
+						{{end}}
+					</li>
 					{{end}}
-				</div>
-				{{end}}
+				</ol>
 				{{if .MorePrev}}<a href="/approve?page={{.PagePrev}}">Forrige</a>{{end}}
 				{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
 				{{if .MoreNext}}<a href="/approve?page={{.PageNext}}">Neste</a>{{end}}

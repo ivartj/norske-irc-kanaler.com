@@ -66,12 +66,23 @@ hr {
 	border: 0;
 }
 
+.channel-list {
+	margin: 0;
+	padding: 0;
+}
+
 fieldset, article, .channel {
 	margin: 1em 0;
 	padding: 1em;
 	border: 1px solid #bbb;
 	border-width: 1px 1px 1px 1px;
 	background-color: white;
+}
+
+.channel {
+	list-style: none;
+	margin-left: 0;
+	margin-right: 0;
 }
 
 .channel-left {
