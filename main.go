@@ -25,8 +25,8 @@ func mainUsage(out io.Writer, p *args.Parser) {
 
 func mainArgs() {
 	p := args.NewParser(os.Args[1:])
-	p.AddOption('h', 'h', "help", false, "Prints help message")
-	p.AddOption(301, '-', "version", false, "Prints version")
+	p.AddOption('h', 'h', "help", "", "Prints help message")
+	p.AddOption(301, '-', "version", "", "Prints version")
 
 	for {
 		code, arg := p.Parse() 
@@ -59,7 +59,7 @@ func mainArgs() {
 	}
 }
 
-func chdir() {
+func mainChangeDirectory() {
 	dir := path.Dir(mainConfFilename)
 	err := os.Chdir(dir)
 	if err != nil {
@@ -68,7 +68,7 @@ func chdir() {
 	}
 }
 
-func openlog() {
+func mainOpenLog() {
 	if(conf.LogPath == "") {
 		return
 	}
@@ -82,12 +82,13 @@ func openlog() {
 
 func main() {
 	mainArgs()
-	chdir()
+	mainChangeDirectory()
 	confParse(mainConfFilename)
-	openlog()
+	mainOpenLog()
 	dbInit()
 	if conf.IRCBotEnable {
 		go chanCheckLoop()
 	}
 	serve()
 }
+
