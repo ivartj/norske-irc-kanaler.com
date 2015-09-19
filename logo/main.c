@@ -28,7 +28,12 @@ void white(cairo_t *cr)
 
 void blue(cairo_t *cr)
 {
-	cairo_set_source_rgba(cr, 0.0, 0.0, 1.0, 1.0);
+
+	cairo_set_source_rgba(cr,
+		0x66 / 256.0,
+		0x55 / 256.0,
+		0xbb / 256.0,
+		1.0);
 	cairo_set_line_width(cr, blue_width);
 	cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
 }
