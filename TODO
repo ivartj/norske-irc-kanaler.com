@@ -13,3 +13,12 @@
    accommodate their creation through a trivial CMS.
  * Make an 'Om siden' page describing the intention of
    the website.
+ * Give further instructions on the submit page:
+    - Mention that the WebChat IRC-URL is optional
+    - Describe what sort of submissions are welcome.
+ * Nicer error messages if the bot is unable to access the channel.
+ * See if there are other ways to find information about a channel
+   (/list?).
+ * Make it possible for the administrator to associate multiple
+   addresses with an IRC network.
+
