@@ -68,21 +68,25 @@
 				<ol class="channel-list">
 				{{range .Channels}}
 					<li class="channel" itemscope="http://schema.org/Thing">
-						<a href="{{.WebLink}}"
-						   rel="nofollow"
-						   class="channel-name channel-link"
-						   itemprop="name">{{.Name}}</a>
-						[<span class="channel-server">{{.Server}}</span>]
-						<div itemprop="description">
-							{{.Description}}
+						<div class="channel-info">
+							<a href="{{.WebLink}}"
+							   rel="nofollow"
+							   class="channel-name channel-link"
+							   itemprop="name">{{.Name}}</a>
+							[<span class="channel-server">{{.Server}}</span>]
+							<div itemprop="description">
+								{{.Description}}
+							</div>
 						</div>
-						<span class="channel-{{if .Error}}error{{else}}status{{end}}">{{.Status}}</span>
-						{{if $global.Admin}}
-						<br>
-						<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-						<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
-						<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
-						{{end}}
+						<div class="channel-{{if .Error}}error{{else}}status{{end}}">
+							{{.Status}}
+							{{if $global.Admin}}
+							<br>
+							<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
+							<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a> -
+							<a href="/uncheck?name={{.Name}}&server={{.Server}}">omskjekk</a>
+							{{end}}
+						</div>
 					</li>
 				{{end}}
 				</ol>

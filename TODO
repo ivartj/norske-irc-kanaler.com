@@ -1,5 +1,4 @@
- * Configurable if there is to be channel checking, in
-   case it is run from a development machine.
+ * Make an administrator panel for managing server/network associations
  * Ensure that each listed channel are unique and valid.
     - Force all channel names and adresses to be lowercase.
       This must consider that the {}|^ characters are in IRC
@@ -8,9 +7,7 @@
       part of the same network.
     - Remove whitespace from submissions.
  * Improve multi-page layout.
- * Make RSS feed of recently submitted channels.
- * Expand help page, possibly making multiple pages and
-   accommodate their creation through a trivial CMS.
+ * Check for errors in RSS feed.
  * Make an 'Om siden' page describing the intention of
    the website.
  * Give further instructions on the submit page:

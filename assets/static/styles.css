@@ -31,11 +31,11 @@ h1, h2, h3, h4 {
 }
 
 .description {
-	background-color: #ffd;
+	background-color: #ca2b2a;
 	max-width: 35em;
 	margin: 0 auto;
 	padding: 0.5em;
-
+	color: white;
 }
 
 .bar-mid {
@@ -46,7 +46,7 @@ h1, h2, h3, h4 {
 	padding: 0.5em;
 }
 
-.bar-mid a:visited, .bar-mid a:link {
+.description a:visited, .description a:link, .bar-mid a:visited, .bar-mid a:link {
 	color: white;
 }
 
@@ -71,7 +71,7 @@ hr {
 	padding: 0;
 }
 
-fieldset, article, .channel {
+fieldset, article {
 	margin: 1em 0;
 	padding: 1em;
 	border: 1px solid #bbb;
@@ -81,8 +81,27 @@ fieldset, article, .channel {
 
 .channel {
 	list-style: none;
-	margin-left: 0;
-	margin-right: 0;
+	margin: 1em 0;
+}
+
+.channel-info {
+	padding: 1em 1em 0.5em 1em;
+	border: 1px solid #bbb;
+	border-width: 1px 1px 0 1px;
+	background-color: white;
+}
+
+.channel-status, .channel-error {
+	padding: 0.5em 1em 0.5em 1em;
+	border: 1px solid #bbb;
+	border-width: 0 1px 1px 1px;
+	background-color: #879;
+	color: white;
+}
+
+.channel-error {
+	background-color: #ca2b2a;
+	color: white;
 }
 
 .channel-left {
@@ -91,11 +110,6 @@ fieldset, article, .channel {
 
 .channel-right {
 	float: right;
-}
-
-.channel-info {
-	max-width: 30em;
-	padding-left: 0.5em;
 }
 
 .channel-link {
@@ -117,16 +131,6 @@ fieldset, article, .channel {
 
 .channel-col-1, .channel-col-2 {
 	vertical-align: top;
-}
-
-.channel-error {
-	color: #f00 ! important;
-	text-decoration: none ! important;
-}
-
-.channel-status {
-	color: #999 ! important;
-	text-decoration: none ! important;
 }
 
 .channel-server {
