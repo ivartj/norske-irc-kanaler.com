@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"html/template"
 	"fmt"
-	sql "code.google.com/p/go-sqlite/go1/sqlite3"
+	"database/sql"
 )
 
-func submitChannel(c *sql.Conn, name, server, weblink, description string) string {
+func submitChannel(c *sql.DB, name, server, weblink, description string) string {
 
 	name, server = chanCanonical(name, server)
 

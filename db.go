@@ -1,11 +1,14 @@
 package main
 
 import (
-	sql "code.google.com/p/go-sqlite/go1/sqlite3"
+	"database/sql"
+	_ "code.google.com/p/go-sqlite/go1/sqlite3"
+	"github.com/rubenv/sql-migrate"
 	"fmt"
 	"time"
 	"io"
 	"sync"
+	"log"
 )
 
 var dbLock *sync.Mutex = &sync.Mutex{}
@@ -13,93 +16,23 @@ var dbLock *sync.Mutex = &sync.Mutex{}
 const dbTimeFmt string = "2006-01-02 15:04:05"
 
 func dbInit() {
+	migrations := &migrate.FileMigrationSource{
+		Dir: conf.AssetsPath + "/sql",
+	}
+
 	c := dbOpen()
 	defer c.Close()
-	err := c.Exec(`
-		create table if not exists channels (
-			name text not null,
-			server text not null,
-			weblink text not null,
-			description text not null,
-			numusers integer not null,
-			approved integer not null,
-			checked integer not null,
-			lastcheck text not null,
-			errmsg text not null,
-			submitdate text not null,
-			approvedate text not null,
-			primary key (name, server)
-		);
 
-		create view if not exists channels_approved as
-		select
-			name,
-			server,
-			weblink, 
-			description,
-			numusers,
-			approved,
-			checked,
-			lastcheck,
-			errmsg,
-			submitdate,
-			approvedate
-		from
-			channels
-		where
-			approved is not 0
-		order by
-			numusers desc, checked desc;
-
-		create view if not exists channel_latest as
-		select
-			name,
-			server,
-			weblink,
-			description,
-			numusers,
-			approved,
-			checked,
-			lastcheck,
-			checked,
-			errmsg,
-			submitdate,
-			approvedate
-		from
-			channels
-		where
-			approved is not 0
-		order by
-			approvedate desc;
-
-		create view if not exists channels_unapproved as
-		select
-			name,
-			server,
-			weblink,
-			description,
-			numusers,
-			approved,
-			checked,
-			lastcheck,
-			errmsg,
-			submitdate,
-			approvedate
-		from
-			channels
-		where
-			approved is 0
-		order by
-			submitdate desc;
-	`)
+	n, err := migrate.Exec(c, "sqlite3", migrations, migrate.Up)
+	log.Printf("Applied %d migrations.\n", n);
 	if err != nil {
-		panic(fmt.Errorf("Failed to create schema: %s", err.Error()))
+		log.Fatalf("Error on applying migrations:\n%s\n", err.Error())
 	}
 }
 
-func dbOpen() *sql.Conn {
+func dbOpen() *sql.DB {
 	dbLock.Lock()
-	c, err := sql.Open(conf.DatabasePath)
+	c, err := sql.Open("sqlite3", conf.DatabasePath)
 	if err != nil {
 		panic(fmt.Errorf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error()))
 	}
@@ -122,7 +55,7 @@ type dbChannel struct {
 	errmsg string
 }
 
-func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
+func dbGetChannel(c *sql.DB, name, server string) *dbChannel {
 	stmt, err := c.Query(`
 		select
 			weblink,
@@ -183,8 +116,8 @@ func dbGetChannel(c *sql.Conn, name, server string) *dbChannel {
 	return ch
 }
 
-func dbEditChannel(c *sql.Conn, originalName, originalServer string, name, server, weblink, description string) {
-	err := c.Exec(`
+func dbEditChannel(c *sql.DB, originalName, originalServer string, name, server, weblink, description string) {
+	_, err := c.Exec(`
 		update channels
 		set
 			name = ?,
@@ -199,8 +132,8 @@ func dbEditChannel(c *sql.Conn, originalName, originalServer string, name, serve
 	}
 }
 
-func dbUpdateStatus(c *sql.Conn, name, server string, numusers int, errmsg string) {
-	err := c.Exec(`
+func dbUpdateStatus(c *sql.DB, name, server string, numusers int, errmsg string) {
+	_, err := c.Exec(`
 		update channels
 		set
 			numusers = ?,
@@ -215,8 +148,8 @@ func dbUpdateStatus(c *sql.Conn, name, server string, numusers int, errmsg strin
 	}
 }
 
-func dbUncheck(c *sql.Conn, name, server string) {
-	err := c.Exec(`
+func dbUncheck(c *sql.DB, name, server string) {
+	_, err := c.Exec(`
 		update channels
 		set
 			checked = 0
@@ -228,8 +161,8 @@ func dbUncheck(c *sql.Conn, name, server string) {
 	}
 }
 
-func dbDeleteChannel(c *sql.Conn, name, server string) {
-	err := c.Exec(`
+func dbDeleteChannel(c *sql.DB, name, server string) {
+	_, err := c.Exec(`
 		delete from channels
 		where
 			name = ? and server = ?;
@@ -239,8 +172,8 @@ func dbDeleteChannel(c *sql.Conn, name, server string) {
 	}
 }
 
-func dbApproveChannel(c *sql.Conn, name, server string) {
-	err := c.Exec(`
+func dbApproveChannel(c *sql.DB, name, server string) {
+	_, err := c.Exec(`
 		update channels
 		set
 			approved = 1,
@@ -253,23 +186,23 @@ func dbApproveChannel(c *sql.Conn, name, server string) {
 	}
 }
 
-func dbGetApprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+func dbGetApprovedChannels(c *sql.DB, off, len int) ([]dbChannel, int) {
 	return dbGetChannels(c, off, len, "approved")
 }
 
-func dbGetUnapprovedChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+func dbGetUnapprovedChannels(c *sql.DB, off, len int) ([]dbChannel, int) {
 	return dbGetChannels(c, off, len, "unapproved")
 }
 
-func dbGetLatestChannels(c *sql.Conn, off, len int) ([]dbChannel, int) {
+func dbGetLatestChannels(c *sql.DB, off, len int) ([]dbChannel, int) {
 	return dbGetChannels(c, off, len, "latest")
 }
 
-func dbGetChannels(c *sql.Conn, off, len int, tablename string) ([]dbChannel, int) {
+func dbGetChannels(c *sql.DB, off, len int, tablename string) ([]dbChannel, int) {
 
 	table := "channels_" + tablename
 
-	stmt, err := c.Query(`
+	rows, err := c.Query(`
 		select
 			name,
 			server,
@@ -299,7 +232,7 @@ func dbGetChannels(c *sql.Conn, off, len int, tablename string) ([]dbChannel, in
 		panic(fmt.Errorf("Failed to query channels from database: %s.\n", err.Error()))
 	}
 
-	defer stmt.Close()
+	defer rows.Close()
 
 	channels := make([]dbChannel, 0, len)
 
@@ -318,8 +251,8 @@ func dbGetChannels(c *sql.Conn, off, len int, tablename string) ([]dbChannel, in
 		numchannels int
 	)
 
-	for err = nil; err == nil; err = stmt.Next() {
-		stmt.Scan(&name, &server, &weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate, &numchannels)
+	for rows.Next() {
+		rows.Scan(&name, &server, &weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate, &numchannels)
 		tLastcheck, _ := time.Parse(dbTimeFmt, lastcheck)
 		tSubmitdate, _ := time.Parse(dbTimeFmt, submitdate)
 		tApprovedate, _ := time.Parse(dbTimeFmt, approvedate)
@@ -342,8 +275,8 @@ func dbGetChannels(c *sql.Conn, off, len int, tablename string) ([]dbChannel, in
 	return channels, numchannels
 }
 
-func dbAddChannel(c *sql.Conn, name, server, weblink, description string, numusers int) {
-	err := c.Exec(`
+func dbAddChannel(c *sql.DB, name, server, weblink, description string, numusers int) {
+	_, err := c.Exec(`
 		insert into channels
 			(name, server, weblink, description, numusers, approved, checked, lastcheck, errmsg, submitdate, approvedate)
 		values
@@ -353,3 +286,4 @@ func dbAddChannel(c *sql.Conn, name, server, weblink, description string, numuse
 		panic(fmt.Errorf("Failed to add channel to database: %s.\n", err.Error()))
 	}
 }
+
