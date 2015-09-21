@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"database/sql"
 )
 
 var chanIllegalChars map[byte]string = map[byte]string{
@@ -68,25 +69,56 @@ func chanCheckAll() {
 		}
 	}()
 
-	c := dbOpen()
-	defer c.Close()
-	chs, _ := dbGetApprovedChannels(c, 0, 9999)
+	db := dbOpen()
+	defer db.Close()
+	servers := dbGetServers(db)
+	chs, _ := dbGetApprovedChannels(db, 0, 9999)
 
-	for _, v := range chs {
-		if v.checked {
-			dur := time.Now().Sub(v.lastcheck)
+	for _, server := range servers {
+		chanCheckServer(db, server, chs)
+	}
+}
+
+func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
+	server_chs := []*dbChannel{}
+	for _, ch := range chs {
+		if ch.server != server {
+			continue
+		}
+
+		if ch.checked {
+			dur := time.Now().Sub(ch.lastcheck)
 			if dur < time.Hour * 24 {
 				continue
 			}
 		}
-		n, err := chanCheck(v.name, v.server)
+
+		server_chs = append(server_chs, &ch)
+	}
+
+	if len(server_chs) == 0 {
+		return
+	}
+
+	bot, err := irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname)
+	if err != nil {
+		panic(err)
+	}
+	defer bot.Disconnect()
+
+	for _, ch := range server_chs {
+		if ch.server != server {
+			continue
+		}
+
+		n, _, err := chanCheck(bot, ch.name)
 		str := ""
 		if err != nil {
 			str = err.Error()
 		}
-		dbUpdateStatus(c, v.name, v.server, n, str)
-		time.Sleep(time.Minute)
+		dbUpdateStatus(db, ch.name, ch.server, n, str)
 	}
+
 }
 
 func chanCanonical(name, server string) (string, string) {
@@ -128,18 +160,47 @@ func chanValidate(name, server string) error {
 	return nil
 }
 
-func chanCheck(name, server string) (int, error) {
+func chanCheck(bot *irc.Conn, name string) (int, string, error) {
 
-	c, err := irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname)
-	if err != nil {
-		return 0, err
+	bot.SendRawf("LIST %s", name)
+
+	numusers := 0
+	topic := ""
+	received322 := false
+
+	for {
+		ev, err := bot.WaitUntil(
+			"322", // RPL_LIST
+			"323", // RPL_LISTEND
+			"401", // ERR_NOSUCHNICK (nick/channel)
+			"403", // ERR_NOSUCHCHANNEL
+		)
+		if err != nil {
+			return 0, "", err
+		}
+
+		switch ev.Code {
+		case "322":
+			received322 = true
+			if len(ev.Args) < 4 {
+				return 0, "", fmt.Errorf("Unexpectedly short LIST response on %s", name)
+			}
+			fmt.Sscanf(ev.Args[2], "%d", &numusers)
+			topic = ev.Args[3]
+
+		case "323":
+			if received322 == false {
+				return 0, "", fmt.Errorf("No status data for %s received on query", name)
+			}
+			return numusers, topic, nil
+
+		case "401": fallthrough
+		case "403":
+			return 0, "", fmt.Errorf("No such channel, '%s'", name)
+
+		}
 	}
-	defer c.Quit(conf.IRCBotQuitMessage)
 
-	ch, err := c.Join(name)
-	if err != nil {
-		return 0, err
-	}
-
-	return len(ch.Names) - 1, nil
+	return 0, "", fmt.Errorf("Logically unreachable statement reached in 'chanCheck' function")
 }
+

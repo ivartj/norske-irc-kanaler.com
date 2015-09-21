@@ -3,136 +3,106 @@ package irc
 import (
 	"net"
 	"fmt"
-	"io"
+	"time"
 	"bufio"
-	"errors"
 	"bytes"
 	"strings"
-	"time"
+	"errors"
+	"io"
 )
 
-type Conn struct{
-	sock net.Conn
-	nick string
-	scan *bufio.Scanner
+type HandleFunc func(*Conn, *Event)
+
+var defaultHandlers map[string]HandleFunc = map[string]HandleFunc{
+	"PING": pingHandler,
 }
 
-func Connect(server, nick, realname string) (*Conn, error) {
-	sock, err := net.DialTimeout("tcp", server + ":6667", time.Second * 30)
+type Conn struct {
+	net.Conn
+	nick, user string
+	scan *bufio.Scanner
+	Events <-chan *Event
+	events chan<- *Event
+	handlers map[string]HandleFunc
+}
+
+func pingHandler(c *Conn, ev *Event) {
+	reply := "PONG"
+	for _, v := range ev.Args {
+		reply += " " + v
+	}
+	c.SendRaw(reply)
+}
+
+func Connect(address, nick, user string) (*Conn, error) {
+	// TODO: Do not add port if it is present in address
+	sock, err := net.DialTimeout("tcp", address + ":6667", time.Second * 30)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to '%s': %s", server, err.Error())
+		return nil, fmt.Errorf("Failed to connect to '%s': %s", address, err.Error())
 	}
 
 	scan := bufio.NewScanner(sock)
 	scan.Split(bufio.ScanLines)
 
-	c := &Conn{sock, nick, scan}
+	ch := make(chan *Event)
+	c := &Conn{sock, nick, user, scan, ch, ch, make(map[string]HandleFunc)}
+	c.SendRawf("NICK %s", nick)
+	c.SendRawf("USER %s 0 * :%s", nick, user)
 
-	fmt.Fprintf(sock, "NICK %s\r\n", nick)
-	fmt.Fprintf(sock, "USER %s 0 * :%s\r\n", nick, realname)
-
-	sock.SetReadDeadline(time.Now().Add(time.Minute))
-
-	msg, err := c.NextMessage()
-
-	for ; err == nil; msg, err = c.NextMessage() {
-		if msg.Command == "001" {
-			goto out
-		}
-		if msg.Command == "PING" {
-			pong := "PONG"
-			for _, v := range msg.Args {
-				pong += " " + v
-			}
-			fmt.Fprintf(c.sock, "%s\r\n", pong)
-		}
-		if CodeIsError(msg.Command) {
-			err = errors.New(CodeString(msg.Command))
-			goto out
-		}
-
-	}
-out:
-
-	if err != nil {
-		sock.Close()
-		return nil, fmt.Errorf("Error upon connecting to server '%s': %s", server, err.Error())
-	}
-
-	sock.SetReadDeadline(time.Time{})
+	go c.receiveMessages()
+	_, err = c.WaitUntil("001") // Wait until welcome code
 
 	return c, nil
 }
 
-type Channel struct {
-	Names []string
-}
-
-func (c *Conn) Join(channel string) (*Channel, error) {
-
-	fmt.Fprintf(c.sock, "JOIN %s\r\n", channel)
-
-	ch := &Channel{
-		Names: []string{},
+func (c *Conn) handle(ev *Event) error {
+	h, ok := c.handlers[ev.Code]
+	if !ok {
+		h, ok = defaultHandlers[ev.Code]
+	}
+	if !ok {
+		if CodeIsError(ev.Code) {
+			return errors.New(CodeString(ev.Code))
+		}
+		return nil
 	}
 
-	c.sock.SetReadDeadline(time.Now().Add(time.Minute))
+	var err error
+	err = nil
+	defer func() {
+		v := recover()
+		err = fmt.Errorf("IRC server error: %v", v)
+	}()
 
-	msg, err := c.NextMessage()
-	for ; err == nil; msg, err = c.NextMessage() {
+	h(c, ev)
 
-		// RPL_NAMREPLY
-		if msg.Command == "353" {
-			if len(msg.Args) != 0 {
-				ch.Names = append(ch.Names, strings.Split(msg.Args[len(msg.Args) - 1], " ")...)
+	return err
+}
+
+func (c *Conn) SetHandler(code string, handler HandleFunc) {
+	c.handlers[code] = handler
+}
+
+func (c *Conn) WaitUntil(codes ...string) (*Event, error) {
+	var ev *Event
+	for ev = range c.Events {
+		for _, v := range codes {
+			if ev.Code == v {
+				goto ret
 			}
-			continue
 		}
-
-		// RPL_ENDOFNAMES
-		if msg.Command == "366" {
-			goto out
+		if CodeIsError(ev.Code) {
+			return nil, errors.New(CodeString(ev.Code))
 		}
-
-		switch msg.Command {
-		case "422": fallthrough // ERR_NOMOTD
-		case "331": // ERR_NOTOPIC
-			continue
+		err := c.handle(ev)
+		if err != nil {
+			return nil, err
 		}
-
-		if msg.Command == "PING" {
-			pong := "PONG"
-			for _, v := range msg.Args {
-				pong += " " + v
-			}
-			fmt.Fprintf(c.sock, "%s\r\n", pong)
-		}
-		if CodeIsError(msg.Command) {
-			err = errors.New(CodeString(msg.Command))
-			goto out
-		}
-
 	}
-out:
+	return nil, io.EOF
 
-	if err != nil {
-		return nil, fmt.Errorf("Error upon joining channel '%s': %s", channel, err.Error())
-	}
-
-	c.sock.SetReadDeadline(time.Time{})
-
-	return ch, nil
-}
-
-func (c *Conn) Quit(msg string) {
-	fmt.Fprintf(c.sock, "QUIT :%s\r\n", msg)
-	c.sock.Close()
-}
-
-type Message struct {
-	Prefix string
-	Command string
-	Args []string
+ret:
+	return ev, nil
 }
 
 func msgScan(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -164,51 +134,81 @@ func msgScan(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	return end, data[start:end], nil
 }
 
-func (c *Conn) NextMessage() (*Message, error) {
-
+func (c *Conn) receiveMessages() {
+	var err error
 	const (
 		stPrefix int	= iota
-		stCommand int	= iota
+		stCode int	= iota
 		stArgs int	= iota
 	)
 
-	ok := c.scan.Scan()
-	if !ok {
-		err := c.scan.Err()
-		if err == nil {
-			err = io.EOF
-		}
-		return nil, err
-	}
-	scanline := c.scan.Bytes()
-
-	words := bufio.NewScanner(bytes.NewReader(scanline))
-	words.Split(msgScan)
-
-	state := stPrefix
-	msg := &Message{}
-
-	for words.Scan() {
-		word := words.Text()
-
-		switch state {
-		case stPrefix:
-			if strings.HasPrefix(word, ":") {
-				msg.Prefix = word
-				state = stCommand
-				break
+	for {
+		ok := c.scan.Scan()
+		if !ok {
+			err = c.scan.Err()
+			if err != nil {
+				goto abort
 			}
-			fallthrough
-		case stCommand:
-			msg.Command = word
-			state = stArgs
-		case stArgs:
-			if strings.HasPrefix(word, ":") {
-				word = strings.TrimPrefix(word, ":")
-			}
-			msg.Args = append(msg.Args, word)
+			goto eof
 		}
-	}
+		scanline := c.scan.Bytes()
 
-	return msg, nil
+		words := bufio.NewScanner(bytes.NewReader(scanline))
+		words.Split(msgScan)
+
+		state := stPrefix
+		msg := &Event{}
+
+		for words.Scan() {
+			word := words.Text()
+
+			switch state {
+			case stPrefix:
+				if strings.HasPrefix(word, ":") {
+					msg.Prefix = word
+					state = stCode
+					break
+				}
+				fallthrough
+			case stCode:
+				msg.Code = word
+				state = stArgs
+			case stArgs:
+				if strings.HasPrefix(word, ":") {
+					word = strings.TrimPrefix(word, ":")
+				}
+				msg.Args = append(msg.Args, word)
+			}
+		}
+
+		c.events <- msg
+	}
+eof:
+	close(c.events)
+	return
+abort:
+	panic(err)
 }
+
+func (c *Conn) SendRaw(msg string) {
+	fmt.Fprint(c, msg)
+	fmt.Fprint(c, "\r\n")
+}
+
+func (c *Conn) SendRawf(format string, args ...interface{}) {
+	fmt.Fprintf(c, format, args...)
+	fmt.Fprint(c, "\r\n")
+}
+
+func (c *Conn) Disconnect() {
+	// TODO: Could probably be done more gracefully
+	c.SendRaw("QUIT")
+	c.Close()
+}
+
+type Event struct {
+	Prefix string
+	Code string
+	Args []string
+}
+

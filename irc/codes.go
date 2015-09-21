@@ -85,3 +85,4 @@ func CodeString(code string) string {
 	}
 	return fmt.Sprintf("%s (%s)", str, code)
 }
+

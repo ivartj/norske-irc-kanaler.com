@@ -38,7 +38,7 @@ func editServe(w http.ResponseWriter, req *http.Request) {
 		data.Name = q.Get("name")
 		data.OriginalServer = q.Get("server")
 		data.Server = q.Get("server")
-		ch := dbGetChannel(c, data.OriginalName, data.OriginalServer)
+		ch, _ := dbGetChannel(c, data.OriginalName, data.OriginalServer)
 		data.WebLink = ch.weblink
 		data.Description = ch.description
 	case "POST":

@@ -20,7 +20,7 @@ func submitChannel(c *sql.DB, name, server, weblink, description string) string 
 		return err.Error()
 	}
 
-	ch := dbGetChannel(c, name, server)
+	ch, _ := dbGetChannel(c, name, server)
 	if ch != nil {
 		return "Takk. Forslaget har allerede blitt sendt inn."
 	}

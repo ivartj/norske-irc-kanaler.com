@@ -55,8 +55,8 @@ type dbChannel struct {
 	errmsg string
 }
 
-func dbGetChannel(c *sql.DB, name, server string) *dbChannel {
-	stmt, err := c.Query(`
+func dbGetChannel(c *sql.DB, name, server string) (*dbChannel, error) {
+	row := c.QueryRow(`
 		select
 			weblink,
 			description,
@@ -73,15 +73,6 @@ func dbGetChannel(c *sql.DB, name, server string) *dbChannel {
 			name is ? and server is ?;
 	`, name, server)
 
-	if err == io.EOF {
-		return nil
-	}
-
-	if err != nil {
-		panic(fmt.Errorf("Unable to retrieve channel '%s@%s'.\n", name, server))
-	}
-	defer stmt.Close()
-
 	var (
 		weblink string
 		description string
@@ -94,9 +85,9 @@ func dbGetChannel(c *sql.DB, name, server string) *dbChannel {
 		approvedate string
 	)
 
-	err = stmt.Scan(&weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate)
+	err := row.Scan(&weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	tLastcheck, _ := time.Parse(dbTimeFmt, lastcheck)
 	tSubmitdate, _ := time.Parse(dbTimeFmt, submitdate)
@@ -113,7 +104,7 @@ func dbGetChannel(c *sql.DB, name, server string) *dbChannel {
 		errmsg: errmsg,
 		submitdate: tSubmitdate,
 		approvedate: tApprovedate }
-	return ch
+	return ch, nil
 }
 
 func dbEditChannel(c *sql.DB, originalName, originalServer string, name, server, weblink, description string) {
@@ -274,6 +265,39 @@ func dbGetChannels(c *sql.DB, off, len int, tablename string) ([]dbChannel, int)
 
 	return channels, numchannels
 }
+
+func dbGetServers(c *sql.DB) []string {
+	rows, err := c.Query(`
+		select
+			server
+		from
+			servers_all;
+	`);
+
+	if err == io.EOF {
+		return []string{}
+	}
+
+	if err != nil {
+		panic(fmt.Errorf("Failed to query servers from database: %s.\n", err.Error()))
+	}
+
+	defer rows.Close()
+
+	servers := []string{}
+
+	var (
+		server string
+	)
+
+	for rows.Next() {
+		rows.Scan(&server)
+		servers = append(servers, server)
+	}
+
+	return servers
+}
+
 
 func dbAddChannel(c *sql.DB, name, server, weblink, description string, numusers int) {
 	_, err := c.Exec(`
