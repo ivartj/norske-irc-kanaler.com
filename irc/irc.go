@@ -24,6 +24,7 @@ type Conn struct {
 	Events <-chan *Event
 	events chan<- *Event
 	handlers map[string]HandleFunc
+	closed bool
 }
 
 func pingHandler(c *Conn, ev *Event) {
@@ -45,7 +46,7 @@ func Connect(address, nick, user string) (*Conn, error) {
 	scan.Split(bufio.ScanLines)
 
 	ch := make(chan *Event)
-	c := &Conn{sock, nick, user, scan, ch, ch, make(map[string]HandleFunc)}
+	c := &Conn{sock, nick, user, scan, ch, ch, make(map[string]HandleFunc), false}
 	c.SendRawf("NICK %s", nick)
 	c.SendRawf("USER %s 0 * :%s", nick, user)
 
@@ -146,7 +147,7 @@ func (c *Conn) receiveMessages() {
 		ok := c.scan.Scan()
 		if !ok {
 			err = c.scan.Err()
-			if err != nil {
+			if err != nil && !c.closed {
 				goto abort
 			}
 			goto eof
@@ -204,6 +205,7 @@ func (c *Conn) Disconnect() {
 	// TODO: Could probably be done more gracefully
 	c.SendRaw("QUIT")
 	c.Close()
+	c.closed = true
 }
 
 type Event struct {
