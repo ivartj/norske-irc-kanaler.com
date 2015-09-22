@@ -11,6 +11,14 @@
 
  * Gather and display the topic of the channel
 
+ * Ensure that the web server will never stop without logging the
+   reason (this happened in one instance).
+
+    - Make sure that panics and errors in HTTP handlers are caught and
+      handled properly
+
+    - Make sure that process signals are logged
+
  * Ensure that each listed channel is unique and valid.
 
     - Handle addresses that point to the same host or are
