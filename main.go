@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ivartj/args"
+	"github.com/ivartj/norske-irc-kanaler.com/args"
 	"fmt"
 	"io"
 	"os"

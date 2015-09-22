@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ircnorge/irc"
+	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"strings"
 	"errors"
 	"net/url"
