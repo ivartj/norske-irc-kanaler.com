@@ -1,21 +1,36 @@
  * Make an administrator panel for managing server/network associations
- * Ensure that each listed channel are unique and valid.
-    - Force all channel names and adresses to be lowercase.
-      This must consider that the {}|^ characters are in IRC
-      lowercase []\~
+
+ * Make the website record a history of number of active users.
+
+ * Make a separate library for querying channels, and an associated
+   command-line utility to test it with.
+
+ * Make it so that for a network, it is possible to configure that
+   queries should be done on another address (irc.inet.tele.dk seems
+   to be more accepting of the bot than irc.efnet.org).
+
+ * Gather and display the topic of the channel
+
+ * Ensure that each listed channel is unique and valid.
+
     - Handle addresses that point to the same host or are
       part of the same network.
-    - Remove whitespace from submissions.
+
+ * Validate and canonicalize server addresses
+
+ * Remove whitespace from submissions.
+
  * Improve multi-page layout.
+
+    - Make something better than just "Forrige"/"Neste"
+
  * Check for errors in RSS feed.
+
  * Make an 'Om siden' page describing the intention of
    the website.
- * Give further instructions on the submit page:
-    - Mention that the WebChat IRC-URL is optional
-    - Describe what sort of submissions are welcome.
- * Nicer error messages if the bot is unable to access the channel.
- * See if there are other ways to find information about a channel
-   (/list?).
- * Make it possible for the administrator to associate multiple
-   addresses with an IRC network.
 
+ * Give further instructions on the submit page:
+
+    - Mention that the WebChat-URL is optional
+
+    - Describe what sort of submissions are welcome
