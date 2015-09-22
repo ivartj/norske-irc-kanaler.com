@@ -11,50 +11,58 @@ import (
 
 var mainConfFilename string = ""
 
-func mainUsage(out io.Writer, p *args.Parser) {
+const (
+	mainName		= "norske-irc-kanaler.com"
+	mainVersion		= "1.0"
+)
+
+func mainUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
-	fmt.Fprintln(out, "  ircnorge CONFIGURATION-FILE")
+	fmt.Fprintf(out,  "  %s CONFIGURATION_FILE\n", mainName)
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Description:")
 	fmt.Fprintln(out, "  Serves website that inspects and advertises")
 	fmt.Fprintln(out, "  IRC channels.")
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Options:")
-	p.PrintUsage(out)
+	fmt.Fprintln(out, "  -h, --help  Prints help message")
+	fmt.Fprintln(out, "  --version   Prints version")
+	fmt.Fprintln(out, "")
 }
 
 func mainArgs() {
-	p := args.NewParser(os.Args[1:])
-	p.AddOption('h', 'h', "help", "", "Prints help message")
-	p.AddOption(301, '-', "version", "", "Prints version")
+	tok := args.NewTokenizer(os.Args)
 
-	for {
-		code, arg := p.Parse() 
+	for tok.Next() {
+		arg := tok.Arg()
+		isOption := tok.IsOption()
 
-		if code == args.End {
-			break
-		}
-
-		switch code {
-		case args.Plain:
+		switch {
+		case isOption:
+			switch arg {
+			case "-h", "--help":
+				mainUsage(os.Stdout)
+				os.Exit(0)
+			case "--version":
+				fmt.Printf("%s version %s\n", mainName, mainVersion)
+				os.Exit(0)
+			}
+		case !isOption:
+			if mainConfFilename != "" {
+				mainUsage(os.Stderr)
+				os.Exit(1)
+			}
 			mainConfFilename = arg
-		case 'h':
-			mainUsage(os.Stdout, p)
-			os.Exit(0)
-		case 301:
-			fmt.Println("ircnorge version 0.1")
-			os.Exit(0)
-		case args.Unrecognized:
-			fmt.Fprintf(os.Stderr, "Unrecognized option '%s'.\n", arg);
-			os.Exit(1)
-		case args.MissingOptionArgument:
-			fmt.Fprintf(os.Stderr, "Missing option to '%s'.\n", arg);
-			os.Exit(1)
 		}
 	}
 
+	if tok.Err() != nil {
+		fmt.Fprintf(os.Stderr, "Error on processing arguments: %s.\n", tok.Err().Error())
+		os.Exit(1)
+	}
+
 	if mainConfFilename == "" {
-		mainUsage(os.Stdout, p)
+		mainUsage(os.Stdout)
 		os.Exit(1)
 	}
 }
