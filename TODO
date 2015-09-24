@@ -2,9 +2,6 @@
 
  * Make the website record a history of number of active users.
 
- * Make a separate library for querying channels, and an associated
-   command-line utility to test it with.
-
  * Make it so that for a network, it is possible to configure that
    queries should be done on another address (irc.inet.tele.dk seems
    to be more accepting of the bot than irc.efnet.org).
