@@ -19,6 +19,7 @@ var defaultHandlers map[string]HandleFunc = map[string]HandleFunc{
 
 type Conn struct {
 	net.Conn
+	server string
 	nick, user string
 	scan *bufio.Scanner
 	Events <-chan *Event
@@ -46,7 +47,7 @@ func Connect(address, nick, user string) (*Conn, error) {
 	scan.Split(bufio.ScanLines)
 
 	ch := make(chan *Event)
-	c := &Conn{sock, nick, user, scan, ch, ch, make(map[string]HandleFunc), false}
+	c := &Conn{sock, address, nick, user, scan, ch, ch, make(map[string]HandleFunc), false}
 	c.SendRawf("NICK %s", nick)
 	c.SendRawf("USER %s 0 * :%s", nick, user)
 
@@ -54,6 +55,10 @@ func Connect(address, nick, user string) (*Conn, error) {
 	_, err = c.WaitUntil("001") // Wait until welcome code
 
 	return c, nil
+}
+
+func (c *Conn) GetServer() string {
+	return c.server
 }
 
 func (c *Conn) handle(ev *Event) error {
