@@ -33,6 +33,7 @@ Options:
                          If used multiple times the methods will be tried in
                          sequence.
                          The default is to only use the 'list' method.
+  --debug-irc            Prints IRC protocol messages to stderr.
 
 `, mainName)
 
@@ -57,6 +58,7 @@ var (
 	confUsername = "norbot"
 	confTimeout = time.Second * 2
 	confQueryMethods = []*query.Method {}
+	confDebugIRC = false
 )
 
 func mainParseArgs() {
@@ -110,6 +112,8 @@ func mainParseArgs() {
 				panic(fmt.Errorf("Not a recognized query method, '%s'", param))
 			}
 			confQueryMethods = append(confQueryMethods, m)
+		case "--debug-irc":
+			confDebugIRC = true
 		default:
 			panic(fmt.Errorf("Unexpected option, '%s'", arg))
 		}
@@ -150,7 +154,12 @@ func queryChannelsOnServer(server string, channels []string) {
 		}
 	}()
 
-	bot, err := irc.Connect(server, confNickname, confUsername)
+	var debugIRC io.Writer = nil
+	if confDebugIRC {
+		debugIRC = os.Stderr
+	}
+
+	bot, err := irc.Connect(server, confNickname, confUsername, debugIRC)
 	if err != nil {
 		panic(err)
 	}

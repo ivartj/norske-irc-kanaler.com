@@ -9,6 +9,7 @@ import (
 	"strings"
 	"errors"
 	"io"
+	"sync"
 )
 
 type HandleFunc func(*Conn, *Event)
@@ -19,6 +20,8 @@ var defaultHandlers map[string]HandleFunc = map[string]HandleFunc{
 
 type Conn struct {
 	net.Conn
+	irclog io.Writer
+	irclogMutex sync.Mutex
 	server string
 	nick, user string
 	scan *bufio.Scanner
@@ -36,7 +39,7 @@ func pingHandler(c *Conn, ev *Event) {
 	c.SendRaw(reply)
 }
 
-func Connect(address, nick, user string) (*Conn, error) {
+func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
 	// TODO: Do not add port if it is present in address
 	sock, err := net.DialTimeout("tcp", address + ":6667", time.Second * 30)
 	if err != nil {
@@ -47,7 +50,19 @@ func Connect(address, nick, user string) (*Conn, error) {
 	scan.Split(bufio.ScanLines)
 
 	ch := make(chan *Event)
-	c := &Conn{sock, address, nick, user, scan, ch, ch, make(map[string]HandleFunc), false}
+	c := &Conn{
+		Conn: sock,
+		irclog: irclog,
+		irclogMutex: sync.Mutex{},
+		server: address,
+		nick: nick,
+		user: user,
+		scan: scan,
+		Events: ch,
+		events: ch,
+		handlers: make(map[string]HandleFunc),
+		closed: false,
+	}
 	c.SendRawf("NICK %s", nick)
 	c.SendRawf("USER %s 0 * :%s", nick, user)
 
@@ -158,6 +173,9 @@ func (c *Conn) receiveMessages() {
 			goto eof
 		}
 		scanline := c.scan.Bytes()
+		if c.irclog != nil {
+			fmt.Fprintln(c.irclog, string(scanline))
+		}
 
 		words := bufio.NewScanner(bytes.NewReader(scanline))
 		words.Split(msgScan)
@@ -197,13 +215,15 @@ abort:
 }
 
 func (c *Conn) SendRaw(msg string) {
-	fmt.Fprint(c, msg)
-	fmt.Fprint(c, "\r\n")
+	c.SendRawf("%s", msg)
 }
 
 func (c *Conn) SendRawf(format string, args ...interface{}) {
-	fmt.Fprintf(c, format, args...)
-	fmt.Fprint(c, "\r\n")
+	s := fmt.Sprintf(format, args...)
+	fmt.Fprintf(c, "%s\r\n", s)
+	if c.irclog != nil {
+		fmt.Fprintf(c.irclog, "=> %s\n", s)
+	}
 }
 
 func (c *Conn) Disconnect() {

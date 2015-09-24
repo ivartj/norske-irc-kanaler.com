@@ -2,19 +2,10 @@ package query
 
 import (
 	"github.com/ivartj/norske-irc-kanaler.com/irc"
-	"time"
 	"fmt"
 	"strconv"
 	"strings"
 )
-
-var DefaultConfiguration = &Configuration{
-	Nickname: "norbot5123",
-	Username: "norbot",
-	Server: "unspecified",
-	Port: 6667,
-	Timeout: 2 * time.Second,
-}
 
 var (
 	ListMethod = &Method{
@@ -129,9 +120,12 @@ ret:
 
 func joinQuery(conn *irc.Conn, channelName string) (*Result, error) {
 	conn.SendRawf("JOIN %s", channelName)
+	conn.SendRawf("TOPIC %s", channelName)
 
 	numusers := 0
 	topic := ""
+
+	receivedTopic, receivedNames := false, false
 
 	for {
 		ev, err := conn.WaitUntil(
@@ -145,32 +139,28 @@ func joinQuery(conn *irc.Conn, channelName string) (*Result, error) {
 			return nil, err
 		}
 
-		receivedTopic, receivedNames := false, false
-
 		switch ev.Code {
 		case "353":
 			if len(ev.Args) != 0 {
 				numusers += len(strings.Split(ev.Args[len(ev.Args) - 1], " "))
 			}
 
-		case "322":
+		case "332":
 			topic = ev.Args[len(ev.Args) - 1]
 			receivedTopic = true
-			if receivedNames && receivedTopic {
-				goto ret
-			}
 
 		case "366":
 			receivedNames = true
-			if receivedNames && receivedTopic {
-				goto ret
-			}
 
-		case "422": fallthrough
-		case "331": continue
+		case "422": continue
+		case "331":
+			receivedTopic = true
+		}
+
+		if receivedNames && receivedTopic {
+			break
 		}
 	}
-ret:
 
 	// TODO: Make it possible to add a parting message
 	conn.SendRawf("PART %s", channelName)
