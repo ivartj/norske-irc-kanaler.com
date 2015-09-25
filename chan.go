@@ -65,9 +65,9 @@ func chanStatus(ch *dbChannel) (string, bool) {
 
 func chanCheckAll() {
 	defer func() {
-		err := recover()
-		if err != nil {
-			log.Printf("Error occurred while checking channels: %s\n", err)
+		err, isErr := recover().(error)
+		if isErr {
+			log.Printf("Error occurred while checking channels: %s\n", err.Error())
 		}
 	}()
 
@@ -82,6 +82,13 @@ func chanCheckAll() {
 }
 
 func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
+	defer func() {
+		err, isErr := recover().(error)
+		if isErr {
+			log.Printf("Error occurred while checking channels on '%s': %s\n", server, err.Error())
+		}
+	}()
+
 	server_chs := []*dbChannel{}
 	for _, ch := range chs {
 		if ch.server != server {
@@ -117,8 +124,10 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 		str := ""
 		if err != nil {
 			str = err.Error()
+			dbUpdateStatus(db, ch.name, ch.server, 0, "", "fail", str)
+		} else {
+			dbUpdateStatus(db, ch.name, ch.server, status.NumberOfUsers, status.Topic, method, str)
 		}
-		dbUpdateStatus(db, ch.name, ch.server, status.NumberOfUsers, status.Topic, method, str)
 		time.Sleep(5 * time.Second)
 	}
 
