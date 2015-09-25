@@ -89,7 +89,7 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 		}
 	}()
 
-	server_chs := []*dbChannel{}
+	server_chs := []dbChannel{}
 	for _, ch := range chs {
 		if ch.server != server {
 			continue
@@ -102,12 +102,14 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 			}
 		}
 
-		server_chs = append(server_chs, &ch)
+		server_chs = append(server_chs, ch)
 	}
 
 	if len(server_chs) == 0 {
 		return
 	}
+
+	log.Printf("Checking channels on %s...\n", server)
 
 	bot, err := irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname, nil)
 	if err != nil {
@@ -116,10 +118,6 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 	defer bot.Disconnect()
 
 	for _, ch := range server_chs {
-		if ch.server != server {
-			continue
-		}
-
 		status, method, err := chanCheck(bot, ch.name)
 		str := ""
 		if err != nil {
@@ -132,6 +130,26 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 	}
 
 }
+
+func chanCheck(bot *irc.Conn, name string) (*query.Result, string, error) {
+
+	errlog := bytes.NewBuffer([]byte{})
+
+	log.Printf("Checking %s@%s...\n", name, bot.GetServer())
+
+	for _, method := range query.GetMethods() {
+		res, err := method.Query(bot, name)
+		if err == nil {
+			log.Printf("%s %s@%s %d %s\n", method.Name(), name, bot.GetServer(), res.NumberOfUsers, res.Topic)
+			return res, method.Name(), nil
+		}
+		fmt.Fprintf(errlog, "method %s failed: %s\n", method.Name(), err.Error())
+		log.Printf("%s %s@%s fail: %s\n", method.Name(), name, bot.GetServer(), err.Error())
+	}
+
+	return nil, "", errors.New(errlog.String())
+}
+
 
 func chanCanonical(name, server string) (string, string) {
 	name = strings.TrimLeft(name, " \t\r\n")
@@ -170,20 +188,5 @@ func chanValidate(name, server string) error {
 	}
 
 	return nil
-}
-
-func chanCheck(bot *irc.Conn, name string) (*query.Result, string, error) {
-
-	log := bytes.NewBuffer([]byte{})
-
-	for _, method := range query.GetMethods() {
-		res, err := method.Query(bot, name)
-		if err == nil {
-			return res, method.Name(), nil
-		}
-		fmt.Fprintf(log, "method %s failed: %s\n", method.Name(), err.Error())
-	}
-
-	return nil, "", errors.New(log.String())
 }
 
