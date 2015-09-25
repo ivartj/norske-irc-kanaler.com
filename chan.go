@@ -2,9 +2,11 @@ package main
 
 import (
 	"github.com/ivartj/norske-irc-kanaler.com/irc"
+	"github.com/ivartj/norske-irc-kanaler.com/chan-query"
 	"strings"
 	"errors"
 	"net/url"
+	"bytes"
 	"fmt"
 	"log"
 	"time"
@@ -27,7 +29,7 @@ var chanIllegalChars map[byte]string = map[byte]string{
 func chanCheckLoop() {
 	for {
 		chanCheckAll()
-		time.Sleep(time.Minute)
+		time.Sleep(time.Hour * 25)
 	}
 }
 
@@ -100,7 +102,7 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 		return
 	}
 
-	bot, err := irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname)
+	bot, err := irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -111,12 +113,12 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 			continue
 		}
 
-		n, _, err := chanCheck(bot, ch.name)
+		status, method, err := chanCheck(bot, ch.name)
 		str := ""
 		if err != nil {
 			str = err.Error()
 		}
-		dbUpdateStatus(db, ch.name, ch.server, n, str)
+		dbUpdateStatus(db, ch.name, ch.server, status.NumberOfUsers, status.Topic, method, str)
 	}
 
 }
@@ -160,47 +162,18 @@ func chanValidate(name, server string) error {
 	return nil
 }
 
-func chanCheck(bot *irc.Conn, name string) (int, string, error) {
+func chanCheck(bot *irc.Conn, name string) (*query.Result, string, error) {
 
-	bot.SendRawf("LIST %s", name)
+	log := bytes.NewBuffer([]byte{})
 
-	numusers := 0
-	topic := ""
-	received322 := false
-
-	for {
-		ev, err := bot.WaitUntil(
-			"322", // RPL_LIST
-			"323", // RPL_LISTEND
-			"401", // ERR_NOSUCHNICK (nick/channel)
-			"403", // ERR_NOSUCHCHANNEL
-		)
-		if err != nil {
-			return 0, "", err
+	for _, method := range query.GetMethods() {
+		res, err := method.Query(bot, name)
+		if err == nil {
+			return res, method.Name(), nil
 		}
-
-		switch ev.Code {
-		case "322":
-			received322 = true
-			if len(ev.Args) < 4 {
-				return 0, "", fmt.Errorf("Unexpectedly short LIST response on %s", name)
-			}
-			fmt.Sscanf(ev.Args[2], "%d", &numusers)
-			topic = ev.Args[3]
-
-		case "323":
-			if received322 == false {
-				return 0, "", fmt.Errorf("No status data for %s received on query", name)
-			}
-			return numusers, topic, nil
-
-		case "401": fallthrough
-		case "403":
-			return 0, "", fmt.Errorf("No such channel, '%s'", name)
-
-		}
+		fmt.Fprintf(log, "method %s failed: %s\n", method.Name(), err.Error())
 	}
 
-	return 0, "", fmt.Errorf("Logically unreachable statement reached in 'chanCheck' function")
+	return nil, "", errors.New(log.String())
 }
 

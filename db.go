@@ -123,7 +123,7 @@ func dbEditChannel(c *sql.DB, originalName, originalServer string, name, server,
 	}
 }
 
-func dbUpdateStatus(c *sql.DB, name, server string, numusers int, errmsg string) {
+func dbUpdateStatus(c *sql.DB, name, server string, numusers int, topic, query_method, errmsg string) {
 	_, err := c.Exec(`
 		update channels
 		set
@@ -136,6 +136,17 @@ func dbUpdateStatus(c *sql.DB, name, server string, numusers int, errmsg string)
 	`, numusers, errmsg, name, server)
 	if err != nil {
 		panic(fmt.Errorf("Failed to update channel status: %s", err.Error()))
+	}
+
+	// TODO: log mode
+	_, err = c.Exec(`
+		insert into channel_status
+			(channel_name, channel_server, numusers, topic, query_method, errmsg)
+		values
+			(?, ?, ?, ?, ?);
+	`, name, server, numusers, topic, query_method, errmsg)
+	if err != nil {
+		panic(fmt.Errorf("Failed to log channel status: %s", err.Error()))
 	}
 }
 
