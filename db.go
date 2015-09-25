@@ -141,9 +141,9 @@ func dbUpdateStatus(c *sql.DB, name, server string, numusers int, topic, query_m
 	// TODO: log mode
 	_, err = c.Exec(`
 		insert into channel_status
-			(channel_name, channel_server, numusers, topic, query_method, errmsg)
+			(channel_name, channel_server, numusers, topic, query_method, errmsg, status_time)
 		values
-			(?, ?, ?, ?, ?);
+			(?, ?, ?, ?, ?, ?, datetime());
 	`, name, server, numusers, topic, query_method, errmsg)
 	if err != nil {
 		panic(fmt.Errorf("Failed to log channel status: %s", err.Error()))
