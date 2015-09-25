@@ -119,6 +119,7 @@ func chanCheckServer(db *sql.DB, server string, chs []dbChannel) {
 			str = err.Error()
 		}
 		dbUpdateStatus(db, ch.name, ch.server, status.NumberOfUsers, status.Topic, method, str)
+		time.Sleep(5 * time.Second)
 	}
 
 }
