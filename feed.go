@@ -8,22 +8,36 @@ import (
 )
 
 func feedServe(w http.ResponseWriter, req *http.Request) {
-	c := dbOpen()
+	c, err := dbOpen()
+	if err != nil {
+		panic(err)
+	}
 	defer c.Close()
 
-	chs, _ := dbGetApprovedChannels(c, 0, 15)
+	chs, err := c.GetApprovedChannels(0, 15)
+	if err != nil {
+		panic(err)
+	}
+
 	feedServeCommon(w, req, chs, "Norske IRC-kanaler")
 }
 
 func feedUnapprovedServe(w http.ResponseWriter, req *http.Request) {
-	c := dbOpen()
+	c, err := dbOpen()
+	if err != nil {
+		panic(err)
+	}
 	defer c.Close()
 
-	chs, _ := dbGetUnapprovedChannels(c, 0, 15)
+	chs, err := c.GetUnapprovedChannels(0, 15)
+	if err != nil {
+		panic(err)
+	}
+
 	feedServeCommon(w, req, chs, "Ikke-godkjente norske IRC-kanaler")
 }
 
-func feedServeCommon(w http.ResponseWriter, req *http.Request, chs []dbChannel, title string) {
+func feedServeCommon(w http.ResponseWriter, req *http.Request, chs []channel, title string) {
 	fmt.Fprintln(w, `<?xml version="1.0"?>
 <rss version="2.0">
 	<channel>
@@ -33,13 +47,13 @@ func feedServeCommon(w http.ResponseWriter, req *http.Request, chs []dbChannel, 
 	`)
 
 	for _, v := range chs {
-		nameAndServer :=  fmt.Sprintf("%s@%s", v.name, v.server)
+		nameAndServer :=  fmt.Sprintf("%s@%s", v.Name(), v.Network())
 		fmt.Fprintln(w, `
 		<item>
 			<title>` + html.EscapeString(nameAndServer) + `</title>
-			<link>` + html.EscapeString(v.weblink) + `</link>
-			<description>` + html.EscapeString(v.description) + `</description>
-			<pubdate>` + html.EscapeString(v.approvedate.Format(time.RFC1123Z)) + `</pubdate>
+			<link>` + html.EscapeString(v.Weblink()) + `</link>
+			<description>` + html.EscapeString(v.Description()) + `</description>
+			<pubdate>` + html.EscapeString(v.ApproveTime().Format(time.RFC1123Z)) + `</pubdate>
 			<guid>` + html.EscapeString(nameAndServer) + `</guid>
 		</item>
 		`)

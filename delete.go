@@ -27,10 +27,16 @@ func deleteServe(w http.ResponseWriter, req *http.Request) {
 		Server: req.URL.Query().Get("server"),
 	}
 
-	c := dbOpen()
+	c, err := dbOpen()
+	if err != nil {
+		panic(err)
+	}
 	defer c.Close()
 
-	dbDeleteChannel(c, data.Name, data.Server)
+	err = c.DeleteChannel(data.Name, data.Server)
+	if err != nil {
+		panic(err)
+	}
 	data.Message = fmt.Sprintf("%s@%s har blitt slettet.", data.Name, data.Server)
 	data.Redirect = req.Referer()
 

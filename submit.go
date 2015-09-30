@@ -4,33 +4,35 @@ import (
 	"net/http"
 	"html/template"
 	"fmt"
-	"database/sql"
 )
 
-func submitChannel(c *sql.DB, name, server, weblink, description string) string {
+func submitChannel(c *dbConn, name, server, weblink, description string) string {
 
-	name, server = chanCanonical(name, server)
+	name, server = channelAddressCanonical(name, server)
 
 	if weblink == "" {
-		weblink = chanSuggestWebLink(name, server)
+		weblink = channelSuggestWebLink(name, server)
 	}
 
-	err := chanValidate(name, server)
+	err := channelAddressValidate(name, server)
 	if err != nil {
 		return err.Error()
 	}
 
-	ch, _ := dbGetChannel(c, name, server)
+	ch, _ := c.GetChannel(name, server)
 	if ch != nil {
-		return "Takk. Forslaget har allerede blitt sendt inn."
+		return "Takk. Bidraget har allerede blitt sendt inn."
 	}
 
-	dbAddChannel(c, name, server, weblink, description, 0)
+	err = c.AddChannel(name, server, weblink, description, !conf.Approval)
+	if err != nil {
+		panic(err)
+	}
 
 	if conf.Approval {
-		return "Takk for forslag! Forslaget vil publiseres etter godkjenning av administrator."
+		return "Takk for forslaget! Forslaget vil publiseres etter godkjenning av administrator."
 	} else {
-		return "Takk for forslag! Forslaget er publisert."
+		return "Takk for bidraget! Forslaget er publisert."
 	}
 }
 
@@ -53,7 +55,10 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 		data.Server = req.FormValue("server")
 		data.WebLink = req.FormValue("weblink")
 		data.Description = req.FormValue("description")
-		c := dbOpen()
+		c, err := dbOpen()
+		if err != nil {
+			panic(err)
+		}
 		defer c.Close()
 
 		data.Message = submitChannel(c, data.Name, data.Server, data.WebLink, data.Description)
@@ -69,3 +74,4 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
 	}
 }
+

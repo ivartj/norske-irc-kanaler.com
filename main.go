@@ -85,7 +85,8 @@ func mainOpenLog() {
 		fmt.Fprintf(os.Stderr, "Failed to open log file '%s': %s\n", conf.LogPath, err.Error())
 		os.Exit(1)
 	}
-	log.SetOutput(f)
+	mw := io.MultiWriter(f, os.Stderr)
+	log.SetOutput(mw)
 }
 
 func main() {
@@ -95,7 +96,7 @@ func main() {
 	mainOpenLog()
 	dbInit()
 	if conf.IRCBotEnable {
-		go chanCheckLoop()
+		go channelCheckLoop()
 	}
 	serve()
 }

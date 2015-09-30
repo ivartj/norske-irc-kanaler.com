@@ -41,13 +41,19 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 		Admin: loginAuth(req),
 	}
 
-	c := dbOpen()
+	c, err := dbOpen()
+	if err != nil {
+		panic(err)
+	}
 	defer c.Close()
 
 	data.ApproveName = req.URL.Query().Get("name")
 	data.ApproveServer = req.URL.Query().Get("server")
 	if data.ApproveName != "" && data.ApproveServer != "" {
-		dbApproveChannel(c, data.ApproveName, data.ApproveServer)
+		err = c.ApproveChannel(data.ApproveName, data.ApproveServer)
+		if err != nil {
+			panic(err)
+		}
 		data.Message = "Kanalen er godkjent!"
 	}
 
@@ -58,20 +64,27 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 		page = 1
 	}
 
-	dbchs, total := dbGetUnapprovedChannels(c, (page - 1) * 15, 15)
-	data.MoreNext = total > page * 15
+	dbchs, err := c.GetUnapprovedChannels((page - 1) * 15, 15 + 1)
+	if err != nil {
+		panic(err)
+	}
+	if len(dbchs) > 15 {
+		dbchs = dbchs[:15]
+		data.MoreNext = true
+	}
+
 	data.MorePrev = page > 1
 	data.PageNext = page + 1
 	data.PagePrev = page - 1
 
 	chs := make([]approveChannel, len(dbchs))
 	for i, v := range dbchs {
-		status, ok := chanStatus(&v)
+		status, ok := channelStatusString(v)
 		chs[i] = approveChannel{
-			Name: v.name,
-			Server: v.server,
-			WebLink: v.weblink,
-			Description: v.description,
+			Name: v.Name(),
+			Server: v.Network(),
+			WebLink: v.Weblink(),
+			Description: v.Description(),
 			Status: status,
 			Error: !ok,
 		}
@@ -90,3 +103,4 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
 	}
 }
+

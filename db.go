@@ -15,209 +15,222 @@ var dbLock *sync.Mutex = &sync.Mutex{}
 
 const dbTimeFmt string = "2006-01-02 15:04:05"
 
+type dbConn struct {
+	*sql.DB
+}
+
 func dbInit() {
 	migrations := &migrate.FileMigrationSource{
 		Dir: conf.AssetsPath + "/sql",
 	}
 
-	c := dbOpen()
+	c, err := dbOpen()
+	if err != nil {
+		log.Fatalf("Failed to open database:\n%s\n", err.Error())
+	}
 	defer c.Close()
 
-	n, err := migrate.Exec(c, "sqlite3", migrations, migrate.Up)
+	n, err := migrate.Exec(c.DB, "sqlite3", migrations, migrate.Up)
 	log.Printf("Applied %d migrations.\n", n);
 	if err != nil {
 		log.Fatalf("Error on applying migrations:\n%s\n", err.Error())
 	}
 }
 
-func dbOpen() *sql.DB {
+func dbOpen() (*dbConn, error) {
 	dbLock.Lock()
 	c, err := sql.Open("sqlite3", conf.DatabasePath)
 	if err != nil {
-		panic(fmt.Errorf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error()))
+		return nil, fmt.Errorf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error())
 	}
 	dbLock.Unlock()
 
-	return c
+	return &dbConn{c}, nil
 }
 
+// Should more or less match the columns of the channel_all view
 type dbChannel struct {
-	name string
-	server string
+	channel
+	channel_name string
+	network string
 	weblink string
 	description string
-	numusers int
+	submit_time time.Time
 	approved bool
+	approve_time time.Time
+	numusers int
+	topic string
 	checked bool
-	lastcheck time.Time
-	submitdate time.Time
-	approvedate time.Time
+	check_time time.Time
 	errmsg string
 }
 
-func dbGetChannel(c *sql.DB, name, server string) (*dbChannel, error) {
-	row := c.QueryRow(`
-		select
-			weblink,
-			description,
-			numusers,
-			approved,
-			checked,
-			lastcheck,
-			errmsg,
-			submitdate,
-			approvedate
-		from
-			channels
-		where
-			name is ? and server is ?;
-	`, name, server)
+func (ch *dbChannel) Name() string { return ch.channel_name }
+func (ch *dbChannel) Network() string { return ch.network }
+func (ch *dbChannel) Weblink() string { return ch.weblink }
+func (ch *dbChannel) Description() string { return ch.description }
+func (ch *dbChannel) SubmitTime() time.Time { return ch.submit_time }
+func (ch *dbChannel) Approved() bool { return ch.approved }
+func (ch *dbChannel) ApproveTime() time.Time { return ch.approve_time }
+func (ch *dbChannel) NumberOfUsers() int { return ch.numusers }
+func (ch *dbChannel) Topic() string { return ch.topic }
+func (ch *dbChannel) Checked() bool { return ch.checked }
+func (ch *dbChannel) CheckTime() time.Time { return ch.check_time }
+func (ch *dbChannel) Error() string { return ch.errmsg }
 
+func dbScanChannel(scan interface{ Scan(dest ...interface{}) error }) (*dbChannel, error) {
 	var (
-		weblink string
-		description string
-		numusers int
-		approved bool
-		checked bool
-		lastcheck string
-		errmsg string
-		submitdate string
-		approvedate string
+		ch dbChannel
+		submit_time string
+		approve_time string
+		numusers sql.NullInt64
+		topic sql.NullString
+		check_time sql.NullString
+		errmsg sql.NullString
 	)
 
-	err := row.Scan(&weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate)
+	err := scan.Scan(
+		&ch.channel_name,
+		&ch.network,
+		&ch.weblink,
+		&ch.description,
+		&submit_time,
+		&ch.approved,
+		&approve_time,
+		&numusers,
+		&topic,
+		&check_time,
+		&errmsg,
+	)
+
 	if err != nil {
 		return nil, err
 	}
-	tLastcheck, _ := time.Parse(dbTimeFmt, lastcheck)
-	tSubmitdate, _ := time.Parse(dbTimeFmt, submitdate)
-	tApprovedate, _ := time.Parse(dbTimeFmt, approvedate)
-	ch := &dbChannel{
-		name: name,
-		server: server,
-		weblink: weblink,
-		description: description,
-		numusers: numusers,
-		approved: approved,
-		checked: checked,
-		lastcheck: tLastcheck,
-		errmsg: errmsg,
-		submitdate: tSubmitdate,
-		approvedate: tApprovedate }
+
+	ch.submit_time, err = time.Parse(dbTimeFmt, submit_time)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse submission time: %s", err.Error())
+	}
+
+	if approve_time != "" {
+		ch.approve_time, err = time.Parse(dbTimeFmt, approve_time)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse approval time: %s", err.Error())
+		}
+	}
+
+	if !check_time.Valid {
+		ch.checked = false
+	} else {
+		ch.checked = true
+		ch.check_time, err = time.Parse(dbTimeFmt, check_time.String)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse status time: %s", err.Error())
+		}
+
+		ch.numusers = int(numusers.Int64)
+		ch.topic = topic.String
+		ch.errmsg = errmsg.String
+	}
+
+	return &ch, nil
+}
+
+func (c *dbConn) GetChannel(name, network string) (channel, error) {
+	row := c.QueryRow(`
+		select
+			*
+		from
+			channel_all
+		where
+			channel_name is ? and network is ?;
+	`, name, network)
+
+	ch, err := dbScanChannel(row)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get channel %s@%s: %s", name, network, err.Error())
+	}
+
 	return ch, nil
 }
 
-func dbEditChannel(c *sql.DB, originalName, originalServer string, name, server, weblink, description string) {
+func (c *dbConn) EditChannel(originalName, originalServer string, name, network, weblink, description string) error {
 	_, err := c.Exec(`
-		update channels
+		update channel
 		set
-			name = ?,
-			server = ?,
+			channel_name = ?,
+			network = ?,
 			weblink = ?,
 			description = ?
 		where
-			name is ? and server is ?;
-	`, name, server, weblink, description, originalName, originalServer)
+			channel_name is ? and network is ?;
+	`, name, network, weblink, description, originalName, originalServer)
 	if err != nil {
-		panic(fmt.Errorf("Failed to update channel '%s@%s': %s.\n", originalName, originalServer, err.Error()))
+		return fmt.Errorf("Failed to update channel %s@%s: %s", originalName, originalServer, err.Error())
 	}
+	return nil
 }
 
-func dbUpdateStatus(c *sql.DB, name, server string, numusers int, topic, query_method, errmsg string) {
+func (c *dbConn) UpdateStatus(name, network string, numusers int, topic, query_method, errmsg string) error {
 	_, err := c.Exec(`
-		update channels
-		set
-			numusers = ?,
-			errmsg = ?,
-			checked = 1,
-			lastcheck = datetime()
-		where
-			name is ? and server is ?;
-	`, numusers, errmsg, name, server)
-	if err != nil {
-		panic(fmt.Errorf("Failed to update channel status: %s", err.Error()))
-	}
-
-	// TODO: log mode
-	_, err = c.Exec(`
 		insert into channel_status
-			(channel_name, channel_server, numusers, topic, query_method, errmsg, status_time)
+			(channel_name, network, numusers, topic, query_method, errmsg, status_time)
 		values
 			(?, ?, ?, ?, ?, ?, datetime());
-	`, name, server, numusers, topic, query_method, errmsg)
+	`, name, network, numusers, topic, query_method, errmsg)
 	if err != nil {
-		panic(fmt.Errorf("Failed to log channel status: %s", err.Error()))
+		return fmt.Errorf("Failed to store channel status: %s", err.Error())
 	}
+
+	return nil
 }
 
-func dbUncheck(c *sql.DB, name, server string) {
+func (c *dbConn) DeleteChannel(name, network string) error {
 	_, err := c.Exec(`
-		update channels
-		set
-			checked = 0
+		delete from channel
 		where
-			name is ? and server is ?;
-	`, name, server)
+			channel_name = ? and network = ?;
+	`, name, network)
 	if err != nil {
-		panic(fmt.Errorf("Failed to uncheck channel: %s", err.Error()))
+		return fmt.Errorf("Failed to delete channel '%s@%s': %s", name, network, err.Error())
 	}
+	return nil
 }
 
-func dbDeleteChannel(c *sql.DB, name, server string) {
+func (c *dbConn) ApproveChannel(name, network string) error {
 	_, err := c.Exec(`
-		delete from channels
-		where
-			name = ? and server = ?;
-	`, name, server)
-	if err != nil {
-		panic(fmt.Errorf("Failed to delete channel '%s@%s': %s", name, server, err.Error()))
-	}
-}
-
-func dbApproveChannel(c *sql.DB, name, server string) {
-	_, err := c.Exec(`
-		update channels
+		update channel
 		set
 			approved = 1,
-			approvedate = datetime()
+			approve_time = datetime()
 		where
-			name = ? and server = ?;
-	`, name, server)
+			channel_name = ? and network = ?;
+	`, name, network)
 	if err != nil {
-		panic(fmt.Errorf("Failed to approve channel '%s@%s': %s", name, server, err.Error()))
+		return fmt.Errorf("Failed to approve channel '%s@%s': %s", name, network, err.Error())
 	}
+	return nil
 }
 
-func dbGetApprovedChannels(c *sql.DB, off, len int) ([]dbChannel, int) {
-	return dbGetChannels(c, off, len, "approved")
+func (c *dbConn) GetApprovedChannels(off, len int) ([]channel, error) {
+	return c.GetChannels(off, len, "approved")
 }
 
-func dbGetUnapprovedChannels(c *sql.DB, off, len int) ([]dbChannel, int) {
-	return dbGetChannels(c, off, len, "unapproved")
+func (c *dbConn) GetUnapprovedChannels(off, len int) ([]channel, error) {
+	return c.GetChannels(off, len, "unapproved")
 }
 
-func dbGetLatestChannels(c *sql.DB, off, len int) ([]dbChannel, int) {
-	return dbGetChannels(c, off, len, "latest")
+func (c *dbConn) GetLatestChannels(off, len int) ([]channel, error) {
+	return c.GetChannels(off, len, "latest")
 }
 
-func dbGetChannels(c *sql.DB, off, len int, tablename string) ([]dbChannel, int) {
+func (c *dbConn) GetChannels(off, len int, tablename string) ([]channel, error) {
 
-	table := "channels_" + tablename
+	table := "channel_" + tablename
 
 	rows, err := c.Query(`
 		select
-			name,
-			server,
-			weblink, 
-			description,
-			numusers,
-			approved,
-			checked,
-			lastcheck,
-			errmsg,
-			submitdate,
-			approvedate,
-			(select count(*) from ` + table + `)
+			*
 		from
 			` + table + `
 		limit
@@ -227,98 +240,139 @@ func dbGetChannels(c *sql.DB, off, len int, tablename string) ([]dbChannel, int)
 	`, len, off);
 
 	if err == io.EOF {
-		return []dbChannel{}, 0
+		return []channel{}, nil
 	}
 
 	if err != nil {
-		panic(fmt.Errorf("Failed to query channels from database: %s.\n", err.Error()))
+		return nil, fmt.Errorf("Failed to query channels from database: %s.\n", err.Error())
 	}
 
 	defer rows.Close()
 
-	channels := make([]dbChannel, 0, len)
-
-	var (
-		name string
-		server string
-		weblink string
-		description string
-		numusers int
-		approved bool
-		checked bool
-		lastcheck string
-		errmsg string
-		submitdate string
-		approvedate string
-		numchannels int
-	)
+	channels := []channel{}
 
 	for rows.Next() {
-		rows.Scan(&name, &server, &weblink, &description, &numusers, &approved, &checked, &lastcheck, &errmsg, &submitdate, &approvedate, &numchannels)
-		tLastcheck, _ := time.Parse(dbTimeFmt, lastcheck)
-		tSubmitdate, _ := time.Parse(dbTimeFmt, submitdate)
-		tApprovedate, _ := time.Parse(dbTimeFmt, approvedate)
-		ch := dbChannel{
-			name: name,
-			server: server,
-			weblink: weblink,
-			description: description,
-			numusers: numusers,
-			approved: approved,
-			checked: checked,
-			lastcheck: tLastcheck,
-			errmsg: errmsg,
-			submitdate: tSubmitdate,
-			approvedate: tApprovedate,
-		 }
+		ch, err := dbScanChannel(rows)
+		if err != nil {
+			return nil, err
+		}
 		channels = append(channels, ch)
 	}
 
-	return channels, numchannels
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return channels, nil
 }
 
-func dbGetServers(c *sql.DB) []string {
+type dbServer struct {
+	server, network string
+}
+
+type dbNetwork struct {
+	network string
+	servers []string
+}
+
+func (c *dbConn) GetNetworks() ([]*dbNetwork, error) {
+	servers, err := c.GetServers()
+	if err != nil {
+		return nil, err
+	}
+
+	networkMap := make(map[string][]string)
+	for _, server := range servers {
+		networkServers, ok := networkMap[server.network]
+		if !ok {
+			networkServers = []string{}
+		}
+		networkServers = append(networkServers, server.server)
+		networkMap[server.network] = networkServers
+	}
+
+	networks := []*dbNetwork{}
+
+	for k, v := range networkMap {
+		networks = append(networks, &dbNetwork{k, v})
+	}
+
+	return networks, nil
+}
+
+func (c *dbConn) GetServers() ([]*dbServer, error) {
 	rows, err := c.Query(`
 		select
-			server
+			server, network
 		from
-			servers_all;
+			server_all;
 	`);
 
 	if err == io.EOF {
-		return []string{}
+		return []*dbServer{}, nil
 	}
 
 	if err != nil {
-		panic(fmt.Errorf("Failed to query servers from database: %s.\n", err.Error()))
+		// TODO: More descriptive error
+		return nil, err
 	}
 
 	defer rows.Close()
 
-	servers := []string{}
-
-	var (
-		server string
-	)
+	servers := []*dbServer{}
 
 	for rows.Next() {
-		rows.Scan(&server)
+		server := &dbServer{}
+		rows.Scan(&server.server, &server.network)
 		servers = append(servers, server)
 	}
 
-	return servers
+	if rows.Err() != nil {
+		// TODO: More descriptive error
+		return nil, rows.Err()
+	}
+
+	return servers, nil
+}
+
+func (c *dbConn) AddServer(server, network string) error {
+	_, err := c.Exec(`
+		insert into server
+			(server, network)
+		values
+			(?, ?)
+	`, server, network)
+	if err != nil {
+		return fmt.Errorf("Failed to add server '%s', %s", server, err.Error())
+	}
+	return nil
 }
 
 
-func dbAddChannel(c *sql.DB, name, server, weblink, description string, numusers int) {
+func (c *dbConn) AddChannel(name, network, weblink, description string, approved bool) error {
 	_, err := c.Exec(`
-		insert into channels
-			(name, server, weblink, description, numusers, approved, checked, lastcheck, errmsg, submitdate, approvedate)
+		insert into channel
+			(channel_name,
+			 network,
+			 weblink,
+			 description,
+			 approved,
+			 submit_time,
+			 approve_time)
 		values
-			(?, ?, ?, ?, ?, ?, 0, datetime(), '', datetime(), datetime());
-	`, name, server, weblink, description, numusers, !conf.Approval)
+			(?, -- name
+			 ?, -- network
+			 ?, -- weblink
+			 ?, -- description
+			 ?, -- approved
+			 datetime(),
+			 datetime());
+	`, name, network, weblink, description, approved)
 	if err != nil {
-		panic(fmt.Errorf("Failed to add channel to database: %s.\n", err.Error()))
+		// TODO: More descriptive error
+		return err
 	}
+
+	return nil
 }
 

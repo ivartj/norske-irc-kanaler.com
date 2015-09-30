@@ -16,7 +16,10 @@ type indexChannel struct{
 }
 
 func indexServe(w http.ResponseWriter, req *http.Request) {
-	c := dbOpen()
+	c, err := dbOpen()
+	if err != nil {
+		panic(err)
+	}
 	defer c.Close()
 
 	data := struct{
@@ -43,20 +46,30 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 		data.PageTitle = fmt.Sprintf("Side %d", page)
 	}
 
-	dbchs, total := dbGetApprovedChannels(c, (page - 1) * 15, 15)
-	data.MoreNext = total > page * 15
+	// TODO: Make page length a configuration parameter that is also
+	//       used on the approval page.
+	dbchs, err := c.GetApprovedChannels((page - 1) * 15, 15 + 1)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(dbchs) > 15 {
+		dbchs = dbchs[:15]
+		data.MoreNext = true
+	}
+
 	data.MorePrev = page > 1
 	data.PageNext = page + 1
 	data.PagePrev = page - 1
 
 	chs := make([]indexChannel, len(dbchs))
 	for i, v := range dbchs {
-		status, ok := chanStatus(&v)
+		status, ok := channelStatusString(v)
 		chs[i] = indexChannel{
-			Name: v.name,
-			Server: v.server,
-			WebLink: v.weblink,
-			Description: v.description,
+			Name: v.Name(),
+			Server: v.Network(),
+			WebLink: v.Weblink(),
+			Description: v.Description(),
 			Status: status,
 			Error: !ok,
 		}

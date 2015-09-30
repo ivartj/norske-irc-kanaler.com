@@ -29,3 +29,4 @@ func timeAgo(t time.Time) string {
 		return "innen 1 minutt siden"
 	}
 }
+
