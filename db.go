@@ -45,6 +45,11 @@ func dbOpen() (*dbConn, error) {
 	}
 	dbLock.Unlock()
 
+	_, err = c.Exec("pragma foreign_keys = true;")
+	if err != nil {
+		return nil, err
+	}
+
 	return &dbConn{c}, nil
 }
 
