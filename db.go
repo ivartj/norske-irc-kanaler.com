@@ -146,7 +146,7 @@ func (c *dbConn) GetChannel(name, network string) (channel, error) {
 		select
 			*
 		from
-			channel_all
+			channel_all_server_combinations
 		where
 			channel_name is ? and network is ?;
 	`, name, network)
@@ -366,7 +366,15 @@ func (c *dbConn) AddChannel(name, network, weblink, description string, approved
 			 approve_time)
 		values
 			(?, -- name
-			 ?, -- network
+			 (select
+				(case when server_table.network is null
+				 then submit.server
+				 else server_table.network
+				 end)
+			  from
+				(select ? as server) submit
+				 left natural join
+				 server server_table), -- network
 			 ?, -- weblink
 			 ?, -- description
 			 ?, -- approved
