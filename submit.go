@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"net/http"
@@ -17,6 +17,15 @@ func submitChannel(c *dbConn, name, server, weblink, description string) string 
 	err := channelAddressValidate(name, server)
 	if err != nil {
 		return err.Error()
+	}
+
+	isExcluded, excludeReason, err := c.IsChannelExcluded(name, server)
+	if err != nil {
+		panic(err)
+	}
+
+	if isExcluded {
+		return fmt.Sprintf("Kanalen blir ikke opplistet av følgende grunn: %s.\n", excludeReason)
 	}
 
 	ch, _ := c.GetChannel(name, server)

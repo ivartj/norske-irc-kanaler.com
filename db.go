@@ -389,3 +389,25 @@ func (c *dbConn) AddChannel(name, network, weblink, description string, approved
 	return nil
 }
 
+func (c *dbConn) IsChannelExcluded(name, network string) (bool, string, error) {
+	row := c.QueryRow(`
+		select
+			exclude_reason
+		from
+			channel_excluded_all_server_combinations
+		where
+			channel_name is ? and network is ?;
+	`, name, network)
+
+	var exclude_reason string
+	err := row.Scan(&exclude_reason)
+
+	if err == sql.ErrNoRows {
+		return false, "", nil
+	} else if err != nil {
+		return false, "", err
+	}
+
+	return true, exclude_reason, nil
+}
+
