@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"html/template"
 	"fmt"
 	"net/url"
 )
@@ -16,7 +15,7 @@ type approveChannel struct {
 	Error bool
 }
 
-func approveServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveApprove(w http.ResponseWriter, req *http.Request) {
 
 	if loginAuth(req) == false {
 		http.Redirect(w, req, "/login?redirect=" + url.QueryEscape(req.URL.Path + "?" + req.URL.RawQuery), 307)
@@ -24,8 +23,7 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 	}
 
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		Channels []approveChannel
 		Admin bool
 		ApproveName string
@@ -36,10 +34,11 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 		PageNext int
 		PagePrev int
 	} {
-		serveCommon: serveCommonData(req),
-		PageTitle: "Kanalgodkjenning",
+		serveContext: ctx,
 		Admin: loginAuth(req),
 	}
+
+	ctx.setPageTitle("Kanalgodkjenning")
 
 	c, err := dbOpen()
 	if err != nil {
@@ -92,15 +91,9 @@ func approveServe(w http.ResponseWriter, req *http.Request) {
 
 	data.Channels = chs
 
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
+	err = ctx.executeTemplate(w, "approve", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
-	}
-
-	err = t.ExecuteTemplate(w, "approve", &data)
-	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
+		panic(err)
 	}
 }
 

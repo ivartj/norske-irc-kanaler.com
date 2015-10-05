@@ -22,6 +22,7 @@ type config struct {
 	LogPath string `yaml:"log-path"`
 	Approval bool `yaml:"approval"`
 	Password string `yaml:"password"`
+	ReloadTemplate bool `yaml:"reload-templates"`
 }
 
 var conf *config = &config{}

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func feedServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveFeed(w http.ResponseWriter, req *http.Request) {
 	c, err := dbOpen()
 	if err != nil {
 		panic(err)
@@ -22,7 +22,7 @@ func feedServe(w http.ResponseWriter, req *http.Request) {
 	feedServeCommon(w, req, chs, "Norske IRC-kanaler")
 }
 
-func feedUnapprovedServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveFeedUnapproved(w http.ResponseWriter, req *http.Request) {
 	c, err := dbOpen()
 	if err != nil {
 		panic(err)

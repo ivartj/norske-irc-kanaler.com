@@ -2,20 +2,18 @@ package main
 
 import (
 	"net/http"
-	"html/template"
 	"fmt"
 	"net/url"
 )
 
-func editServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveEdit(w http.ResponseWriter, req *http.Request) {
 	if loginAuth(req) == false {
 		http.Redirect(w, req, "/login?redirect=" + url.QueryEscape(req.URL.Path + "?" + req.URL.RawQuery), 307)
 		return
 	}
 
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		OriginalName string
 		OriginalServer string
 		Name string
@@ -24,9 +22,10 @@ func editServe(w http.ResponseWriter, req *http.Request) {
 		Description string
 		Message string
 	}{
-		serveCommon: serveCommonData(req),
-		PageTitle: "Rediger kanal",
+		serveContext: ctx,
 	}
+
+	ctx.setPageTitle("Rediger kanal")
 
 	c, err := dbOpen()
 	if err != nil {
@@ -67,14 +66,8 @@ func editServe(w http.ResponseWriter, req *http.Request) {
 		data.Message = "Endring vellykket."
 	}
 
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
+	err = ctx.executeTemplate(w, "edit", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
-	}
-
-	err = t.ExecuteTemplate(w, "edit", &data)
-	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s\n", tpath, err.Error()))
+		panic(err)
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func logoutServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveLogout(w http.ResponseWriter, req *http.Request) {
 	// TODO: Check if redirect code is appropriate
 	if loginAuth(req) {
 		loginSessionID = ""

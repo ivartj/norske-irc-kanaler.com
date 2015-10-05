@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"html/template"
 	"fmt"
 	"crypto/rand"
 	"encoding/base64"
@@ -33,18 +32,18 @@ func loginAuth(req *http.Request) bool {
 	return loginSessionID == c.Value
 }
 
-func loginServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveLogin(w http.ResponseWriter, req *http.Request) {
 
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		Message string
 		Success bool
 		Redirect string
 	}{
-		serveCommon: serveCommonData(req),
-		PageTitle: "Innlogging",
+		serveContext: ctx,
 	}
+
+	ctx.setPageTitle("Innlogging")
 
 	switch req.Method {
 	case "POST":
@@ -64,16 +63,8 @@ func loginServe(w http.ResponseWriter, req *http.Request) {
 		data.Redirect = req.URL.Query().Get("redirect")
 	}
 		
-
-
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
+	err := ctx.executeTemplate(w, "login", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s\n", tpath, err.Error()))
-	}
-
-	err = t.ExecuteTemplate(w, "login", &data)
-	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s\n", tpath, err.Error()))
+		panic(err)
 	}
 }

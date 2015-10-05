@@ -2,7 +2,6 @@
 
 import (
 	"net/http"
-	"html/template"
 	"fmt"
 )
 
@@ -25,7 +24,7 @@ func submitChannel(c *dbConn, name, server, weblink, description string) string 
 	}
 
 	if isExcluded {
-		return fmt.Sprintf("Kanalen blir ikke opplistet av følgende grunn: %s.\n", excludeReason)
+		return fmt.Sprintf("Kanalen blir ikke opplistet av følgende grunn: %s\n", excludeReason)
 	}
 
 	ch, _ := c.GetChannel(name, server)
@@ -45,19 +44,19 @@ func submitChannel(c *dbConn, name, server, weblink, description string) string 
 	}
 }
 
-func submitServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveSubmit(w http.ResponseWriter, req *http.Request) {
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		Name string
 		Server string
 		WebLink string
 		Description string
 		Message string
 	}{
-		serveCommon: serveCommonData(req),
-		PageTitle: "Legg til IRC-chatterom",
+		serveContext: ctx,
 	}
+
+	ctx.setPageTitle("Legg til chatterom")
 
 	if req.Method == "POST" {
 		data.Name = req.FormValue("name")
@@ -73,14 +72,9 @@ func submitServe(w http.ResponseWriter, req *http.Request) {
 		data.Message = submitChannel(c, data.Name, data.Server, data.WebLink, data.Description)
 	}
 
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
+	err := ctx.executeTemplate(w, "submit", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
-	}
-	err = t.ExecuteTemplate(w, "submit", &data)
-	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
+		panic(err)
 	}
 }
 

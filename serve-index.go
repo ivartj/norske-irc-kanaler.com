@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"html/template"
 	"fmt"
 )
 
@@ -15,7 +14,7 @@ type indexChannel struct{
 	Error bool
 }
 
-func indexServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveIndex(w http.ResponseWriter, req *http.Request) {
 	c, err := dbOpen()
 	if err != nil {
 		panic(err)
@@ -23,17 +22,17 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 	defer c.Close()
 
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		Channels []indexChannel
 		MoreNext bool
 		MorePrev bool
 		PageNext int
 		PagePrev int
 	}{
-		serveCommon: serveCommonData(req),
-		PageTitle: conf.WebsiteTitle,
+		serveContext: ctx,
 	}
+
+	ctx.setPageTitle(conf.WebsiteTitle)
 
 	pagestr := req.URL.Query().Get("page")
 	page := 1
@@ -43,7 +42,7 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if page != 1 {
-		data.PageTitle = fmt.Sprintf("Side %d", page)
+		ctx.setPageTitle(fmt.Sprintf("Side %d", page))
 	}
 
 	// TODO: Make page length a configuration parameter that is also
@@ -76,13 +75,9 @@ func indexServe(w http.ResponseWriter, req *http.Request) {
 	}
 	data.Channels = chs
 
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
+	err = ctx.executeTemplate(w, "index", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
-	}
-	err = t.ExecuteTemplate(w, "index", &data)
-	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
+		panic(err)
 	}
 }
+

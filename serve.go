@@ -3,25 +3,70 @@ package main
 import (
 	"fmt"
 	"os"
+	"io"
 	"log"
 	"runtime/debug"
 	"net"
 	"net/http"
 	"net/http/fcgi"
+	"html/template"
 )
 
-type serveCommon struct {
-	SiteTitle string
-	SiteDescription string
-	Admin bool
+type serveContext struct{
+	req *http.Request
+	pageTitle string
 }
 
-func serveCommonData(req *http.Request) serveCommon {
-	return serveCommon{
-		SiteTitle: conf.WebsiteTitle,
-		SiteDescription: conf.WebsiteDescription,
-		Admin: loginAuth(req),
+func newServeContext(req *http.Request) *serveContext {
+	return &serveContext{
+		req: req,
+		pageTitle: conf.WebsiteTitle,
 	}
+}
+
+// Initiated in serve()
+var serveTemplate *template.Template = nil
+
+func (ctx *serveContext) SiteTitle() string {
+	return conf.WebsiteTitle
+}
+
+func (ctx *serveContext) SiteDescription() string {
+	return conf.WebsiteDescription
+}
+
+func (ctx *serveContext) PageTitle() string {
+	return ctx.pageTitle
+}
+
+func (ctx *serveContext) setPageTitle(title string) {
+	ctx.pageTitle = title
+}
+
+func (ctx *serveContext) Admin() bool {
+	return loginAuth(ctx.req)
+}
+
+func (ctx *serveContext) executeTemplate(w io.Writer, name string, data interface{}) error {
+	var t *template.Template
+	var err error
+
+	if conf.ReloadTemplate {
+		tpath := conf.AssetsPath + "/templates.html"
+		t, err = template.ParseFiles(tpath)
+		if err != nil {
+			return err
+		}
+	} else {
+		t = serveTemplate
+	}
+
+	err = t.ExecuteTemplate(w, name, &data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func serveRecovery(w http.ResponseWriter, req *http.Request) {
@@ -30,34 +75,36 @@ func serveRecovery(w http.ResponseWriter, req *http.Request) {
 		if x != nil {
 			msg := fmt.Sprintf("%s: %s\n", x, debug.Stack())
 			log.Printf("%s", msg)
-			errorServe(w, req, msg)
+			ctx := newServeContext(req)
+			ctx.serveError(w, req, msg)
 		}
 	}()
 	http.DefaultServeMux.ServeHTTP(w, req)
 }
 
 func serveExact(w http.ResponseWriter, req *http.Request) {
+	ctx := newServeContext(req)
 	switch req.URL.Path {
 	case "/":
-		indexServe(w, req)
+		ctx.serveIndex(w, req)
 	case "/submit":
-		submitServe(w, req)
+		ctx.serveSubmit(w, req)
 	case "/feed":
-		feedServe(w, req)
+		ctx.serveFeed(w, req)
 	case "/feed-unapproved":
-		feedUnapprovedServe(w, req)
+		ctx.serveFeedUnapproved(w, req)
 	case "/login":
-		loginServe(w, req)
+		ctx.serveLogin(w, req)
 	case "/logout":
-		logoutServe(w, req)
+		ctx.serveLogout(w, req)
 	case "/edit":
-		editServe(w, req)
+		ctx.serveEdit(w, req)
 	case "/approve":
-		approveServe(w, req)
+		ctx.serveApprove(w, req)
 	case "/delete":
-		deleteServe(w, req)
+		ctx.serveDelete(w, req)
 	case "/help":
-		helpServe(w, req)
+		ctx.serveHelp(w, req)
 	case "/favicon.ico":
 		http.ServeFile(w, req, conf.AssetsPath + "/favicon.ico")
 	default:
@@ -66,6 +113,12 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 }
 
 func serve() {
+	var err error
+	serveTemplate, err = template.ParseFiles(conf.AssetsPath + "/templates.html")
+	if err != nil {
+		log.Fatalf("Failed to parse templates: %s.\n", err.Error())
+	}
+
 	http.DefaultServeMux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(conf.AssetsPath + "/static"))))
 	http.DefaultServeMux.HandleFunc("/", serveExact)
 

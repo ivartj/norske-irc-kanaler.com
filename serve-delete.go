@@ -4,28 +4,27 @@ import (
 	"net/http"
 	"net/url"
 	"fmt"
-	"html/template"
 )
 
-func deleteServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveDelete(w http.ResponseWriter, req *http.Request) {
 	if loginAuth(req) == false {
 		http.Redirect(w, req, "/login?redirect=" + url.QueryEscape(req.URL.Path + "?" + req.URL.RawQuery), 307)
 		return
 	}
 
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		Name string
 		Server string
 		Message string
 		Redirect string
 	}{
-		serveCommon: serveCommonData(req),
-		PageTitle: "Sletting av kanal",
+		serveContext: ctx,
 		Name: req.URL.Query().Get("name"),
 		Server: req.URL.Query().Get("server"),
 	}
+
+	ctx.setPageTitle("Sletting av kanal")
 
 	c, err := dbOpen()
 	if err != nil {
@@ -40,14 +39,9 @@ func deleteServe(w http.ResponseWriter, req *http.Request) {
 	data.Message = fmt.Sprintf("%s@%s har blitt slettet.", data.Name, data.Server)
 	data.Redirect = req.Referer()
 
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
+	err = ctx.executeTemplate(w, "delete", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s.\n", tpath, err.Error()))
-	}
-
-	err = t.ExecuteTemplate(w, "delete", &data)
-	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s.\n", tpath, err.Error()))
+		panic(err)
 	}
 }
+

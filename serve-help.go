@@ -22,25 +22,19 @@ func helpGetContent() template.HTML {
 	return template.HTML(string(bytes))
 }
 
-func helpServe(w http.ResponseWriter, req *http.Request) {
+func (ctx *serveContext) serveHelp(w http.ResponseWriter, req *http.Request) {
 	data := struct{
-		serveCommon
-		PageTitle string
+		*serveContext
 		Content template.HTML
 	}{
-		serveCommon: serveCommonData(req),
-		PageTitle: "Hjelp med IRC-chat",
+		serveContext: ctx,
 		Content: helpGetContent(),
 	}
 
-	tpath := conf.AssetsPath + "/templates.html"
-	t, err := template.ParseFiles(tpath)
-	if err != nil {
-		panic(fmt.Errorf("Failed to parse template file '%s': %s", tpath, err.Error()))
-	}
+	ctx.setPageTitle("Hjelp med IRC-chat")
 
-	err = t.ExecuteTemplate(w, "help", &data)
+	err := ctx.executeTemplate(w, "help", &data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to execute template file '%s': %s", tpath, err.Error()))
+		panic(err)
 	}
 }
