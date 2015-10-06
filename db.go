@@ -9,6 +9,7 @@ import (
 	"io"
 	"sync"
 	"log"
+	"html/template"
 )
 
 var dbLock *sync.Mutex = &sync.Mutex{}
@@ -82,6 +83,11 @@ func (ch *dbChannel) Topic() string { return ch.topic }
 func (ch *dbChannel) Checked() bool { return ch.checked }
 func (ch *dbChannel) CheckTime() time.Time { return ch.check_time }
 func (ch *dbChannel) Error() string { return ch.errmsg }
+
+func (ch *dbChannel) Status() string {
+	str, _ := channelStatusString(ch)
+	return str
+}
 
 func dbScanChannel(scan interface{ Scan(dest ...interface{}) error }) (*dbChannel, error) {
 	var (
@@ -409,5 +415,114 @@ func (c *dbConn) IsChannelExcluded(name, network string) (bool, string, error) {
 	}
 
 	return true, exclude_reason, nil
+}
+
+func (c *dbConn) GetNumberOfChannelsUnapproved() (int, error) {
+	row := c.QueryRow(`
+		select
+			count(*)
+		from
+			channel_unapproved;
+	`)
+
+	var num int
+	err := row.Scan(&num)
+	return num, err
+}
+
+func (c *dbConn) GetNumberOfChannelsExcluded() (int, error) {
+	row := c.QueryRow(`
+		select
+			count(*)
+		from
+			channel_excluded;
+	`)
+
+	var num int
+	err := row.Scan(&num)
+	return num, err
+}
+
+func (c *dbConn) AddExclusion(name, network, reason string) error {
+	_, err := c.Exec(`
+		insert into channel_excluded
+			(channel_name,
+			 network,
+			 exclude_reason)
+		values
+			(?, -- name
+			 (select
+				(case when server_table.network is null
+				 then submit.server
+				 else server_table.network
+				 end)
+			  from
+				(select ? as server) submit
+				 left natural join
+				 server server_table), -- network
+			 ? -- reason
+			);
+	`, name, network, reason)
+	if err != nil {
+		// TODO: More descriptive error
+		return err
+	}
+
+	return nil
+}
+
+type dbExclusion struct {
+	name, network, reason string
+}
+
+func (ex *dbExclusion) Name() string { return ex.name }
+func (ex *dbExclusion) Network() string { return ex.network }
+func (ex *dbExclusion) Reason() template.HTML { return template.HTML(ex.reason) }
+
+func (c *dbConn) GetExclusions() ([]*dbExclusion, error) {
+	rows, err := c.Query(`
+		select
+			channel_name, network, exclude_reason
+		from
+			channel_excluded;
+	`);
+
+	if err == io.EOF {
+		return []*dbExclusion{}, nil
+	}
+
+	if err != nil {
+		// TODO: More descriptive error
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	exs := []*dbExclusion{}
+
+	for rows.Next() {
+		ex := &dbExclusion{}
+		rows.Scan(&ex.name, &ex.network, &ex.reason)
+		exs = append(exs, ex)
+	}
+
+	if rows.Err() != nil {
+		// TODO: More descriptive error
+		return nil, rows.Err()
+	}
+
+	return exs, nil
+}
+
+func (c *dbConn) DeleteExclusion(name, network string) error {
+	_, err := c.Exec(`
+		delete from channel_excluded
+		where
+			channel_name = ? and network = ?;
+	`, name, network)
+	if err != nil {
+		return fmt.Errorf("Failed to delete exclusion '%s@%s': %s", name, network, err.Error())
+	}
+	return nil
 }
 

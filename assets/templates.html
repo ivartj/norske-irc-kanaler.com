@@ -45,10 +45,40 @@
 </html>
 {{end}}
 
+{{define "channel"}}
+	<li class="channel" itemscope="http://schema.org/Thing">
+		<div class="channel-info">
+			<a href="{{.Weblink}}"
+			   rel="nofollow"
+			   class="channel-name channel-link"
+			   itemprop="name">{{.Name}}</a>
+			<span class="channel-network">{{.Network}}</span>
+			<div itemprop="description">
+				{{.Description}}
+			</div>
+		</div>
+		{{if context.Admin}}
+		<div class="channel-actions">
+			<a href="/edit?name={{.Name}}&network={{.Network}}">rediger</a> -
+			{{if not .Approved}}<a href="/approve?name={{.Name}}&network={{.Network}}">godkjen</a> -{{end}}
+			<a href="/delete?name={{.Name}}&network={{.Network}}">slett</a>
+		</div>
+		{{if not .Error }}
+		<div class="channel-status">
+			{{.Status}}
+		</div>
+		{{else}}
+		<div class="channel-error">
+			{{.Status}}
+		</div>
+		{{end}}
+		{{end}}
+	</li>
+{{end}}
+
 {{define "index"}}
 {{template "head" .}}
-		{{with $global := .}}
-		{{if .MorePrev}}
+		{{if .Index.MorePrev}}
 		{{template "nav" .}}
 		{{else}}
 		<div class="content">
@@ -62,77 +92,40 @@
 				Klikk <a href="/help">her</a> hvis du ikke er kjent med IRC.
 			</div>
 			<div class="wrap">
-				{{if .Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
+				{{if context.Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
 			{{end}}
 				<ol class="channel-list">
-				{{range .Channels}}
-					<li class="channel" itemscope="http://schema.org/Thing">
-						<div class="channel-info">
-							<a href="{{.WebLink}}"
-							   rel="nofollow"
-							   class="channel-name channel-link"
-							   itemprop="name">{{.Name}}</a>
-							[<span class="channel-server">{{.Server}}</span>]
-							<div itemprop="description">
-								{{.Description}}
-							</div>
-						</div>
-						<div class="channel-{{if .Error}}error{{else}}status{{end}}">
-							{{.Status}}
-							{{if $global.Admin}}
-							<br>
-							<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-							<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
-							{{end}}
-						</div>
-					</li>
+				{{range .Index.Channels}}
+					{{template "channel" .}}
 				{{end}}
 				</ol>
 				<nav class="pagenav">
-					{{if .MorePrev}}<a href="/?page={{.PagePrev}}">Forrige</a>{{end}}
-					{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
-					{{if .MoreNext}}<a href="/?page={{.PageNext}}">Neste</a>{{end}}
+					{{if .Index.MorePrev}}<a href="/?page={{.Index.PagePrev}}">Forrige</a>{{end}}
+					{{if .Index.MoreNext}}{{if .Index.MorePrev}}-{{end}}{{end}}
+					{{if .Index.MoreNext}}<a href="/?page={{.Index.PageNext}}">Neste</a>{{end}}
 				</nav>
-				{{end}}
 {{template "foot" .}}
 {{end}}
 
 {{define "approve"}}
 {{template "head" .}}
 {{template "nav" .}}
-				{{with $snobal := .}}
-				{{if .Message}}<p>{{.Message}}</p>{{end}}
+				{{if .Approve.Message}}<p>{{.Approve.Message}}</p>{{end}}
 				<ol class="channel-list">
-					{{range .Channels}}
-					<li class="channel">
-						<a href="{{.WebLink}}"
-						   rel="nofollow"
-						   class="channel-name channel-link"
-						   itemprop="name">{{.Name}}</a>
-						[<span class="channel-server">{{.Server}}</span>]
-						<div itemprop="description">
-							{{.Description}}
-						</div>
-						<span class="channel-grey">{{.Status}}</span>
-						{{if $snobal.Admin}}
-						<br>
-						<a href="/edit?name={{.Name}}&server={{.Server}}">rediger</a> -
-						<a href="/approve?name={{.Name}}&server={{.Server}}">godkjen</a> -
-						<a href="/delete?name={{.Name}}&server={{.Server}}">slett</a>
-						{{end}}
-					</li>
+					{{range .Approve.Channels}}
+						{{template "channel" .}}
 					{{end}}
 				</ol>
-				{{if .MorePrev}}<a href="/approve?page={{.PagePrev}}">Forrige</a>{{end}}
-				{{if .MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
-				{{if .MoreNext}}<a href="/approve?page={{.PageNext}}">Neste</a>{{end}}
-				{{end}}
+				{{if .Approve.MorePrev}}<a href="/approve?page={{.Approve.PagePrev}}">Forrige</a>{{end}}
+				{{if .Approve.MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
+				{{if .Approve.MoreNext}}<a href="/approve?page={{.Approve.PageNext}}">Neste</a>{{end}}
 {{template "foot" .}}
 {{end}}
 
 {{define "submit"}}
 {{template "head" .}}
 {{template "nav" .}}
+				{{if not .Submit.RemoveForm}}
 				<form method="post" action="/submit">
 					<fieldset>
 						{{if .Message}}<p>{{.Message}}</p>{{end}}
@@ -143,16 +136,16 @@
 								       type="text"
 								       id="submit-name"
 								       name="name"
-								       value="{{.Name}}"
+								       value="{{.Submit.Name}}"
 								       placeholder="#kanal"
 								       required>
 							</li>
 							<li>
-								<label for="submit-server">IRC-nettverk: </label>
+								<label for="submit-network">IRC-nettverk: </label>
 								<input type="text"
-								       id="submit-server"
-								       name="server"
-								       value="{{.Server}}"
+								       id="submit-network"
+								       name="network"
+								       value="{{.Submit.Network}}"
 								       placeholder="irc.eksempel.net"
 								       required>
 							</li>
@@ -160,7 +153,7 @@
 								<label for="submit-weblink">Webchat-URL: </label>
 								<input type="text"
 								       id="submit-weblink"
-								       value="{{.WebLink}}"
+								       value="{{.Submit.Weblink}}"
 								       placeholder="http://"
 								       name="weblink">
 							</li>
@@ -169,12 +162,19 @@
 								<textarea name="description"
 									  id="submit-description"
 									  maxlength="160"
-									  required>{{.Description}}</textarea>
+									  required>{{.Submit.Description}}</textarea>
 							</li>
 						</ol>
 						<input type="submit" value="Send inn">
 					</fieldset>
 				</form>
+				{{else}}
+				<article>
+					{{if .Submit.Excluded}}<p>Kanalen blir ikke inkludert med følgende begrunnelse:</p>{{end}}
+					<p>{{.Message}}</p>
+				</article>
+				<p><a href="/">Tilbake</a></p>
+				{{end}}
 {{template "foot" .}}
 {{end}}
 
@@ -230,11 +230,11 @@
 								       required>
 							</li>
 							<li>
-								<label for="submit-server">IRC-nettverk: </label>
+								<label for="submit-network">IRC-nettverk: </label>
 								<input type="text"
-								       id="submit-server"
-								       name="server"
-								       value="{{.Server}}"
+								       id="submit-network"
+								       name="network"
+								       value="{{.Network}}"
 								       placeholder="irc.eksempel.net"
 								       required>
 							</li>
@@ -242,7 +242,7 @@
 								<label for="submit-weblink">Webchat-URL: </label>
 								<input type="text"
 								       id="submit-weblink"
-								       value="{{.WebLink}}"
+								       value="{{.Weblink}}"
 								       name="weblink">
 							</li>
 							<li>
@@ -284,3 +284,72 @@
 				</article>
 {{template "foot" .}}
 {{end}}
+
+{{define "admin"}}
+{{template "head" .}}
+{{template "nav" .}}
+	<article>
+		<p><a href="/approve">{{.AdminPanel.NumberForApproval}} kanaler til godkjenning.</a></p>
+		<p><a href="/exclude">{{.AdminPanel.NumberExcluded}} kanaler er ekskludert.</a></p>
+	</article>
+{{template "foot" .}}
+{{end}}
+
+{{define "exclude"}}
+{{template "head" .}}
+{{template "nav" .}}
+	<form method="post" action="/exclude">
+		<fieldset>
+			{{if .Message}}<p>{{.Message}}</p>{{end}}
+			<ol>
+				<li>
+					<label for="exclude-name">Kanalnavn: </label>
+					<input
+					       type="text"
+					       id="exclude-name"
+					       name="name"
+					       value="{{.Exclude.ExcludeName}}"
+					       placeholder="#kanal"
+					       required>
+				</li>
+				<li>
+					<label for="exclude-network">IRC-nettverk: </label>
+					<input type="text"
+					       id="exclude-network"
+					       name="network"
+					       value="{{.Exclude.ExcludeNetwork}}"
+					       placeholder="irc.eksempel.net"
+					       required>
+				</li>
+				<li>
+					<label for="exclude-reason">Begrunnelse:</label><br>
+					<textarea name="exclude-reason"
+						  id="exclude-reason"
+						  maxlength="160"
+						  required>{{.Exclude.ExcludeReason}}</textarea>
+				</li>
+			</ol>
+			<input type="submit" value="Send inn">
+		</fieldset>
+	</form>
+
+	<ol class="channel-list">
+		{{range .Exclude.Exclusions}}
+			<li class="channel">
+				<div class="channel-info">
+					{{.Name}}
+					<span class="channel-network">{{.Network}}</span>
+					<div>
+						{{.Reason}}
+					</div>
+				</div>
+				<div class="channel-actions">
+					<a href="/exclude?name={{.Name}}&network={{.Network}}&delete=yes&code={{context.SessionID}}">slett</a>
+				</div>
+			</li>
+		{{end}}
+	</ol>
+
+{{template "foot"}}
+{{end}}
+

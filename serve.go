@@ -10,18 +10,31 @@ import (
 	"net/http"
 	"net/http/fcgi"
 	"html/template"
+	"github.com/frustra/bbcode"
 )
 
 type serveContext struct{
+	index serveIndexContext
+	submit serveSubmitContext
+	approve serveApproveContext
+	exclude serveExcludeContext
+	adminpanel serveAdminPanelContext
 	req *http.Request
 	pageTitle string
+	message template.HTML
+	db *dbConn
 }
 
-func newServeContext(req *http.Request) *serveContext {
+func newServeContext(req *http.Request) (*serveContext, error) {
+	db, err := dbOpen()
+	if err != nil {
+		return nil, err
+	}
 	return &serveContext{
 		req: req,
 		pageTitle: conf.WebsiteTitle,
-	}
+		db: db,
+	}, nil
 }
 
 // Initiated in serve()
@@ -47,18 +60,36 @@ func (ctx *serveContext) Admin() bool {
 	return loginAuth(ctx.req)
 }
 
+func (ctx *serveContext) SessionID() string {
+	return loginSessionID
+}
+
+func (ctx *serveContext) Message() template.HTML {
+	return ctx.message
+}
+
+func (ctx *serveContext) setMessage(msg string) {
+	bb := bbcode.NewCompiler(true, true)
+	ctx.message = template.HTML(bb.Compile(msg))
+}
+
 func (ctx *serveContext) executeTemplate(w io.Writer, name string, data interface{}) error {
 	var t *template.Template
 	var err error
 
+	fnmap := template.FuncMap{
+		"context": func() *serveContext { return ctx },
+	}
+
 	if conf.ReloadTemplate {
 		tpath := conf.AssetsPath + "/templates.html"
-		t, err = template.ParseFiles(tpath)
+		t, err = template.New(name).Funcs(fnmap).ParseFiles(tpath)
 		if err != nil {
 			return err
 		}
 	} else {
 		t = serveTemplate
+		t.Funcs(fnmap)
 	}
 
 	err = t.ExecuteTemplate(w, name, &data)
@@ -75,7 +106,9 @@ func serveRecovery(w http.ResponseWriter, req *http.Request) {
 		if x != nil {
 			msg := fmt.Sprintf("%s: %s\n", x, debug.Stack())
 			log.Printf("%s", msg)
-			ctx := newServeContext(req)
+
+			// TODO: Do not depend serveContext
+			ctx, _ := newServeContext(req)
 			ctx.serveError(w, req, msg)
 		}
 	}()
@@ -83,7 +116,11 @@ func serveRecovery(w http.ResponseWriter, req *http.Request) {
 }
 
 func serveExact(w http.ResponseWriter, req *http.Request) {
-	ctx := newServeContext(req)
+	ctx, err := newServeContext(req)
+	if err != nil {
+		panic(err)
+	}
+
 	switch req.URL.Path {
 	case "/":
 		ctx.serveIndex(w, req)
@@ -99,8 +136,12 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		ctx.serveLogout(w, req)
 	case "/edit":
 		ctx.serveEdit(w, req)
+	case "/admin":
+		ctx.serveAdmin(w, req)
 	case "/approve":
 		ctx.serveApprove(w, req)
+	case "/exclude":
+		ctx.serveExclude(w, req)
 	case "/delete":
 		ctx.serveDelete(w, req)
 	case "/help":
@@ -114,7 +155,12 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 
 func serve() {
 	var err error
-	serveTemplate, err = template.ParseFiles(conf.AssetsPath + "/templates.html")
+
+	fnmap := template.FuncMap{
+		"context": func() *serveContext { return nil },
+	}
+
+	serveTemplate, err = template.New("main").Funcs(fnmap).ParseFiles(conf.AssetsPath + "/templates.html")
 	if err != nil {
 		log.Fatalf("Failed to parse templates: %s.\n", err.Error())
 	}

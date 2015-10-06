@@ -21,26 +21,24 @@ h1, h2, h3, h4 {
 }
 
 .bar {
-	background-color: #879;
+	background-color: #ca2b2a;
 }
 
 .content {
 	min-height: 100%;
 	position: relative;
-	background-color: #ddd;
+	background-color: #eee;
 }
 
 .description {
-	background-color: #bfb;
+	background-color: #fff;
 	border: 1px solid #bbb;
-	border-width: 0 1px 1px 1px;
 	max-width: 35em;
-	margin: 0 auto;
+	margin: 1em auto;
 	padding: 0.5em;
 }
 
 .bar-mid {
-	background-color: #ca2b2a;
 	color: white;
 	max-width: 35em;
 	margin: 0 auto;
@@ -78,29 +76,21 @@ hr {
 fieldset, article {
 	margin: 1em 0;
 	padding: 1em;
-	border: 1px solid #bbb;
-	border-width: 1px 1px 1px 1px;
+	border: 0;
 	background-color: white;
 }
 
 .channel {
 	list-style: none;
 	margin: 1em 0;
-}
-
-.channel-info {
-	padding: 1em 1em 0.5em 1em;
-	border: 1px solid #bbb;
-	border-width: 1px 1px 0 1px;
+	padding: 1em;
 	background-color: white;
 }
 
+.channel-info {
+}
+
 .channel-status, .channel-error {
-	padding: 0.5em 1em 0.5em 1em;
-	border: 1px solid #bbb;
-	border-width: 0 1px 1px 1px;
-	background-color: #879;
-	color: white;
 }
 
 .channel-error {
@@ -133,11 +123,7 @@ fieldset, article {
 	text-decoration: underline ! important;
 }
 
-.channel-col-1, .channel-col-2 {
-	vertical-align: top;
-}
-
-.channel-server {
+.channel-network {
 	color: #777;
 }
 
@@ -204,3 +190,4 @@ pre {
 .pagenav {
 	padding: 0 0.5em;
 }
+

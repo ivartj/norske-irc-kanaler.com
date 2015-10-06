@@ -36,6 +36,7 @@ type channel interface {
 	Topic() string
 	Checked() bool
 	CheckTime() time.Time
+	Status() string
 	Error() string
 }
 
