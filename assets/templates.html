@@ -46,14 +46,13 @@
 {{end}}
 
 {{define "channel"}}
-	<li class="channel" itemscope="http://schema.org/Thing">
+	<li class="channel">
 		<div class="channel-info">
 			<a href="{{.Weblink}}"
 			   rel="nofollow"
-			   class="channel-name channel-link"
-			   itemprop="name">{{.Name}}</a>
+			   class="channel-name channel-link">{{.Name}}</a>
 			<span class="channel-network">{{.Network}}</span>
-			<div itemprop="description">
+			<div>
 				{{.Description}}
 			</div>
 		</div>
