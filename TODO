@@ -2,8 +2,6 @@
 
     - For managing server/network associations
 
-    - Approving channels
-
     - Viewing bot status, including scheduled channel inspections
 
     - Scheduling and canceling bot actions.
@@ -19,13 +17,13 @@
       URLs) would then not have to be updated when the network given
       for a channel changes.
 
- * Make it possible to configure that the HTML template will not be
-   reread (typically you want to reread it when making adjustments to
-   the web design, while not reread it on the deployed installation).
+ * Channel list
 
- * Display the topic of the channel.
+    - Display the topic of the channel.
 
- * Add a 'irc://' link in channel items.
+    - Add a 'irc://' link in channel items.
+
+    - Make something better than just "Forrige"/"Neste"
 
  * Ensure that the web server will never stop without logging the
    reason (this happened in one instance).
@@ -35,21 +33,26 @@
 
     - Make sure that process signals are logged
 
- * Validate and canonicalize server addresses
+    - Make sure that panics and errors in the IRC bot thread are
+      caught
 
- * Remove whitespace from submissions.
-
- * Improve multi-page layout.
-
-    - Make something better than just "Forrige"/"Neste"
+ * Input handling
+ 
+    - Remove whitespace from submissions.
 
  * Check for errors in RSS feed.
 
- * Make an 'Om siden' page describing the intention of
-   the website.
+ * Remove Schema.org markup
 
- * Give further instructions on the submit page:
+ * Text
+ 
+    - Make an 'Om siden' page describing the intention of
+      the website.
 
-    - Mention that the WebChat-URL is optional
+    - Update the help page with respect to the new web design.
 
-    - Describe what sort of submissions are welcome
+    - Give further instructions on the submit page:
+
+       - Mention that the WebChat-URL is optional
+
+       - Describe what sort of submissions are welcome
