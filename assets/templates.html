@@ -52,6 +52,15 @@
 			   rel="nofollow"
 			   class="channel-name channel-link">{{.Name}}</a>
 			<span class="channel-network">{{.Network}}</span>
+			<div class="float-right">
+				[<a href="irc://{{.Network}}/{{.Name}}"
+				    title="Besøk kanalen ved hjelp av en applikasjon på ditt system"
+				   >app</a>
+				 <a href="{{.Weblink}}"
+				    title="Besøk kanalen ved hjelp av et web-basert IRC-program"
+				    rel="nofollow"
+				   >web</a>]
+			</div>
 			<div>
 				{{.Description}}
 			</div>

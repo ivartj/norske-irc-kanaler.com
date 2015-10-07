@@ -21,8 +21,6 @@
 
     - Display the topic of the channel.
 
-    - Add a 'irc://' link in channel items.
-
     - Make something better than just "Forrige"/"Neste"
 
  * Ensure that the web server will never stop without logging the

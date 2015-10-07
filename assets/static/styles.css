@@ -98,11 +98,7 @@ fieldset, article {
 	color: white;
 }
 
-.channel-left {
-	float: left;
-}
-
-.channel-right {
+.float-right {
 	float: right;
 }
 
