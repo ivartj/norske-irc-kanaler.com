@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"io"
+	"strings"
 	"log"
 	"runtime/debug"
 	"net"
@@ -19,18 +20,21 @@ type serveContext struct{
 	approve serveApproveContext
 	exclude serveExcludeContext
 	adminpanel serveAdminPanelContext
+	info serveInfoContext
 	req *http.Request
+	w http.ResponseWriter
 	pageTitle string
 	message template.HTML
 	db *dbConn
 }
 
-func newServeContext(req *http.Request) (*serveContext, error) {
+func newServeContext(w http.ResponseWriter, req *http.Request) (*serveContext, error) {
 	db, err := dbOpen()
 	if err != nil {
 		return nil, err
 	}
 	return &serveContext{
+		w: w,
 		req: req,
 		pageTitle: conf.WebsiteTitle,
 		db: db,
@@ -108,7 +112,7 @@ func serveRecovery(w http.ResponseWriter, req *http.Request) {
 			log.Printf("%s", msg)
 
 			// TODO: Do not depend serveContext
-			ctx, _ := newServeContext(req)
+			ctx, _ := newServeContext(w, req)
 			ctx.serveError(w, req, msg)
 		}
 	}()
@@ -116,9 +120,14 @@ func serveRecovery(w http.ResponseWriter, req *http.Request) {
 }
 
 func serveExact(w http.ResponseWriter, req *http.Request) {
-	ctx, err := newServeContext(req)
+	ctx, err := newServeContext(w, req)
 	if err != nil {
 		panic(err)
+	}
+
+	if strings.HasPrefix(req.URL.Path, "/info") {
+		ctx.serveInfo(w, req)
+		return
 	}
 
 	switch req.URL.Path {
@@ -144,8 +153,6 @@ func serveExact(w http.ResponseWriter, req *http.Request) {
 		ctx.serveExclude(w, req)
 	case "/delete":
 		ctx.serveDelete(w, req)
-	case "/help":
-		ctx.serveHelp(w, req)
 	case "/favicon.ico":
 		http.ServeFile(w, req, conf.AssetsPath + "/favicon.ico")
 	default:

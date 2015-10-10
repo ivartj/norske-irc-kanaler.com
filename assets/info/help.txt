@@ -1,0 +1,13 @@
+[size=2]Hjelp med IRC-chat[/size]
+
+Internet Relay Chat er et system som brukes til samtaler mellom flere personer, i såkalte kanaler, også kjent som "chatterom".
+
+En alminnelig bruker benytter seg av et klientprogram for å koble seg opp til et IRC-nettverk hvor disse kanalene finner sted. Akkurat som man bruker et nettleserprogram til å lese websider, vil en IRC-bruker bruke et IRC-program for å koble seg på IRC-kanaler.
+
+På denne nettsiden fører de grønne 'lenkene til et web-basert IRC-program. Man kan også bruke programmer som man kan installere på egen datamaskin, som [url=http://www.kvirc.net/]KVIrc[/url]. Da må man vite addressen til IRC-nettverket hvor kanalen befinner seg på. Nettverksaddressen er på denne
+nettsiden skrevet i grått ved siden av kanalnavnet.
+
+For mer praktisk informasjon kan du skrive '/help' (uten apostrofene) i meldingsfeltet i et vanlig IRC-program.
+
+IRC ble først utviklet i 1988 av Jarkko Oikarinen, en finsk programmerer. Ettersom kommunikasjonsformen ble standardisert og beskrevet offentlig, kan andre utviklere implementere systemet uavhengig av et bestemt program eller en bestemt organisasjon.
+

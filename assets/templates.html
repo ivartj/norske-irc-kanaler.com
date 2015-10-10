@@ -30,13 +30,13 @@
 			</div>
 			<div class="bar footer-hidden">
 				<div class="bar-mid">
-					<a href="/help">Hjelp med IRC-chat</a> - 
+					<a href="/info/help">Hjelp med IRC-chat</a> - 
 					<a href="/submit">Legg til chatterom</a>
 				</div>
 			</div>
 			<div class="bar footer">
 				<div class="bar-mid">
-					<a href="/help">Hjelp med IRC-chat</a> - 
+					<a href="/info/help">Hjelp med IRC-chat</a> - 
 					<a href="/submit">Legg til chatterom</a>
 				</div>
 			</div>
@@ -97,7 +97,7 @@
 			</div>
 			<div class="description">
 				{{.SiteDescription}}<br>
-				Klikk <a href="/help">her</a> hvis du ikke er kjent med IRC.
+				Klikk <a href="/info/help">her</a> hvis du ikke er kjent med IRC.
 			</div>
 			<div class="wrap">
 				{{if context.Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
@@ -284,11 +284,11 @@
 {{template "foot" .}}
 {{end}}
 
-{{define "help"}}
+{{define "info"}}
 {{template "head" .}}
 {{template "nav" .}}
 				<article>
-{{.Content}}
+{{.Info.Content}}
 				</article>
 {{template "foot" .}}
 {{end}}
