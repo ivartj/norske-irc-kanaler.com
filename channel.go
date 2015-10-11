@@ -43,7 +43,7 @@ type channel interface {
 func channelCheckLoop() {
 	for {
 		channelCheckAll()
-		time.Sleep(time.Hour * 25)
+		time.Sleep(time.Hour * 24 * 7)
 	}
 }
 
@@ -121,7 +121,7 @@ func channelCheckServer(db *dbConn, network *dbNetwork, chs []channel) {
 
 		if ch.Checked() {
 			dur := time.Now().Sub(ch.CheckTime())
-			if dur < time.Hour * 24 {
+			if dur < time.Hour * 24 * 7 {
 				continue
 			}
 		}

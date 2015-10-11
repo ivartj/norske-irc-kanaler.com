@@ -7,7 +7,8 @@ import (
 	"os"
 	"path"
 	"io/ioutil"
-	"github.com/frustra/bbcode"
+	"bytes"
+	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
 )
 
 func helpGetContent() template.HTML {
@@ -48,13 +49,13 @@ func (ctx *serveContext) Info() *serveInfoContext {
 		panic(err)
 	} else {
 		defer file.Close()
-		bytes, err := ioutil.ReadAll(file)
+		buf := bytes.NewBuffer([]byte{})
+		err = bbgo.Process(file, buf)
 		if err != nil {
 			panic(err)
 		}
 
-		bb := bbcode.NewCompiler(true, true)
-		ctx.info.Content = template.HTML(bb.Compile(string(bytes)))
+		ctx.info.Content = template.HTML(buf.String())
 	}
 
 	ctx.info.initialized = true

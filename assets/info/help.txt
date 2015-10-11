@@ -1,4 +1,4 @@
-[size=2]Hjelp med IRC-chat[/size]
+[h1]Hjelp med IRC-chat[/h1]
 
 Internet Relay Chat er et system som brukes til samtaler mellom flere personer, i såkalte kanaler, også kjent som "chatterom".
 

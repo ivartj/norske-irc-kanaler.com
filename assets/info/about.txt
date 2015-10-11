@@ -1,0 +1,10 @@
+[h1]Om siden[/h1]
+
+Laget av [url=http://ivartj.org]ivartj[/url].
+
+Kanalene rangeres avhengig av hvor mange brukere som viser seg å være i kanalen ved automatiserte besøk, som gjøres ukentlig.
+
+Utviklet med programmeringsspråket [url=http://golang.org/]Go[/url].
+
+Kildekode: [url=http://github.com/ivartj/norske-irc-kanaler.com]github.com/ivartj/norske-irc-kanaler.com[/url]
+

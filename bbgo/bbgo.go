@@ -1,11 +1,12 @@
 package bbgo
 
 import (
-	"errors"
 	"io"
 )
 
 func Process(src io.Reader, dest io.Writer) error {
-	return errors.New("Unimplemented")
+	ch := lex(src)
+	p := newParser(ch, dest)
+	return p.parse()
 }
 
