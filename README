@@ -1,25 +1,45 @@
-Den grunnleggende idéen er å lage en webside som norsktalende eller
-norsklærende kan finne gjennom søkemoterer, og som hjelper dem med å
-finne norskspråklige IRC-kanaler samt å lære om IRC. Nettsiden vil
-kunne ta inn forslag til kanaler, vil inspisere om kanalene kan
-oppkobles, og rangere kanalene etter antall brukere.
+Norske-IRC-Kanaler.com (Norwegian IRC Channels)
+===============================================
 
-Administrator må kunne fjerne eller endre oppslag, utestenge forslag
-av bestemte kanaler (evt. med wildcard), og sette publisering av
-forslag på hold innen godkjenning.
+(English translation of this text is further down / Engelsk
+oversettelse finnes lengre ned)
 
- ______________
- Databaseskjema
+Webside som norsktalende og norsklærende kan finne gjennom
+søkemoterer, og som hjelper dem med å finne norskspråklige
+IRC-kanaler, samt å lære om IRC. Nettsiden tar inn forslag til kanaler
+og rangerer kanalene etter antall brukere.
 
- Kanal
- + serveradresse
- + kanalnavn
- - godkjent
- - beskrivelse
- - antall brukere
- - webchat-lenke
- - evt. feilmelding
+Administrator kan fjerne eller endre oppslag, utestenge innlegg av
+bestemte kanaler, og sette publisering av forslag på vent innen
+godkjenning.
 
- Innstillinger
- - godkjenning av kanaler
+Websiden laget med programmeringsspråket Go. For å kompilere nettsiden
+trenger du en implementasjon av Go. Du kan finne en på
+http://golang.org/
 
+Installering og kjøring:
+
+  $ go get github.com/ivartj/norske-irc-kanaler.com
+  $ cd $GOPATH/src/github.com/ivartj/norske-irc-kanaler.com
+  $ cp config.cfg.example config.cfg
+  $ ./norske-irc-kanaler.com config.cfg
+
+ENGLISH
+
+Website which Norwegian speakers and learners may find through search
+engines, and which assists them in finding IRC channels that use
+Norwegian language, as well as learn about IRC.
+
+The administrator may remove or edit entries, block submissions of
+specific channels, and set submissions for approval before publishing.
+
+The website is made with the Go programming language. To compile the
+website, you need an implementation of Go. You may find one at
+http://golang.org/
+
+Installing and running:
+
+  $ go get github.com/ivartj/norske-irc-kanaler.com
+  $ cd $GOPATH/src/github.com/ivartj/norske-irc-kanaler.com
+  $ cp config.cfg.example config.cfg
+  $ ./norske-irc-kanaler.com config.cfg
