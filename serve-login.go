@@ -36,7 +36,6 @@ func (ctx *serveContext) serveLogin(w http.ResponseWriter, req *http.Request) {
 
 	data := struct{
 		*serveContext
-		Message string
 		Success bool
 		Redirect string
 	}{
@@ -49,14 +48,14 @@ func (ctx *serveContext) serveLogin(w http.ResponseWriter, req *http.Request) {
 	case "POST":
 		data.Redirect = req.FormValue("redirect")
 		if req.FormValue("password") != conf.Password {
-			data.Message = "Feil passord."
+			ctx.setMessage("Feil passord")
 		} else {
 			http.SetCookie(w, &http.Cookie{
 				Name: "session-id",
 				Value: loginNewSessionID(),
 				HttpOnly: true,
 			})
-			data.Message = "Innlogging vellykket."
+			ctx.setMessage("Innlogging vellykket.")
 			data.Success = true
 		}
 	case "GET":

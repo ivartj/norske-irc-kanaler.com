@@ -11,7 +11,8 @@ import (
 	"net/http"
 	"net/http/fcgi"
 	"html/template"
-	"github.com/frustra/bbcode"
+	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
+	"bytes"
 )
 
 type serveContext struct{
@@ -21,6 +22,7 @@ type serveContext struct{
 	exclude serveExcludeContext
 	adminpanel serveAdminPanelContext
 	info serveInfoContext
+	edit serveEditContext
 	req *http.Request
 	w http.ResponseWriter
 	pageTitle string
@@ -73,8 +75,13 @@ func (ctx *serveContext) Message() template.HTML {
 }
 
 func (ctx *serveContext) setMessage(msg string) {
-	bb := bbcode.NewCompiler(true, true)
-	ctx.message = template.HTML(bb.Compile(msg))
+	output := bytes.NewBuffer([]byte{})
+	input := strings.NewReader(msg)
+	err := bbgo.Process(input, output)
+	if err != nil {
+		panic(err)
+	}
+	ctx.message = template.HTML(output.String())
 }
 
 func (ctx *serveContext) executeTemplate(w io.Writer, name string, data interface{}) error {

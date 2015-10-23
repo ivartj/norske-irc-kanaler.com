@@ -62,7 +62,7 @@ func mainArgs() {
 	}
 
 	if mainConfFilename == "" {
-		mainUsage(os.Stdout)
+		mainUsage(os.Stderr)
 		os.Exit(1)
 	}
 }
@@ -71,7 +71,7 @@ func mainChangeDirectory() {
 	dir := path.Dir(mainConfFilename)
 	err := os.Chdir(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to change to directory '%s': %s.\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to change to directory '%s': %s.\n", dir, err.Error())
 		os.Exit(1)
 	}
 }

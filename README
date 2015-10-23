@@ -13,7 +13,7 @@ Administrator kan fjerne eller endre oppslag, utestenge innlegg av
 bestemte kanaler, og sette publisering av forslag på vent innen
 godkjenning.
 
-Websiden laget med programmeringsspråket Go. For å kompilere nettsiden
+Websiden er laget med programmeringsspråket Go. For å kompilere nettsiden
 trenger du en implementasjon av Go. Du kan finne en på
 http://golang.org/
 

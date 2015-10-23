@@ -138,7 +138,7 @@
 				{{if not .Submit.RemoveForm}}
 				<form method="post" action="/submit">
 					<fieldset>
-						{{if .Message}}<p>{{.Message}}</p>{{end}}
+						{{if .Message}}{{.Message}}{{end}}
 						<ol>
 							<li>
 								<label for="submit-name">Kanalnavn: </label>
@@ -181,7 +181,7 @@
 				{{else}}
 				<article>
 					{{if .Submit.Excluded}}<p>Kanalen blir ikke inkludert med følgende begrunnelse:</p>{{end}}
-					<p>{{.Message}}</p>
+					{{.Message}}
 				</article>
 				<p><a href="/">Tilbake</a></p>
 				{{end}}
@@ -194,7 +194,7 @@
 {{template "nav" .}}
 				<form method="post" action="/login">
 					<fieldset>
-						{{if .Message}}<p>{{.Message}}</p>{{end}}
+						{{if .Message}}{{.Message}}{{end}}
 						{{if .Success}}<p><a href="{{.Redirect}}">Tilbake</a></p>
 						{{else}}
 						<input type="hidden"
@@ -222,12 +222,12 @@
 				<form method="post" action="/edit">
 					<input type="hidden"
 					       name="original-name"
-					       value="{{.OriginalName}}">
+					       value="{{.Edit.OriginalName}}">
 					<input type="hidden"
-					       name="original-server"
-					       value="{{.OriginalServer}}">
+					       name="original-network"
+					       value="{{.Edit.OriginalNetwork}}">
 					<fieldset>
-						{{if .Message}}<p>{{.Message}}</p>{{end}}
+						{{if .Message}}{{.Message}}{{end}}
 						<ol>
 							<li>
 								<label for="submit-name">Kanalnavn: </label>
@@ -235,7 +235,7 @@
 								       type="text"
 								       id="submit-name"
 								       name="name"
-								       value="{{.Name}}"
+								       value="{{.Edit.Name}}"
 								       placeholder="#kanal"
 								       required>
 							</li>
@@ -244,7 +244,7 @@
 								<input type="text"
 								       id="submit-network"
 								       name="network"
-								       value="{{.Network}}"
+								       value="{{.Edit.Network}}"
 								       placeholder="irc.eksempel.net"
 								       required>
 							</li>
@@ -252,7 +252,7 @@
 								<label for="submit-weblink">Webchat-URL: </label>
 								<input type="text"
 								       id="submit-weblink"
-								       value="{{.Weblink}}"
+								       value="{{.Edit.Weblink}}"
 								       name="weblink">
 							</li>
 							<li>
@@ -260,7 +260,7 @@
 								<textarea name="description"
 									  id="submit-description"
 									  maxlength="160"
-									  required>{{.Description}}</textarea>
+									  required>{{.Edit.Description}}</textarea>
 							</li>
 						</ol>
 						<input type="submit" value="Endre">
@@ -281,7 +281,7 @@
 {{define "delete"}}
 {{template "head" .}}
 {{template "nav" .}}
-				<p>{{.Message}}</p>
+				{{.Message}}
 				<p><a href="{{.Redirect}}">Tilbake.</a></p>
 {{template "foot" .}}
 {{end}}
@@ -310,7 +310,7 @@
 {{template "nav" .}}
 	<form method="post" action="/exclude">
 		<fieldset>
-			{{if .Message}}<p>{{.Message}}</p>{{end}}
+			{{if .Message}}{{.Message}}{{end}}
 			<ol>
 				<li>
 					<label for="exclude-name">Kanalnavn: </label>
