@@ -23,6 +23,8 @@
 
     - Make something better than just "Forrige"/"Neste"
 
+    - Consider replacing the default webchat interface with irc.lc
+
  * Ensure that the web server will never stop without logging the
    reason (this happened in one instance).
 

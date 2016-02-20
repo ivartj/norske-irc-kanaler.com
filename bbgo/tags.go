@@ -119,6 +119,7 @@ func (bold *boldTagType) PrintClose(w io.Writer, arg string) {
 type urlTagType struct{}
 
 func (url *urlTagType) PrintOpen(w io.Writer, arg string) {
+	// TODO: Further sanitation, consider javascript: URLs.
 	fmt.Fprintf(w, "<a href=\"%s\">", html.EscapeString(arg))
 }
 

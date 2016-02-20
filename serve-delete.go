@@ -15,13 +15,13 @@ func (ctx *serveContext) serveDelete(w http.ResponseWriter, req *http.Request) {
 	data := struct{
 		*serveContext
 		Name string
-		Server string
+		Network string
 		Message string
 		Redirect string
 	}{
 		serveContext: ctx,
 		Name: req.URL.Query().Get("name"),
-		Server: req.URL.Query().Get("server"),
+		Network: req.URL.Query().Get("network"),
 	}
 
 	ctx.setPageTitle("Sletting av kanal")
@@ -32,11 +32,11 @@ func (ctx *serveContext) serveDelete(w http.ResponseWriter, req *http.Request) {
 	}
 	defer c.Close()
 
-	err = c.DeleteChannel(data.Name, data.Server)
+	err = c.DeleteChannel(data.Name, data.Network)
 	if err != nil {
 		panic(err)
 	}
-	data.Message = fmt.Sprintf("%s@%s har blitt slettet.", data.Name, data.Server)
+	data.Message = fmt.Sprintf("%s@%s har blitt slettet.", data.Name, data.Network)
 	data.Redirect = req.Referer()
 
 	err = ctx.executeTemplate(w, "delete", &data)
