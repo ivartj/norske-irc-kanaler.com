@@ -160,7 +160,7 @@
 								       required>
 							</li>
 							<li>
-								<label for="submit-weblink">Webchat-URL: </label>
+								<label for="submit-weblink">Webchat-URL (ikke påkrevd): </label>
 								<input type="text"
 								       id="submit-weblink"
 								       value="{{.Submit.Weblink}}"
@@ -174,8 +174,10 @@
 									  maxlength="160"
 									  required>{{.Submit.Description}}</textarea>
 							</li>
+							<li>
+								<input type="submit" value="Send inn">
+							</li>
 						</ol>
-						<input type="submit" value="Send inn">
 					</fieldset>
 				</form>
 				{{else}}

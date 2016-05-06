@@ -169,7 +169,12 @@ form fieldset li {
 }
 
 form label {
-	width: 120px;
+	min-width: 29%;
+	white-space: nowrap;
+}
+
+form input[type=text] {
+	width: 65%;
 }
 
 form textarea {
