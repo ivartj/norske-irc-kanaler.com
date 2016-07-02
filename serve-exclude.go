@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/url"
+	"fmt"
 )
 
 type serveExcludeContext struct {
@@ -10,7 +11,6 @@ type serveExcludeContext struct {
 	ExcludeName string
 	ExcludeNetwork string
 	ExcludeReason string
-	Message string
 	Exclusions []*dbExclusion
 }
 
@@ -19,9 +19,6 @@ func (ctx *serveContext) Exclude() *serveExcludeContext {
 	if ctx.exclude.initialized {
 		return &ctx.exclude
 	}
-
-	ctx.exclude.ExcludeName = ctx.req.URL.Query().Get("name")
-	ctx.exclude.ExcludeNetwork = ctx.req.URL.Query().Get("network")
 
 	var err error
 	ctx.exclude.Exclusions, err = ctx.db.GetExclusions()
@@ -54,15 +51,29 @@ func (ctx *serveContext) serveExclude(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if req.Method == "POST" {
-		err := ctx.db.AddExclusion(
-			req.FormValue("name"),
-			req.FormValue("network"),
-			req.FormValue("exclude-reason"),
-		)
+
+		name := ctx.req.URL.Query().Get("name")
+		network := ctx.req.URL.Query().Get("network")
+		reason := req.FormValue("exclude-reason")
+
+		name, network = channelAddressCanonical(name, network)
+		err := channelAddressValidate(name, network)
+
 		if err != nil {
-			panic(err)
+			ctx.setMessage(fmt.Sprintf("Ikke en gyldig kanaladresse: %s", err.Error()))
+		} else {
+
+			err = ctx.db.AddExclusion(name, network, reason)
+			if err != nil {
+				panic(err)
+			}
+
+			ctx.setMessage("Ekskludering lagt inn")
 		}
-		ctx.setMessage("Ekskludering lagt inn")
+
+		ctx.exclude.ExcludeName = name
+		ctx.exclude.ExcludeNetwork = network
+		ctx.exclude.ExcludeReason = reason
 	}
 
 	err := ctx.executeTemplate(w, "exclude", ctx)
