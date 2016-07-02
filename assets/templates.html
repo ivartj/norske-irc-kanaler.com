@@ -120,7 +120,7 @@
 {{define "approve"}}
 {{template "head" .}}
 {{template "nav" .}}
-				{{if .Approve.Message}}<p>{{.Approve.Message}}</p>{{end}}
+				{{if .Message}}{{.Message}}{{end}}
 				<ol class="channel-list">
 					{{range .Approve.Channels}}
 						{{template "channel" .}}

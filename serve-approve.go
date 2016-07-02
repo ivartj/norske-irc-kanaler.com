@@ -11,7 +11,6 @@ type serveApproveContext struct {
 	Channels []channel
 	ApproveName string
 	ApproveNetwork string
-	Message string
 	MoreNext bool
 	MorePrev bool
 	PageNext int
@@ -31,7 +30,7 @@ func (ctx *serveContext) Approve() *serveApproveContext {
 		if err != nil {
 			panic(err)
 		}
-		ctx.approve.Message = "Kanalen er godkjent!"
+		ctx.setMessage("Kanalen er godkjent!")
 	}
 
 	pagestr := ctx.req.URL.Query().Get("page")
@@ -68,6 +67,10 @@ func (ctx *serveContext) serveApprove(w http.ResponseWriter, req *http.Request) 
 	}
 
 	ctx.setPageTitle("Kanalgodkjenning")
+
+	// Ugly. Needs to initialize subcontext to initialize .Message
+	// TODO: Fix this
+	ctx.Approve()
 
 	err := ctx.executeTemplate(w, "approve", ctx)
 	if err != nil {
