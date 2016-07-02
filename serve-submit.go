@@ -62,7 +62,6 @@ type serveSubmitContext struct {
 	Network string
 	Weblink string
 	Description string
-	Message string
 	RemoveForm bool
 	Excluded bool
 }
