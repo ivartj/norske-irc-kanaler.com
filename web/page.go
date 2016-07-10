@@ -8,7 +8,7 @@ import (
 )
 
 type Page interface{
-	Write(bs []byte) (int, error)
+	http.ResponseWriter
 	Fatal(args ...interface{})
 	Fatalf(format string, args ...interface{})
 	Exec(query string, args ...interface{}) (sql.Result, error)
@@ -22,23 +22,29 @@ type Page interface{
 
 type page struct {
 	w http.ResponseWriter
-	req *http.Request
 	db *sql.DB
 	site *Site
 	fieldData map[string]interface{}
 }
 
-func pageNew(site *Site, w http.ResponseWriter, req *http.Request) *page {
+func pageNew(site *Site, w http.ResponseWriter) *page {
 
 	ctx := &page{
 		w: w,
-		req: req,
 		site: site,
 		fieldData: map[string]interface{}{},
 	}
 
 	return ctx
 
+}
+
+func (ctx *page) Header() http.Header {
+	return ctx.w.Header()
+}
+
+func (ctx *page) WriteHeader(statusCode int) {
+	ctx.w.WriteHeader(statusCode)
 }
 
 func (ctx *page) Fatal(args ...interface{}) {
@@ -50,6 +56,10 @@ func (ctx *page) Fatalf(format string, args ...interface{}) {
 }
 
 func (ctx *page) initDb() {
+	if ctx.db != nil {
+		return
+	}
+
 	var err error
 	ctx.db, err = ctx.site.openDB()
 	if err != nil {
@@ -88,6 +98,10 @@ func (ctx *page) commit() error {
 	if err != nil {
 		return err
 	}
+	err = ctx.db.Close()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -96,6 +110,10 @@ func (ctx *page) rollback() error {
 		return nil
 	}
 	_, err := ctx.db.Exec("rollback transaction;")
+	if err != nil {
+		return err
+	}
+	err = ctx.db.Close()
 	if err != nil {
 		return err
 	}
@@ -146,9 +164,9 @@ func (ctx *page) SetFieldMap(m map[string]interface{}) {
 
 func (ctx *page) GetField(name string) (interface{}, error) {
 	v, ok := ctx.fieldData[name]
-	if !ok {
-		return nil, fmt.Errorf("No field data for field '%s'", name)
+	if ok {
+		return v, nil
 	}
-	return v, nil
+	return ctx.site.GetField(name)
 }
 

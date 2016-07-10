@@ -32,8 +32,17 @@ const tplText = `
 
 `
 
-func indexServe(ctx Page) {
-	ctx.Set("content", "Lorem ipsum dolor sit amet")
+func indexPage(ctx Page, req *http.Request) {
+	ctx.SetField("content", "Lorem ipsum dolor sit amet")
+	ctx.ExecuteTemplate("index")
+}
+
+func submitPage(ctx Page, req *http.Request) {
+	ctx.SetField("content", "Lorem ipsum dolor sit amet")
+	_, err := ctx.Exec("insert into test (id) select (max(id) + 1) from test;")
+	if err != nil {
+		ctx.Fatalf("Error on inserting in table: %s", err.Error())
+	}
 	ctx.ExecuteTemplate("index")
 }
 
@@ -62,8 +71,9 @@ func TestSite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	site := NewSite("./database.db", tpl)
-	site.mux["/"] = indexServe
+	site := NewSite("test.db", tpl)
+	site.HandlePage("/", indexPage)
+	site.HandlePage("/submit", submitPage)
 	site.SetFieldMap(map[string]interface{}{
 		"page-title" : "",
 		"site-title" : "The Greatest Site",
@@ -73,6 +83,8 @@ func TestSite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	site.ServeHTTP(newDummyResponseWriter(), req)
+	req, err = http.NewRequest("POST", "/submit", strings.NewReader(""))
 	site.ServeHTTP(newDummyResponseWriter(), req)
 }
 

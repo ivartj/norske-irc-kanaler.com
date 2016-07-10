@@ -3,11 +3,11 @@
 <html lang="no">
 	<head>
 		<meta charset="utf-8">
-		<title>{{.PageTitle}}</title>
+		<title>{{if (q "page-title")}}{{q "page-title"}} - {{q "site-title"}}{{else}}{{q "site-title"}}{{end}}</title>
 		<meta name="viewport"
 		      content="width=device-width, initial-scale=1.0">
 		<meta name="description"
-		      content="{{.SiteDescription}}">
+		      content="{{q "site-description"}}">
 		<link rel="stylesheet"
 		      href="/static/styles.css"
 		      type="text/css">
@@ -19,11 +19,16 @@
 		<div class="content">
 			<div class="bar">
 				<nav class="bar-mid">
-					<a href="/">{{.SiteTitle}}</a> /
-					<strong>{{.PageTitle}}</strong>
+					<a href="/">{{q "site-title"}}</a> /
+					<strong>{{q "page-title"}}</strong>
 				</nav>
 			</div>
 			<div class="wrap">
+				{{range (q "page-messages")}}
+				<div class="message">
+					{{.}}
+				</div>
+				{{end}}
 {{end}}
 
 {{define "foot"}}
@@ -67,7 +72,8 @@
 				{{.Description}}
 			</div>
 		</div>
-		{{if context.Admin}}
+
+		{{if (q "admin")}}
 		<div class="channel-actions">
 			<a href="/edit?name={{.Name}}&network={{.Network}}">rediger</a> -
 			{{if not .Approved}}<a href="/approve?name={{.Name}}&network={{.Network}}">godkjen</a> -{{end}}
@@ -83,36 +89,42 @@
 		</div>
 		{{end}}
 		{{end}}
+
 	</li>
 {{end}}
 
 {{define "index"}}
-{{template "head" .}}
-		{{if .Index.MorePrev}}
-		{{template "nav" .}}
+{{template "head"}}
+		{{if (q "more-prev")}}
+		{{template "nav"}}
 		{{else}}
+		{{range (q "page-messages")}}
+		<div class="message">
+			{{.}}
+		</div>
+		{{end}}
 		<div class="content">
 			<div class="bar">
 				<div class="bar-mid bar-banner">
-					<h1><img id="logo" src="/static/logo.png" alt="Logo">{{.SiteTitle}}</h1>
+					<h1><img id="logo" src="/static/logo.png" alt="Logo">{{q "site-title"}}</h1>
 				</div>
 			</div>
 			<div class="description">
-				{{.SiteDescription}}<br>
+				{{q "site-description"}}<br>
 				Klikk <a href="/info/help">her</a> hvis du ikke er kjent med IRC.
 			</div>
 			<div class="wrap">
-				{{if context.Admin}}<p><a href="/logout">Logg ut</a></p>{{end}}
+				{{if (q "admin")}}<p><a href="/logout">Logg ut</a></p>{{end}}
 			{{end}}
 				<ol class="channel-list">
-				{{range .Index.Channels}}
+				{{range (q "channels")}}
 					{{template "channel" .}}
 				{{end}}
 				</ol>
 				<nav class="pagenav">
-					{{if .Index.MorePrev}}<a href="/?page={{.Index.PagePrev}}">Forrige</a>{{end}}
-					{{if .Index.MoreNext}}{{if .Index.MorePrev}}-{{end}}{{end}}
-					{{if .Index.MoreNext}}<a href="/?page={{.Index.PageNext}}">Neste</a>{{end}}
+					{{if (q "more-prev")}}<a href="/?page={{q "page-prev"}}">Forrige</a>{{end}}
+					{{if (and (q "more-next") (q "more-prev"))}}-{{end}}
+					{{if (q "more-next")}}<a href="/?page={{q "page-next"}}">Neste</a>{{end}}
 				</nav>
 {{template "foot" .}}
 {{end}}
@@ -120,25 +132,23 @@
 {{define "approve"}}
 {{template "head" .}}
 {{template "nav" .}}
-				{{if .Message}}{{.Message}}{{end}}
 				<ol class="channel-list">
-					{{range .Approve.Channels}}
+					{{range (q "channels")}}
 						{{template "channel" .}}
 					{{end}}
 				</ol>
-				{{if .Approve.MorePrev}}<a href="/approve?page={{.Approve.PagePrev}}">Forrige</a>{{end}}
-				{{if .Approve.MoreNext}}{{if .MorePrev}}-{{end}}{{end}}
-				{{if .Approve.MoreNext}}<a href="/approve?page={{.Approve.PageNext}}">Neste</a>{{end}}
+				{{if (q "more-prev")}}<a href="/approve?page={{q "page-prev"}}">Forrige</a>{{end}}
+				{{if (q "more-next") and (q "more-prev")}}-{{end}}
+				{{if (q "more-next")}}<a href="/approve?page={{q "page-next"}}">Neste</a>{{end}}
 {{template "foot" .}}
 {{end}}
 
 {{define "submit"}}
 {{template "head" .}}
 {{template "nav" .}}
-				{{if not .Submit.RemoveForm}}
+				{{if not (q "remove-form")}}
 				<form method="post" action="/submit">
 					<fieldset>
-						{{if .Message}}{{.Message}}{{end}}
 						<ol>
 							<li>
 								<label for="submit-name">Kanalnavn: </label>
@@ -146,7 +156,7 @@
 								       type="text"
 								       id="submit-name"
 								       name="name"
-								       value="{{.Submit.Name}}"
+								       value="{{q "submit-name"}}"
 								       placeholder="#kanal"
 								       required>
 							</li>
@@ -155,7 +165,7 @@
 								<input type="text"
 								       id="submit-network"
 								       name="network"
-								       value="{{.Submit.Network}}"
+								       value="{{q "submit-network"}}"
 								       placeholder="irc.eksempel.net"
 								       required>
 							</li>
@@ -163,7 +173,7 @@
 								<label for="submit-weblink">Webchat-URL (ikke påkrevd): </label>
 								<input type="text"
 								       id="submit-weblink"
-								       value="{{.Submit.Weblink}}"
+								       value="{{q "submit-weblink"}}"
 								       placeholder="http://"
 								       name="weblink">
 							</li>
@@ -172,7 +182,7 @@
 								<textarea name="description"
 									  id="submit-description"
 									  maxlength="160"
-									  required>{{.Submit.Description}}</textarea>
+									  required>{{q "submit-description"}}</textarea>
 							</li>
 							<li>
 								<input type="submit" value="Send inn">
@@ -181,10 +191,6 @@
 					</fieldset>
 				</form>
 				{{else}}
-				<article>
-					{{if .Submit.Excluded}}<p>Kanalen blir ikke inkludert med følgende begrunnelse:</p>{{end}}
-					{{.Message}}
-				</article>
 				<p><a href="/">Tilbake</a></p>
 				{{end}}
 {{template "foot" .}}
@@ -194,14 +200,14 @@
 {{define "login"}}
 {{template "head" .}}
 {{template "nav" .}}
+				{{if (q "success")}}
+				<p><a href="{{q "redirect"}}">Tilbake</a></p>
+				{{else}}
 				<form method="post" action="/login">
 					<fieldset>
-						{{if .Message}}{{.Message}}{{end}}
-						{{if .Success}}<p><a href="{{.Redirect}}">Tilbake</a></p>
-						{{else}}
 						<input type="hidden"
 						       name="redirect"
-						       value="{{.Redirect}}">
+						       value="{{q "redirect"}}">
 						<ol>
 							<li>
 								<label for="login-password">Passord: </label>
@@ -212,9 +218,9 @@
 							</li>
 						</ol>
 						<input type="submit" value="Logg inn">
-						{{end}}
 					</fieldset>
 				</form>
+				{{end}}
 {{template "foot" .}}
 {{end}}
 
@@ -224,10 +230,10 @@
 				<form method="post" action="/edit">
 					<input type="hidden"
 					       name="original-name"
-					       value="{{.Edit.OriginalName}}">
+					       value="{{q "edit-original-name"}}">
 					<input type="hidden"
 					       name="original-network"
-					       value="{{.Edit.OriginalNetwork}}">
+					       value="{{q "edit-original-network"}}">
 					<fieldset>
 						{{if .Message}}{{.Message}}{{end}}
 						<ol>
@@ -237,7 +243,7 @@
 								       type="text"
 								       id="submit-name"
 								       name="name"
-								       value="{{.Edit.Name}}"
+								       value="{{q "edit-name"}}"
 								       placeholder="#kanal"
 								       required>
 							</li>
@@ -246,7 +252,7 @@
 								<input type="text"
 								       id="submit-network"
 								       name="network"
-								       value="{{.Edit.Network}}"
+								       value="{{q "edit-network"}}"
 								       placeholder="irc.eksempel.net"
 								       required>
 							</li>
@@ -254,7 +260,7 @@
 								<label for="submit-weblink">Webchat-URL: </label>
 								<input type="text"
 								       id="submit-weblink"
-								       value="{{.Edit.Weblink}}"
+								       value="{{q "edit-weblink"}}"
 								       name="weblink">
 							</li>
 							<li>
@@ -262,7 +268,7 @@
 								<textarea name="description"
 									  id="submit-description"
 									  maxlength="160"
-									  required>{{.Edit.Description}}</textarea>
+									  required>{{q "edit-description"}}</textarea>
 							</li>
 						</ol>
 						<input type="submit" value="Endre">
@@ -283,8 +289,7 @@
 {{define "delete"}}
 {{template "head" .}}
 {{template "nav" .}}
-				{{.Message}}
-				<p><a href="{{.Redirect}}">Tilbake.</a></p>
+				<p><a href="{{q "referer"}}">Tilbake.</a></p>
 {{template "foot" .}}
 {{end}}
 
@@ -292,7 +297,7 @@
 {{template "head" .}}
 {{template "nav" .}}
 				<article>
-{{.Info.Content}}
+{{q "content"}}
 				</article>
 {{template "foot" .}}
 {{end}}
@@ -301,8 +306,8 @@
 {{template "head" .}}
 {{template "nav" .}}
 	<article>
-		<p><a href="/approve">{{.AdminPanel.NumberForApproval}} kanaler til godkjenning.</a></p>
-		<p><a href="/exclude">{{.AdminPanel.NumberExcluded}} kanaler er ekskludert.</a></p>
+		<p><a href="/approve">{{q "number-for-approval"}} kanaler til godkjenning.</a></p>
+		<p><a href="/exclude">{{q "number-excluded"}} kanaler er ekskludert.</a></p>
 	</article>
 {{template "foot" .}}
 {{end}}
@@ -312,7 +317,6 @@
 {{template "nav" .}}
 	<form method="post" action="/exclude">
 		<fieldset>
-			{{if .Message}}{{.Message}}{{end}}
 			<ol>
 				<li>
 					<label for="exclude-name">Kanalnavn: </label>
@@ -320,7 +324,7 @@
 					       type="text"
 					       id="exclude-name"
 					       name="name"
-					       value="{{.Exclude.ExcludeName}}"
+					       value="{{q "exclude-name"}}"
 					       placeholder="#kanal"
 					       required>
 				</li>
@@ -329,7 +333,7 @@
 					<input type="text"
 					       id="exclude-network"
 					       name="network"
-					       value="{{.Exclude.ExcludeNetwork}}"
+					       value="{{q "exclude-network"}}"
 					       placeholder="irc.eksempel.net"
 					       required>
 				</li>
@@ -338,7 +342,7 @@
 					<textarea name="exclude-reason"
 						  id="exclude-reason"
 						  maxlength="160"
-						  required>{{.Exclude.ExcludeReason}}</textarea>
+						  required>{{q "exclude-reason"}}</textarea>
 				</li>
 			</ol>
 			<input type="submit" value="Send inn">
@@ -346,7 +350,7 @@
 	</form>
 
 	<ol class="channel-list">
-		{{range .Exclude.Exclusions}}
+		{{range (q "exclusions")}}
 			<li class="channel">
 				<div class="channel-info">
 					{{.Name}}
@@ -356,7 +360,7 @@
 					</div>
 				</div>
 				<div class="channel-actions">
-					<a href="/exclude?name={{.Name}}&network={{.Network}}&delete=yes&code={{context.SessionID}}">slett</a>
+					<a href="/exclude?name={{.Name}}&network={{.Network}}&delete=yes&code={{q "admin-code"}}">slett</a>
 				</div>
 			</li>
 		{{end}}

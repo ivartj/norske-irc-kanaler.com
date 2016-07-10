@@ -8,11 +8,13 @@ import (
 	"log"
 	"fmt"
 	"errors"
+	"path"
 )
 
 type Site struct {
 	dbpath string
-	mux map[string]func(Page)
+	pages map[string]func(Page, *http.Request)
+	dirs map[string]func(Page, *http.Request)
 	tpl *template.Template
 	fieldData map[string]interface{}
 }
@@ -29,7 +31,8 @@ func NewSite(dbpath string, tpl *template.Template) *Site {
 
 	ctx := &Site{
 		dbpath: dbpath,
-		mux: map[string]func(Page){},
+		pages: map[string]func(Page, *http.Request){},
+		dirs: map[string]func(Page, *http.Request){},
 		tpl: tpl,
 		fieldData: map[string]interface{}{},
 	}
@@ -37,8 +40,12 @@ func NewSite(dbpath string, tpl *template.Template) *Site {
 	return ctx
 }
 
-func (ctx *Site) RegisterPage(path string, fn func(Page)) {
-	ctx.mux[path] = fn
+func (ctx *Site) HandlePage(path string, fn func(Page, *http.Request)) {
+	ctx.pages[path] = fn
+}
+
+func (ctx *Site) HandleDir(path string, fn func(Page, *http.Request)) {
+	ctx.dirs[path] = fn
 }
 
 func (ctx *Site) SetField(name string, value interface{}) {
@@ -59,16 +66,43 @@ func (ctx *Site) GetField(name string) (interface{}, error) {
 	return v, nil
 }
 
+func (ctx *Site) getHandler(p string) (func(Page, *http.Request), bool) {
+
+	h, ok := ctx.pages[p]
+	if ok {
+		return h, true
+	}
+
+	for _, v := range []map[string]func(Page, *http.Request){ctx.pages, ctx.dirs} {
+		h, ok = v[p + "/"]
+		if ok {
+			return func(page Page, req *http.Request) {
+				http.Redirect(page, req, p + "/", http.StatusMovedPermanently)
+			}, true
+		}
+	}
+
+	for p != "/" {
+		p = path.Dir(p)
+		h, ok = ctx.dirs[p + "/"]
+		if ok {
+			return h, true
+		}
+	}
+
+	return nil, false
+}
+
 func (ctx *Site) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
-	subfn, ok := ctx.mux[req.URL.Path]
+	subfn, ok := ctx.getHandler(req.URL.Path)
 	if !ok {
 		// TODO: Make own 404 handler
 		http.NotFound(w, req)
 		return
 	}
 
-	subctx := pageNew(ctx, w, req)
+	subctx := pageNew(ctx, w)
 
 	defer func() {
 		x := recover()
@@ -82,7 +116,7 @@ func (ctx *Site) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// TODO: Serve own error page
 		panic(x)
 	}()
-	subfn(subctx)
+	subfn(subctx, req)
 	err := subctx.commit()
 	if err != nil {
 		log.Fatalf("Failed to commit transaction: %s.\n", err.Error())

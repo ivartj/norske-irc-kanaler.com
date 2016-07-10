@@ -2,6 +2,11 @@ package main
 
 import (
 	"github.com/ivartj/norske-irc-kanaler.com/args"
+	"github.com/ivartj/norske-irc-kanaler.com/web"
+	"net"
+	"net/http"
+	"net/http/fcgi"
+	"html/template"
 	"fmt"
 	"io"
 	"os"
@@ -89,15 +94,59 @@ func mainOpenLog() {
 	log.SetOutput(mw)
 }
 
+func mainPrepareSite() *web.Site {
+	tpl, err := web.NewTemplate().ParseFiles(conf.AssetsPath + "/templates.html")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse template: %s.\n", err.Error())
+		os.Exit(1)
+	}
+	site := web.NewSite(conf.DatabasePath, tpl)
+	site.SetFieldMap(map[string]interface{}{
+		"site-title" : conf.WebsiteTitle,
+		"site-description" : conf.WebsiteDescription,
+		"page-title" : "",
+		"page-messages" : []template.HTML{},
+		"admin" : false,
+	})
+	site.HandlePage("/", indexPage)
+	site.HandlePage("/submit", submitPage)
+	site.HandleDir("/static/", assetsDir)
+	site.HandleDir("/info/", infoDir)
+	site.HandlePage("/login", loginPage)
+	site.HandlePage("/logout", loginCheck(logoutPage))
+	site.HandlePage("/admin", loginCheck(adminPage))
+	site.HandlePage("/approve", loginCheck(approvePage))
+	site.HandlePage("/exclude", loginCheck(excludePage))
+	site.HandlePage("/edit", loginCheck(editPage))
+	site.HandlePage("/delete", loginCheck(deletePage))
+	return site
+}
+
+func mainServeSite(site *web.Site) {
+	var err error
+	switch conf.ServeMethod {
+	case "http":
+		err = http.ListenAndServe(":" + fmt.Sprint(conf.HttpPort), site)
+	case "fcgi":
+		l, err := net.Listen("unix", conf.FastcgiPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create unix socket for FastCGI: %s.\n", err.Error())
+			os.Exit(1)
+		}
+		err = fcgi.Serve(l, site)
+	}
+	log.Fatalf("Error serving site: %s.\n", err.Error())
+}
+
 func main() {
 	mainArgs()
 	mainChangeDirectory()
 	confParse(mainConfFilename)
 	mainOpenLog()
-	dbInit()
 	if conf.IRCBotEnable {
 		go channelCheckLoop()
 	}
-	serve()
+	site := mainPrepareSite()
+	mainServeSite(site)
 }
 
