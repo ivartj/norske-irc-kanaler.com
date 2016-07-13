@@ -4,18 +4,15 @@ import (
 	"strconv"
 	"net/http"
 	"fmt"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
 const (
 	indexPageSize = 15
 )
 
-func indexPage(page web.Page, req *http.Request) {
+func indexPage(page *page, req *http.Request) {
 
 	var err error
-
-	loginInit(page, req)
 
 	pg := 1
 	pgstr := req.URL.Query().Get("page")

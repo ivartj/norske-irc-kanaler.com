@@ -2,18 +2,23 @@ package main
 
 import (
 	"net/http"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
-func deletePage(page web.Page, req *http.Request) {
+func deletePage(page *page, req *http.Request) {
 	name := req.URL.Query().Get("name")
 	network := req.URL.Query().Get("network")
-	page.SetField("referer", req.Referer())
+
+	if page.main.auth.Nonce() != req.FormValue("nonce") {
+		page.AddMessage("Nonce-mismatch.")
+		page.ExecuteTemplate("message")
+		return
+	}
+
 	err := dbDeleteChannel(page, name, network)
 	if err != nil {
 		page.Fatalf("Failed to delete channel: %s", err.Error())
 	}
-	utilAddMessage(page, "%s@%s har blitt slettet.", name, network)
+	page.AddMessage("%s@%s har blitt slettet.", name, network)
 	page.ExecuteTemplate("delete")
 }
 

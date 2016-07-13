@@ -1,7 +1,6 @@
 package web
 
 import (
-	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 	"database/sql"
 	"net/http"
 	"html/template"
@@ -12,7 +11,7 @@ import (
 )
 
 type Site struct {
-	dbpath string
+	db *sql.DB
 	pages map[string]func(Page, *http.Request)
 	dirs map[string]func(Page, *http.Request)
 	tpl *template.Template
@@ -27,10 +26,10 @@ func NewTemplate() *template.Template {
 	}))
 }
 
-func NewSite(dbpath string, tpl *template.Template) *Site {
+func NewSite(db *sql.DB, tpl *template.Template) *Site {
 
 	ctx := &Site{
-		dbpath: dbpath,
+		db: db,
 		pages: map[string]func(Page, *http.Request){},
 		dirs: map[string]func(Page, *http.Request){},
 		tpl: tpl,
@@ -124,19 +123,7 @@ func (ctx *Site) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (ctx *Site) openDB() (*sql.DB, error) {
-
-	c, err := sql.Open("sqlite3", ctx.dbpath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to open database connection: %s", err.Error())
-	}
-
-	_, err = c.Exec("pragma foreign_keys = 1;")
-	if err != nil {
-		c.Close()
-		return nil, fmt.Errorf("Failed to enable foreign keys in database connection: %s", err.Error())
-	}
-
-	return c, nil
+func (ctx *Site) Begin() (*sql.Tx, error) {
+	return ctx.db.Begin()
 }
 

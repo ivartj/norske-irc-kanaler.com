@@ -16,11 +16,7 @@ var dbLock *sync.Mutex = &sync.Mutex{}
 
 const dbTimeFmt string = "2006-01-02 15:04:05"
 
-type dbConn struct {
-	*sql.DB
-}
-
-type db interface {
+type dbConn interface {
 	Query(code string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(code string, args ...interface{}) *sql.Row
 	Exec(code string, args ...interface{}) (sql.Result, error)
@@ -30,38 +26,18 @@ type dbScan interface {
 	Scan(...interface{}) error
 }
 
-func dbInit() {
+func dbInit(c *sql.DB, migrationsDir string) error {
 	migrations := &migrate.FileMigrationSource{
-		Dir: conf.AssetsPath + "/sql",
+		Dir: migrationsDir,
 	}
 
-	c, err := dbOpen()
-	if err != nil {
-		log.Fatalf("Failed to open database:\n%s\n", err.Error())
-	}
-	defer c.Close()
-
-	n, err := migrate.Exec(c.DB, "sqlite3", migrations, migrate.Up)
+	n, err := migrate.Exec(c, "sqlite3", migrations, migrate.Up)
 	log.Printf("Applied %d migrations.\n", n);
 	if err != nil {
-		log.Fatalf("Error on applying migrations:\n%s\n", err.Error())
-	}
-}
-
-func dbOpen() (*dbConn, error) {
-	dbLock.Lock()
-	c, err := sql.Open("sqlite3", conf.DatabasePath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to open database file '%s': %s.\n", conf.DatabasePath, err.Error())
-	}
-	dbLock.Unlock()
-
-	_, err = c.Exec("pragma foreign_keys = true;")
-	if err != nil {
-		return nil, err
+		return fmt.Errorf("Error on applying migrations: %s", err.Error())
 	}
 
-	return &dbConn{c}, nil
+	return nil
 }
 
 // Should more or less match the columns of the channel_all view
@@ -169,7 +145,7 @@ func dbScanChannel(scan dbScan) (*dbChannel, error) {
 	return &ch, nil
 }
 
-func dbGetChannel(c db, name, network string) (channel, error) {
+func dbGetChannel(c dbConn, name, network string) (channel, error) {
 	row := c.QueryRow(`
 		select
 			*
@@ -187,7 +163,7 @@ func dbGetChannel(c db, name, network string) (channel, error) {
 	return ch, nil
 }
 
-func dbEditChannel(c db, originalName, originalServer string, name, network, weblink, description string) error {
+func dbEditChannel(c dbConn, originalName, originalServer string, name, network, weblink, description string) error {
 	_, err := c.Exec(`
 		update channel
 		set
@@ -204,7 +180,7 @@ func dbEditChannel(c db, originalName, originalServer string, name, network, web
 	return nil
 }
 
-func (c *dbConn) UpdateStatus(name, network string, numusers int, topic, query_method, errmsg string) error {
+func dbUpdateStatus(c dbConn, name, network string, numusers int, topic, query_method, errmsg string) error {
 	_, err := c.Exec(`
 		insert into channel_status
 			(channel_name, network, numusers, topic, query_method, errmsg, status_time)
@@ -218,7 +194,7 @@ func (c *dbConn) UpdateStatus(name, network string, numusers int, topic, query_m
 	return nil
 }
 
-func dbDeleteChannel(c db, name, network string) error {
+func dbDeleteChannel(c dbConn, name, network string) error {
 	_, err := c.Exec(`
 		delete from channel
 		where
@@ -230,7 +206,7 @@ func dbDeleteChannel(c db, name, network string) error {
 	return nil
 }
 
-func dbApproveChannel(c db, name, network string) error {
+func dbApproveChannel(c dbConn, name, network string) error {
 	_, err := c.Exec(`
 		update channel
 		set
@@ -245,19 +221,19 @@ func dbApproveChannel(c db, name, network string) error {
 	return nil
 }
 
-func (c *dbConn) GetApprovedChannels(off, len int) ([]channel, error) {
-	return c.GetChannels(off, len, "approved")
+func dbGetApprovedChannels(c dbConn, off, len int) ([]channel, error) {
+	return dbGetChannels(c, off, len, "approved")
 }
 
-func (c *dbConn) GetUnapprovedChannels(off, len int) ([]channel, error) {
-	return c.GetChannels(off, len, "unapproved")
+func dbGetUnapprovedChannels(c dbConn, off, len int) ([]channel, error) {
+	return dbGetChannels(c, off, len, "unapproved")
 }
 
-func (c *dbConn) GetLatestChannels(off, len int) ([]channel, error) {
-	return c.GetChannels(off, len, "latest")
+func dbGetLatestChannels(c dbConn, off, len int) ([]channel, error) {
+	return dbGetChannels(c, off, len, "latest")
 }
 
-func (c *dbConn) GetChannels(off, len int, tablename string) ([]channel, error) {
+func dbGetChannels(c dbConn, off, len int, tablename string) ([]channel, error) {
 
 	table := "channel_" + tablename
 
@@ -308,8 +284,8 @@ type dbNetwork struct {
 	servers []string
 }
 
-func (c *dbConn) GetNetworks() ([]*dbNetwork, error) {
-	servers, err := c.GetServers()
+func dbGetNetworks(c dbConn) ([]*dbNetwork, error) {
+	servers, err := dbGetServers(c)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +309,7 @@ func (c *dbConn) GetNetworks() ([]*dbNetwork, error) {
 	return networks, nil
 }
 
-func (c *dbConn) GetServers() ([]*dbServer, error) {
+func dbGetServers(c dbConn) ([]*dbServer, error) {
 	rows, err := c.Query(`
 		select
 			server, network
@@ -368,7 +344,7 @@ func (c *dbConn) GetServers() ([]*dbServer, error) {
 	return servers, nil
 }
 
-func (c *dbConn) AddServer(server, network string) error {
+func dbAddServer(c dbConn, server, network string) error {
 	_, err := c.Exec(`
 		insert into server
 			(server, network)
@@ -382,7 +358,7 @@ func (c *dbConn) AddServer(server, network string) error {
 }
 
 
-func dbAddChannel(c db, name, network, weblink, description string, approved bool) error {
+func dbAddChannel(c dbConn, name, network, weblink, description string, approved bool) error {
 	_, err := c.Exec(`
 		insert into channel
 			(channel_name,
@@ -417,7 +393,7 @@ func dbAddChannel(c db, name, network, weblink, description string, approved boo
 	return nil
 }
 
-func dbIsChannelExcluded(c db, name, network string) (bool, string, error) {
+func dbIsChannelExcluded(c dbConn, name, network string) (bool, string, error) {
 	row := c.QueryRow(`
 		select
 			exclude_reason
@@ -439,7 +415,7 @@ func dbIsChannelExcluded(c db, name, network string) (bool, string, error) {
 	return true, exclude_reason, nil
 }
 
-func dbGetNumberOfChannelsUnapproved(c db) (int, error) {
+func dbGetNumberOfChannelsUnapproved(c dbConn) (int, error) {
 	row := c.QueryRow(`
 		select
 			count(*)
@@ -452,7 +428,7 @@ func dbGetNumberOfChannelsUnapproved(c db) (int, error) {
 	return num, err
 }
 
-func dbGetNumberOfChannelsExcluded(c db) (int, error) {
+func dbGetNumberOfChannelsExcluded(c dbConn) (int, error) {
 	row := c.QueryRow(`
 		select
 			count(*)
@@ -465,7 +441,7 @@ func dbGetNumberOfChannelsExcluded(c db) (int, error) {
 	return num, err
 }
 
-func dbAddExclusion(c db, name, network, reason string) error {
+func dbAddExclusion(c dbConn, name, network, reason string) error {
 	_, err := c.Exec(`
 		insert into channel_excluded
 			(channel_name,
@@ -501,7 +477,7 @@ func (ex *dbExclusion) Name() string { return ex.name }
 func (ex *dbExclusion) Network() string { return ex.network }
 func (ex *dbExclusion) Reason() template.HTML { return template.HTML(ex.reason) }
 
-func dbGetExclusions(c db) ([]*dbExclusion, error) {
+func dbGetExclusions(c dbConn) ([]*dbExclusion, error) {
 	rows, err := c.Query(`
 		select
 			channel_name, network, exclude_reason
@@ -536,7 +512,7 @@ func dbGetExclusions(c db) ([]*dbExclusion, error) {
 	return exs, nil
 }
 
-func dbDeleteExclusion(c db, name, network string) error {
+func dbDeleteExclusion(c dbConn, name, network string) error {
 	_, err := c.Exec(`
 		delete from channel_excluded
 		where

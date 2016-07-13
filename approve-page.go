@@ -3,35 +3,29 @@ package main
 import (
 	"net/http"
 	"strconv"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
 const approvePageSize = 15
 
-type serveApproveContext struct {
-	initialized bool
-	Channels []channel
-	ApproveName string
-	ApproveNetwork string
-	MoreNext bool
-	MorePrev bool
-	PageNext int
-	PagePrev int
-}
-
-func approvePage(page web.Page, req *http.Request) {
+func approvePage(page *page, req *http.Request) {
 
 	page.SetField("page-title", "Kanalgodkjenning")
 
 	approveName := req.URL.Query().Get("name")
 	approveNetwork := req.URL.Query().Get("network")
 	if approveName != "" && approveNetwork != "" {
+		if page.main.auth.Nonce() != req.FormValue("nonce") {
+			page.AddMessage("Nonce mismatch.")
+			page.ExecuteTemplate("message")
+			return
+		}
 		err := dbApproveChannel(page, approveName, approveNetwork)
 		if err != nil {
 			page.Fatalf("Failed to approve channel: %s", err.Error())
 		}
-		utilAddMessage(page, "Kanalen er godkjent!")
+		page.AddMessage("Kanalen er godkjent!")
 	}
+
 	pgstr := req.URL.Query().Get("page")
 	pg := 1
 	pg, err := strconv.Atoi(pgstr)

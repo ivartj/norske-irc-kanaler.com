@@ -2,7 +2,6 @@
 
 import (
 	"net/http"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
 type submitErrorExcluded string
@@ -18,7 +17,7 @@ func (err submitErrorApproval) Error() string { return string(err) }
 type submitOk string
 func (err submitOk) Error() string { return string(err) }
 
-func submitChannel(page web.Page, name, server, weblink, description string) error {
+func submitChannel(page *page, name, server, weblink, description string) error {
 
 	name, server = channelAddressCanonical(name, server)
 
@@ -45,19 +44,19 @@ func submitChannel(page web.Page, name, server, weblink, description string) err
 		return submitErrorAlreadyIn("Takk. Bidraget har allerede blitt sendt inn.")
 	}
 
-	err = dbAddChannel(page, name, server, weblink, description, !conf.Approval)
+	err = dbAddChannel(page, name, server, weblink, description, !page.main.conf.Approval())
 	if err != nil {
 		panic(err)
 	}
 
-	if conf.Approval {
+	if page.main.conf.Approval() {
 		return submitErrorApproval("Takk for forslaget! Forslaget vil publiseres etter godkjenning av administrator.")
 	} else {
 		return submitOk("Takk for bidraget! Forslaget er publisert.")
 	}
 }
 
-func submitPage(page web.Page, req *http.Request) {
+func submitPage(page *page, req *http.Request) {
 
 	page.SetField("page-title", "Legg til chatterom")
 
@@ -79,7 +78,7 @@ func submitPage(page web.Page, req *http.Request) {
 		page.SetField("remove-form", true)
 
 		err := submitChannel(page, name, network, weblink, description)
-		utilAddMessage(page, err.Error())
+		page.AddMessage(err.Error())
 		switch err.(type) {
 		case submitErrorInvalid:
 			page.SetField("remove-form", false)

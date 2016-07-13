@@ -22,7 +22,7 @@ type Page interface{
 
 type page struct {
 	w http.ResponseWriter
-	db *sql.DB
+	db *sql.Tx
 	site *Site
 	fieldData map[string]interface{}
 }
@@ -61,13 +61,9 @@ func (ctx *page) initDb() {
 	}
 
 	var err error
-	ctx.db, err = ctx.site.openDB()
+	ctx.db, err = ctx.site.Begin()
 	if err != nil {
 		ctx.Fatal(err.Error())
-	}
-	_, err = ctx.db.Exec("begin transaction;")
-	if err != nil {
-		ctx.Fatalf("Failed to initiate database transaction on connection: %s", err.Error())
 	}
 }
 
@@ -94,11 +90,7 @@ func (ctx *page) commit() error {
 	if ctx.db == nil {
 		return nil
 	}
-	_, err := ctx.db.Exec("commit transaction;")
-	if err != nil {
-		return err
-	}
-	err = ctx.db.Close()
+	err := ctx.db.Commit()
 	if err != nil {
 		return err
 	}
@@ -109,11 +101,7 @@ func (ctx *page) rollback() error {
 	if ctx.db == nil {
 		return nil
 	}
-	_, err := ctx.db.Exec("rollback transaction;")
-	if err != nil {
-		return err
-	}
-	err = ctx.db.Close()
+	err := ctx.db.Rollback()
 	if err != nil {
 		return err
 	}

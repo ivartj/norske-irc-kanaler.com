@@ -19,14 +19,18 @@
 		<div class="content">
 			<div class="bar">
 				<nav class="bar-mid">
-					<a href="/">{{q "site-title"}}</a> /
-					<strong>{{q "page-title"}}</strong>
+					<div class="padding-horizontal">
+						<a href="/">{{q "site-title"}}</a> /
+						<strong>{{q "page-title"}}</strong>
+					</div>
 				</nav>
 			</div>
 			<div class="wrap">
 				{{range (q "page-messages")}}
 				<div class="message">
-					{{.}}
+					<div class="padding">
+						{{.}}
+					</div>
 				</div>
 				{{end}}
 {{end}}
@@ -35,16 +39,20 @@
 			</div>
 			<div class="bar footer-hidden">
 				<div class="bar-mid">
-					<a href="/info/help">Hjelp med IRC-chat</a> - 
-					<a href="/info/about">Om siden</a> - 
-					<a href="/submit">Legg til chatterom</a>
+					<div class="padding-horizontal">
+						<a href="/info/help">Hjelp med IRC-chat</a> - 
+						<a href="/info/about">Om siden</a> - 
+						<a href="/submit">Legg til chatterom</a>
+					</div>
 				</div>
 			</div>
 			<div class="bar footer">
 				<div class="bar-mid">
-					<a href="/info/help">Hjelp med IRC-chat</a> - 
-					<a href="/info/about">Om siden</a> - 
-					<a href="/submit">Legg til chatterom</a>
+					<div class="padding-horizontal">
+						<a href="/info/help">Hjelp med IRC-chat</a> - 
+						<a href="/info/about">Om siden</a> - 
+						<a href="/submit">Legg til chatterom</a>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -77,7 +85,7 @@
 		<div class="channel-actions">
 			<a href="/edit?name={{.Name}}&network={{.Network}}">rediger</a> -
 			{{if not .Approved}}<a href="/approve?name={{.Name}}&network={{.Network}}">godkjen</a> -{{end}}
-			<a href="/delete?name={{.Name}}&network={{.Network}}">slett</a>
+			<a href="/delete?name={{.Name}}&amp;network={{.Network}}&amp;nonce={{q "auth-nonce"}}">slett</a>
 		</div>
 		{{if not .Error }}
 		<div class="channel-status">
@@ -106,22 +114,26 @@
 		<div class="content">
 			<div class="bar">
 				<div class="bar-mid bar-banner">
-					<h1><img id="logo" src="/static/logo.png" alt="Logo">{{q "site-title"}}</h1>
+					<div class="padding-horizontal">
+						<h1><img id="logo" src="/static/logo.png" alt="Logo">{{q "site-title"}}</h1>
+					</div>
 				</div>
 			</div>
 			<div class="description">
-				{{q "site-description"}}<br>
-				Klikk <a href="/info/help">her</a> hvis du ikke er kjent med IRC.
+				<div class="padding">
+					{{q "site-description"}}<br>
+					Klikk <a href="/info/help">her</a> hvis du ikke er kjent med IRC.
+				</div>
 			</div>
 			<div class="wrap">
-				{{if (q "admin")}}<p><a href="/logout">Logg ut</a></p>{{end}}
+				{{if (q "admin")}}<p class="padding-horizontal"><a href="/logout?nonce={{q "auth-nonce"}}">Logg ut</a></p>{{end}}
 			{{end}}
 				<ol class="channel-list">
 				{{range (q "channels")}}
 					{{template "channel" .}}
 				{{end}}
 				</ol>
-				<nav class="pagenav">
+				<nav class="padding-horizontal">
 					{{if (q "more-prev")}}<a href="/?page={{q "page-prev"}}">Forrige</a>{{end}}
 					{{if (and (q "more-next") (q "more-prev"))}}-{{end}}
 					{{if (q "more-next")}}<a href="/?page={{q "page-next"}}">Neste</a>{{end}}
@@ -360,12 +372,19 @@
 					</div>
 				</div>
 				<div class="channel-actions">
-					<a href="/exclude?name={{.Name}}&network={{.Network}}&delete=yes&code={{q "admin-code"}}">slett</a>
+					<a href="/exclude?name={{.Name}}&amp;network={{.Network}}&amp;delete=yes&amp;nonce={{q "auth-nonce"}}">slett</a>
 				</div>
 			</li>
 		{{end}}
 	</ol>
 
 {{template "foot"}}
+{{end}}
+
+{{define "message"}}
+{{template "head" .}}
+{{template "nav" .}}
+<a href="{{q "referer"}}">Tilbake</a>
+{{template "foot" .}}
 {{end}}
 

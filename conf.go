@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-type config struct {
+type confSet struct {
 	WebsiteTitle string `yaml:"website-title"`
 	WebsiteDescription string `yaml:"website-description"`
 	IRCBotEnable bool `yaml:"irc-bot-enable"`
@@ -25,90 +25,104 @@ type config struct {
 	ReloadTemplate bool `yaml:"reload-templates"`
 }
 
-var conf *config = &config{}
+type conf struct {
+	set confSet
+}
 
-func confParse(filename string) {
+func (cfg *conf) WebsiteTitle() string { return cfg.set.WebsiteTitle }
+func (cfg *conf) WebsiteDescription() string { return cfg.set.WebsiteDescription }
+func (cfg *conf) IRCBotEnable() bool { return cfg.set.IRCBotEnable }
+func (cfg *conf) IRCBotNickname() string { return cfg.set.IRCBotNickname }
+func (cfg *conf) IRCBotRealname() string { return cfg.set.IRCBotRealname }
+func (cfg *conf) IRCBotQuitMessage() string { return cfg.set.IRCBotQuitMessage }
+func (cfg *conf) ServeMethod() string { return cfg.set.ServeMethod }
+func (cfg *conf) FastcgiPath() string { return cfg.set.FastcgiPath }
+func (cfg *conf) HttpPort() uint { return cfg.set.HttpPort }
+func (cfg *conf) DatabasePath() string { return cfg.set.DatabasePath }
+func (cfg *conf) AssetsPath() string { return cfg.set.AssetsPath }
+func (cfg *conf) LogPath() string { return cfg.set.LogPath }
+func (cfg *conf) Approval() bool { return cfg.set.Approval }
+func (cfg *conf) Password() string { return cfg.set.Password }
+func (cfg *conf) ReloadTemplate() bool { return cfg.set.ReloadTemplate }
+
+func confNew() *conf {
+	return &conf{}
+}
+
+func (cfg *conf) ParseFile(filename string) error {
 
 	file, err := os.Open(filename)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open file '%s': %s\n", filename, err.Error())
-		os.Exit(1)
+		return fmt.Errorf("Failed to open file '%s': %s", filename, err.Error())
 	}
 	defer file.Close()
 
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error on reading from file '%s': %s.\n", filename, err.Error())
-		os.Exit(1)
+		return fmt.Errorf("Error on reading from file '%s': %s", filename, err.Error())
 	}
 
-	err = yaml.Unmarshal(bytes, conf)
+	err = yaml.Unmarshal(bytes, &(cfg.set))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error on parsing configuration file '%s': %s.\n", filename, err.Error())
-		os.Exit(1)
+		return fmt.Errorf("Error on parsing configuration file '%s': %s", filename, err.Error())
 	}
 
-	confSanityCheck(conf)
+	err = cfg.Validate()
+	if err != nil {
+		return fmt.Errorf("Failed to validate configuration: %s", err.Error())
+	}
+
+	return nil
 }
 
-func confSanityCheck(conf *config) {
-	switch conf.ServeMethod {
+func (cfg *conf) Validate() error {
+	switch cfg.ServeMethod() {
 	case "":
-		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'method' field value. Specify either 'http' or 'fastcgi'.\n")
-		os.Exit(1)
+		return fmt.Errorf("Configuration error: Missing 'method' field value. Specify either 'http' or 'fastcgi'.\n")
 	case "http":
-		if conf.HttpPort == 0 || conf.HttpPort > 65545 {
-			fmt.Fprintf(os.Stderr, "Configuration error: Invalid HTTP port number '%d'.\n", conf.HttpPort)
-			os.Exit(1)
+		if cfg.HttpPort() == 0 || cfg.HttpPort() > 65545 {
+			return fmt.Errorf("Configuration error: Invalid HTTP port number '%d'.\n", cfg.HttpPort())
 		}
 	case "fastcgi":
-		if conf.FastcgiPath == "" {
-			fmt.Fprintln(os.Stderr, "Configuration error: Missing 'fastcgi-path' field value.\n")
-			os.Exit(1)
+		if cfg.FastcgiPath() == "" {
+			return fmt.Errorf("Configuration error: Missing 'fastcgi-path' field value.\n")
 		}
 	default:
-		fmt.Fprintln(os.Stderr, "Configuration error: Unrecognized 'method' field value.\n")
-		os.Exit(1)
+		return fmt.Errorf("Configuration error: Unrecognized 'method' field value.\n")
 	}
 
-	if conf.DatabasePath == "" {
-		fmt.Fprintln(os.Stderr, "Configuration error: Missing 'database-path' field value.\n")
-		os.Exit(1)
+	if cfg.DatabasePath() == "" {
+		return fmt.Errorf("Configuration error: Missing 'database-path' field value.\n")
 	}
 
-	if conf.AssetsPath == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'assets-path' field value.\n")
-		os.Exit(1)
+	if cfg.AssetsPath() == "" {
+		return fmt.Errorf("Configuration error: Missing 'assets-path' field value.\n")
 	}
 
-	if conf.Password == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'password' field value.\n")
-		os.Exit(1)
+	if cfg.Password() == "" {
+		return fmt.Errorf("Configuration error: Missing 'password' field value.\n")
 	}
 
-	if conf.IRCBotNickname == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-nickname' field value.\n")
-		os.Exit(1)
+	if cfg.IRCBotNickname() == "" {
+		return fmt.Errorf("Configuration error: Missing 'irc-bot-nickname' field value.\n")
 	}
 
-	if conf.IRCBotRealname == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-realname' field value.\n")
-		os.Exit(1)
+	if cfg.IRCBotRealname() == "" {
+		return fmt.Errorf("Configuration error: Missing 'irc-bot-realname' field value.\n")
 	}
 
-	if conf.WebsiteTitle == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-title' field value.\n")
-		os.Exit(1)
+	if cfg.WebsiteTitle() == "" {
+		return fmt.Errorf("Configuration error: Missing 'website-title' field value.\n")
 	}
 
-	if conf.WebsiteDescription == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'website-description' field value.\n")
-		os.Exit(1)
+	if cfg.WebsiteDescription() == "" {
+		return fmt.Errorf("Configuration error: Missing 'website-description' field value.\n")
 	}
 
-	if conf.IRCBotQuitMessage == "" {
-		fmt.Fprintf(os.Stderr, "Configuration error: Missing 'irc-bot-quit-message' field value.\n")
-		os.Exit(1)
+	if cfg.IRCBotQuitMessage() == "" {
+		return fmt.Errorf("Configuration error: Missing 'irc-bot-quit-message' field value.\n")
 	}
+
+	return nil
 }
 

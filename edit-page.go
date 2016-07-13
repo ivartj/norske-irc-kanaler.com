@@ -2,10 +2,9 @@ package main
 
 import (
 	"net/http"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
-func editPage(page web.Page, req *http.Request) {
+func editPage(page *page, req *http.Request) {
 
 	page.SetField("page-title", "Rediger kanal")
 
@@ -48,7 +47,7 @@ func editPage(page web.Page, req *http.Request) {
 		if err != nil {
 			page.Fatalf("Failed to edit channel: %s", err.Error())
 		}
-		utilAddMessage(page, "Endring vellykket.")
+		page.AddMessage("Endring vellykket.")
 	}
 
 	page.SetFieldMap(map[string]interface{}{

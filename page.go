@@ -1,15 +1,27 @@
 package main
 
 import (
-	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
 	"github.com/ivartj/norske-irc-kanaler.com/web"
+	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
+	"fmt"
 	"bytes"
 	"strings"
 	"html/template"
-	"fmt"
 )
 
-func utilAddMessage(page web.Page, format string, args ...interface{}) {
+type page struct {
+	web.Page
+	main *mainContext
+}
+
+func pageNew(ctx *mainContext, webPage web.Page) *page {
+	return &page{
+		main: ctx,
+		Page: webPage,
+	}
+}
+
+func (page *page) AddMessage(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	bb := bytes.NewBuffer([]byte{})
 	err := bbgo.Process(strings.NewReader(msg), bb)
@@ -27,3 +39,4 @@ func utilAddMessage(page web.Page, format string, args ...interface{}) {
 	}
 	page.SetField("page-messages", append(msgs, template.HTML(bb.String())))
 }
+

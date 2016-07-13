@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"os"
+	"database/sql"
+	_ "code.google.com/p/go-sqlite/go1/sqlite3"
 )
 
 const tplText = `
@@ -67,11 +69,20 @@ func (w *dummyResponseWriter) Write(bs []byte) (int, error) {
 func (w *dummyResponseWriter) WriteHeader(code int) { }
 
 func TestSite(t *testing.T) {
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	_, err = db.Exec("create table test (id integer primary key not null);")
+	if err != nil {
+		t.Fatal(err)
+	}
 	tpl, err := NewTemplate().Parse(tplText)
 	if err != nil {
 		t.Fatal(err)
 	}
-	site := NewSite("test.db", tpl)
+	site := NewSite(db, tpl)
 	site.HandlePage("/", indexPage)
 	site.HandlePage("/submit", submitPage)
 	site.SetFieldMap(map[string]interface{}{

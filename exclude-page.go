@@ -2,14 +2,13 @@ package main
 
 import (
 	"net/http"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
-func excludePage(page web.Page, req *http.Request) {
+func excludePage(page *page, req *http.Request) {
 
 	page.SetField("page-title", "Kanalekskludering")
 
-	if req.Method == "GET" && req.FormValue("delete") == "yes" && req.FormValue("code") == loginSessionID {
+	if req.Method == "GET" && req.FormValue("delete") == "yes" && req.FormValue("nonce") == page.main.auth.Nonce() {
 		err := dbDeleteExclusion(
 			page,
 			req.FormValue("name"),
@@ -18,7 +17,7 @@ func excludePage(page web.Page, req *http.Request) {
 		if err != nil {
 			page.Fatalf("Failed to remove exclusion: %s", err.Error())
 		}
-		utilAddMessage(page, "Ekskluderingen er fjernet.")
+		page.AddMessage("Ekskluderingen er fjernet.")
 	}
 
 	name, network, reason := "", "", ""
@@ -32,7 +31,7 @@ func excludePage(page web.Page, req *http.Request) {
 		err := channelAddressValidate(name, network)
 
 		if err != nil {
-			utilAddMessage(page, "Ikke en gyldig kanal: %s", err.Error())
+			page.AddMessage("Ikke en gyldig kanal: %s", err.Error())
 		} else {
 
 			err = dbAddExclusion(page, name, network, reason)
@@ -40,7 +39,7 @@ func excludePage(page web.Page, req *http.Request) {
 				page.Fatalf("Failed to add exclusion: %s", err.Error())
 			}
 
-			utilAddMessage(page, "Ekskludering lagt inn")
+			page.AddMessage("Ekskludering lagt inn")
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/fcgi"
 	"html/template"
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
@@ -36,6 +37,7 @@ func mainUsage(out io.Writer) {
 }
 
 func mainArgs() {
+
 	tok := args.NewTokenizer(os.Args)
 
 	for tok.Next() {
@@ -81,72 +83,128 @@ func mainChangeDirectory() {
 	}
 }
 
-func mainOpenLog() {
-	if(conf.LogPath == "") {
+func mainOpenLog(cfg *conf) {
+	if(cfg.LogPath() == "") {
 		return
 	}
-	f, err := os.Create(conf.LogPath)
+	f, err := os.Create(cfg.LogPath())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open log file '%s': %s\n", conf.LogPath, err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to open log file '%s': %s\n", cfg.LogPath(), err.Error())
 		os.Exit(1)
 	}
 	mw := io.MultiWriter(f, os.Stderr)
 	log.SetOutput(mw)
 }
 
-func mainPrepareSite() *web.Site {
-	tpl, err := web.NewTemplate().ParseFiles(conf.AssetsPath + "/templates.html")
+type mainContext struct {
+	auth *auth
+	conf *conf
+	site *web.Site
+	db *sql.DB
+}
+
+func mainNewContext(cfg *conf) *mainContext {
+
+	db, err := sql.Open("sqlite3", cfg.DatabasePath())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open database: %s.\n", err.Error())
+		os.Exit(1)
+	}
+
+	err = dbInit(db, cfg.AssetsPath() + "/sql")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s.\n", err.Error())
+	}
+
+	tpl, err := web.NewTemplate().ParseFiles(cfg.AssetsPath() + "/templates.html")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to parse template: %s.\n", err.Error())
 		os.Exit(1)
 	}
-	site := web.NewSite(conf.DatabasePath, tpl)
-	site.SetFieldMap(map[string]interface{}{
-		"site-title" : conf.WebsiteTitle,
-		"site-description" : conf.WebsiteDescription,
+	site := web.NewSite(db, tpl)
+
+	ctx := &mainContext{
+		conf: cfg,
+		site: site,
+		db: db,
+		auth: &auth{},
+	}
+
+	ctx.site.SetFieldMap(map[string]interface{}{
+		"site-title" : cfg.WebsiteTitle(),
+		"site-description" : cfg.WebsiteDescription(),
 		"page-title" : "",
 		"page-messages" : []template.HTML{},
 		"admin" : false,
 	})
-	site.HandlePage("/", indexPage)
-	site.HandlePage("/submit", submitPage)
-	site.HandleDir("/static/", assetsDir)
-	site.HandleDir("/info/", infoDir)
-	site.HandlePage("/login", loginPage)
-	site.HandlePage("/logout", loginCheck(logoutPage))
-	site.HandlePage("/admin", loginCheck(adminPage))
-	site.HandlePage("/approve", loginCheck(approvePage))
-	site.HandlePage("/exclude", loginCheck(excludePage))
-	site.HandlePage("/edit", loginCheck(editPage))
-	site.HandlePage("/delete", loginCheck(deletePage))
-	return site
+
+	auth := ctx.auth
+
+	ctx.HandlePage("/", indexPage)
+	ctx.HandlePage("/submit", submitPage)
+	ctx.HandleDir("/static/", assetsDir)
+	ctx.HandleDir("/info/", infoDir)
+	ctx.HandlePage("/login", loginPage)
+	ctx.HandlePage("/logout", auth.Guard(logoutPage))
+	ctx.HandlePage("/admin", auth.Guard(adminPage))
+	ctx.HandlePage("/approve", auth.Guard(approvePage))
+	ctx.HandlePage("/exclude", auth.Guard(excludePage))
+	ctx.HandlePage("/edit", auth.Guard(editPage))
+	ctx.HandlePage("/delete", auth.Guard(deletePage))
+
+	return ctx
 }
 
-func mainServeSite(site *web.Site) {
+func (ctx *mainContext) HandlePage(path string, pageFn func(*page, *http.Request)) {
+	ctx.site.HandlePage(path, func(page web.Page, req *http.Request) { 
+		pgCtx := pageNew(ctx, page)
+		if req.Referer() != "" {
+			page.SetField("referer", req.Referer())
+		} else {
+			page.SetField("referer", "/")
+		}
+		ctx.auth.InitPage(pgCtx, req)
+		pageFn(pgCtx, req)
+	})
+}
+
+func (ctx *mainContext) HandleDir(path string, pageFn func(*page, *http.Request)) {
+	ctx.site.HandleDir(path, func(page web.Page, req *http.Request) { 
+		pgCtx := pageNew(ctx, page)
+		pageFn(pgCtx, req)
+	})
+}
+
+func mainServeSite(ctx *mainContext) {
 	var err error
-	switch conf.ServeMethod {
+	switch ctx.conf.ServeMethod() {
 	case "http":
-		err = http.ListenAndServe(":" + fmt.Sprint(conf.HttpPort), site)
+		err = http.ListenAndServe(":" + fmt.Sprint(ctx.conf.HttpPort()), ctx.site)
 	case "fcgi":
-		l, err := net.Listen("unix", conf.FastcgiPath)
+		l, err := net.Listen("unix", ctx.conf.FastcgiPath())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create unix socket for FastCGI: %s.\n", err.Error())
 			os.Exit(1)
 		}
-		err = fcgi.Serve(l, site)
+		err = fcgi.Serve(l, ctx.site)
 	}
 	log.Fatalf("Error serving site: %s.\n", err.Error())
 }
 
 func main() {
+	cfg := confNew()
 	mainArgs()
 	mainChangeDirectory()
-	confParse(mainConfFilename)
-	mainOpenLog()
-	if conf.IRCBotEnable {
-		go channelCheckLoop()
+	err := cfg.ParseFile(mainConfFilename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse configuration file: %s.\n", err.Error())
+		os.Exit(1)
 	}
-	site := mainPrepareSite()
-	mainServeSite(site)
+	mainOpenLog(cfg)
+	ctx := mainNewContext(cfg)
+	if cfg.IRCBotEnable() {
+		go channelCheckLoop(ctx)
+	}
+	mainServeSite(ctx)
 }
 

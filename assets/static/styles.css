@@ -22,6 +22,7 @@ h1, h2, h3, h4 {
 
 .bar {
 	background-color: #ca2b2a;
+	padding: 0.5em 0;
 }
 
 .content {
@@ -35,14 +36,20 @@ h1, h2, h3, h4 {
 	border: 1px solid #bbb;
 	max-width: 35em;
 	margin: 1em auto;
-	padding: 0.5em;
+}
+
+.padding {
+	padding: 1em;
+}
+
+.padding-horizontal {
+	padding: 0 1em;
 }
 
 .bar-mid {
 	color: white;
 	max-width: 35em;
 	margin: 0 auto;
-	padding: 0.5em;
 }
 
 .bar-mid a:visited, .bar-mid a:link {
@@ -186,9 +193,5 @@ pre {
 	white-space: pre-wrap;
 	border: 2px solid red;
 	color: red;
-}
-
-.pagenav {
-	padding: 0 0.5em;
 }
 

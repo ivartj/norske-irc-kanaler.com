@@ -2,10 +2,9 @@ package main
 
 import (
 	"net/http"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 )
 
-func adminPage(page web.Page, req *http.Request) {
+func adminPage(page *page, req *http.Request) {
 	page.SetField("page-title", "Administratorpanel")
 
 	numUnapproved, err := dbGetNumberOfChannelsUnapproved(page)

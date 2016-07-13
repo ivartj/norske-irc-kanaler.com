@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"github.com/ivartj/norske-irc-kanaler.com/chan-query"
+	"database/sql"
 	"strings"
 	"errors"
 	"net/url"
@@ -40,9 +41,9 @@ type channel interface {
 	Error() string
 }
 
-func channelCheckLoop() {
+func channelCheckLoop(ctx *mainContext) {
 	for {
-		channelCheckAll()
+		channelCheckAll(ctx)
 		time.Sleep(time.Hour * 24 * 7)
 	}
 }
@@ -77,7 +78,7 @@ func channelStatusString(ch channel) (string, bool) {
 	}
 }
 
-func channelCheckAll() {
+func channelCheckAll(ctx *mainContext) {
 	defer func() {
 		err, isErr := recover().(error)
 		if isErr {
@@ -85,27 +86,27 @@ func channelCheckAll() {
 		}
 	}()
 
-	db, err := dbOpen()
+	db, err := sql.Open("sqlite3", ctx.conf.DatabasePath())
 	if err != nil {
 		log.Fatalf("Failed to open database: %s.\n", err.Error())
 	}
 	defer db.Close()
 
-	networks, err := db.GetNetworks()
+	networks, err := dbGetNetworks(db)
 	if err != nil {
 		log.Fatalf("Failed to get network data from database: %s", err.Error())
 	}
-	chs, err := db.GetApprovedChannels(0, 9999)
+	chs, err := dbGetApprovedChannels(db, 0, 9999)
 	if err != nil {
 		log.Fatalf("Failed to get list of approved channel from database: %s", err.Error())
 	}
 
 	for _, network := range networks {
-		channelCheckServer(db, network, chs)
+		channelCheckServer(ctx, db, network, chs)
 	}
 }
 
-func channelCheckServer(db *dbConn, network *dbNetwork, chs []channel) {
+func channelCheckServer(ctx *mainContext, db *sql.DB, network *dbNetwork, chs []channel) {
 	defer func() {
 		err, isErr := recover().(error)
 		if isErr {
@@ -138,7 +139,7 @@ func channelCheckServer(db *dbConn, network *dbNetwork, chs []channel) {
 	var bot *irc.Conn
 	var err error
 	for _, server := range network.servers {
-		bot, err = irc.Connect(server, conf.IRCBotNickname, conf.IRCBotRealname, nil)
+		bot, err = irc.Connect(server, ctx.conf.IRCBotNickname(), ctx.conf.IRCBotRealname(), nil)
 		if err != nil {
 			log.Printf("Failed to connect to %s: %s.\n", server, err.Error())
 			continue
@@ -161,10 +162,10 @@ func channelCheckServer(db *dbConn, network *dbNetwork, chs []channel) {
 		str := ""
 		if err != nil {
 			str = err.Error()
-			err = db.UpdateStatus(ch.Name(), ch.Network(), 0, "", "fail", str)
+			err = dbUpdateStatus(db, ch.Name(), ch.Network(), 0, "", "fail", str)
 		} else {
 			log.Printf("%s@%s %d Topic: %s\n", ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic)
-			err = db.UpdateStatus(ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic, method, str)
+			err = dbUpdateStatus(db, ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic, method, str)
 		}
 		if err != nil {
 			log.Fatalf("Database error when updating channel status: %s.\n", err.Error())
