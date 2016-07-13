@@ -2,9 +2,11 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 	"fmt"
 	"bytes"
 	"bufio"
+	"strings"
 )
 
 var testConf = &conf{confSet{
@@ -67,5 +69,62 @@ func (w *testResponseWriter) writeHeader(code int) error {
 
 func (w *testResponseWriter) GetResponse(req *http.Request) (*http.Response, error) {
 	return http.ReadResponse(bufio.NewReader(w.buf), req)
+}
+
+func testSubmitChannel(ctx *mainContext, name, network, weblink, description string) error {
+
+	req, err := http.NewRequest("POST", "/submit", nil)
+	if err != nil {
+		return fmt.Errorf("Failed to create test request: %s", err.Error())
+	}
+	req.Form = url.Values(map[string][]string{
+		"name" : []string{ name },
+		"network" : []string{ network },
+		"description" : []string{ description },
+	})
+
+	rw := testNewResponseWriter()
+
+	ctx.site.ServeHTTP(rw, req)
+
+	resp, err := rw.GetResponse(req)
+	if err != nil {
+		return fmt.Errorf("Failed to parse response: %s", err.Error())
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Response status code not 200, but %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func testLogin(ctx *mainContext) (sessionCookie *http.Cookie, err error) {
+	rw := testNewResponseWriter()
+	req, err := http.NewRequest("POST", "/login", strings.NewReader(""))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create test request")
+	}
+	req.Form = url.Values(map[string][]string{
+		"password" : []string{ ctx.conf.Password() },
+	})
+
+	ctx.site.ServeHTTP(rw, req)
+	resp, err := rw.GetResponse(req)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse response to login: %s", err.Error())
+	}
+
+	cookies := map[string]*http.Cookie{}
+	for _, v := range resp.Cookies() {
+		cookies[v.Name] = v
+	}
+
+	sessionCookie, ok := cookies["session-id"]
+	if !ok {
+		return nil, fmt.Errorf("No session ID cookie")
+	}
+
+	return sessionCookie, nil
 }
 

@@ -2,8 +2,6 @@ package main
 
 import (
 	"testing"
-	"net/url"
-	"net/http"
 )
 
 func TestSubmitPage(t *testing.T) {
@@ -12,28 +10,9 @@ func TestSubmitPage(t *testing.T) {
 	//       names read
 
 	ctx := mainNewContext(testConf)
-
-	req, err := http.NewRequest("POST", "/submit", nil)
+	err := testSubmitChannel(ctx, "#test", "irc.example.com", "", "Lorem ipsum dolor sit amet.")
 	if err != nil {
-		t.Fatalf("Failed to create test request: %s.\n", err.Error())
-	}
-	req.Form = url.Values(map[string][]string{
-		"name" : []string{ "#test" },
-		"network" : []string{ "irc.example.com" },
-		"description" : []string{ "Lorem ipsum dolor sit amet." },
-	})
-
-	rw := testNewResponseWriter()
-
-	ctx.site.ServeHTTP(rw, req)
-
-	resp, err := rw.GetResponse(req)
-	if err != nil {
-		t.Fatalf("Failed to parse response: %s.\n", err.Error())
-	}
-
-	if resp.StatusCode != 200 {
-		t.Fatalf("Response status code not 200 OK, but: %s.\n", resp.Status)
+		t.Fatalf("Failed to submit channel: %s.\n", err.Error())
 	}
 
 	ch, err := dbGetChannel(ctx.db, "#test", "irc.example.com")
