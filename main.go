@@ -156,23 +156,31 @@ func mainNewContext(cfg *conf) *mainContext {
 }
 
 func (ctx *mainContext) HandlePage(path string, pageFn func(*page, *http.Request)) {
-	ctx.site.HandlePage(path, func(page web.Page, req *http.Request) { 
+	ctx.site.HandlePage(path, ctx.makeHandler(pageFn))
+}
+
+func (ctx *mainContext) HandleDir(path string, pageFn func(*page, *http.Request)) {
+	ctx.site.HandleDir(path, ctx.makeHandler(pageFn))
+}
+
+func (ctx *mainContext) makeHandler(pageFn func(*page, *http.Request)) func(web.Page, *http.Request) {
+	return func(page web.Page, req *http.Request) { 
 		pgCtx := pageNew(ctx, page)
+
 		if req.Referer() != "" {
 			page.SetField("referer", req.Referer())
 		} else {
 			page.SetField("referer", "/")
 		}
-		ctx.auth.InitPage(pgCtx, req)
-		pageFn(pgCtx, req)
-	})
-}
 
-func (ctx *mainContext) HandleDir(path string, pageFn func(*page, *http.Request)) {
-	ctx.site.HandleDir(path, func(page web.Page, req *http.Request) { 
-		pgCtx := pageNew(ctx, page)
+		page.SetField("site-stylesheet-modtime", "")
+		info, err := os.Stat(ctx.conf.AssetsPath() + "/static/styles.css")
+		if err == nil {
+			page.SetField("site-stylesheet-modtime", info.ModTime().Unix())
+		}
+
 		pageFn(pgCtx, req)
-	})
+	}
 }
 
 func mainServeSite(ctx *mainContext) {

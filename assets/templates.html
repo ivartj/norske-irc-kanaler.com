@@ -9,7 +9,7 @@
 		<meta name="description"
 		      content="{{q "site-description"}}">
 		<link rel="stylesheet"
-		      href="/static/styles.css"
+		      href="/static/styles.css?{{q "site-stylesheet-modtime"}}"
 		      type="text/css">
 	</head>
 	<body>
@@ -116,7 +116,7 @@
 			<div class="bar">
 				<div class="bar-mid bar-banner">
 					<div class="padding-horizontal">
-						<h1><img id="logo" src="/static/logo.png?1" alt="#Norske IRC-kanaler"></h1>
+						<h1><img id="logo" src="/static/logo.png?1" alt="{{q "site-title"}}"></h1>
 					</div>
 				</div>
 			</div>
