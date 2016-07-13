@@ -3,40 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-double width;
-double height;
-double margin;
-double line_distance;
-double white_width;
-double blue_width;
-
-void red(cairo_t *cr)
-{
-	cairo_set_source_rgba(cr,
-		0xca / 256.0,
-		0x2b / 256.0,
-		0x2a / 256.0,
-		1.0);
-}
-
-void white(cairo_t *cr)
-{
-	cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
-	cairo_set_line_width(cr, white_width);
-	cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
-}
-
-void blue(cairo_t *cr)
-{
-
-	cairo_set_source_rgba(cr,
-		0x66 / 256.0,
-		0x55 / 256.0,
-		0xbb / 256.0,
-		1.0);
-	cairo_set_line_width(cr, blue_width);
-	cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
-}
+int width;
+int height;
 
 int main(int argc, char *argv[])
 {
@@ -66,11 +34,6 @@ int main(int argc, char *argv[])
 	width = w;
 	height = h;
 
-	margin = w / 500.0 * 100.0;
-	line_distance = w / 500.0 * 150.0;
-	white_width = w / 500.0 * 80.0;
-	blue_width = w / 500.0 * 60.0;
-
 	output_filename = argv[3];
 
 	cairo_surface_t *surface;
@@ -90,50 +53,18 @@ int main(int argc, char *argv[])
 	}
 
 	cairo_t *cr = cairo_create(surface);
-	red(cr);
+
+	cairo_set_source_rgba(cr, 0xca / 256.0, 0x2b / 256.0, 0x2a / 256.0, 1.0);
 	cairo_paint(cr);
 
-	static cairo_matrix_t m = {
-		.xx = 1.0,
-		.yx = 0.0,
-		.xy = -0.2,
-		.yy = 1.0,
-		.x0 = 50.0,
-		.y0 = 0.0,
-	};
-	m.x0 = w / 500.0 * 50.0;
-	cairo_set_matrix(cr, &m);
-
-	/* Drawing horizontal white lines */
-	white(cr);
-	cairo_move_to(cr, margin, height / 2.0 - line_distance / 2.0);
-	cairo_rel_line_to(cr, width - 2 * margin, 0);
-	cairo_move_to(cr, margin, height / 2.0 + line_distance / 2.0);
-	cairo_rel_line_to(cr, width - 2 * margin, 0);
-	cairo_stroke(cr);
-
-	/* Drawing vertical white lines */
-	white(cr);
-	cairo_move_to(cr, width / 2.0 - line_distance / 2.0, margin);
-	cairo_rel_line_to(cr, 0, height - margin * 2);
-	cairo_move_to(cr, width / 2.0 + line_distance / 2.0, margin);
-	cairo_rel_line_to(cr, 0, height - margin * 2);
-	cairo_stroke(cr);
-
-	/* Drawing horizontal blue lines */
-	blue(cr);
-	cairo_move_to(cr, margin, height / 2.0 - line_distance / 2.0);
-	cairo_rel_line_to(cr, width - 2 * margin, 0);
-	cairo_move_to(cr, margin, height / 2.0 + line_distance / 2.0);
-	cairo_rel_line_to(cr, width - 2 * margin, 0);
-	cairo_stroke(cr);
-	
-	/* Drawing vertical blue lines */
-	blue(cr);
-	cairo_move_to(cr, width / 2.0 - line_distance / 2.0, margin);
-	cairo_rel_line_to(cr, 0, height - margin * 2);
-	cairo_move_to(cr, width / 2.0 + line_distance / 2.0, margin);
-	cairo_rel_line_to(cr, 0, height - margin * 2);
+	cairo_select_font_face(cr, "Sujeta", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(cr, 60);
+	cairo_move_to(cr, 1, height - 1);
+	cairo_text_path(cr, "#Norske IRC-Kanaler");
+	cairo_set_source_rgba(cr, 0x66 / 256.0, 0x55 / 256.0, 0xbb / 256.0, 1.0);
+	cairo_fill_preserve(cr);
+	cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
+	cairo_set_line_width(cr, 1.0);
 	cairo_stroke(cr);
 
 	cairo_destroy(cr);

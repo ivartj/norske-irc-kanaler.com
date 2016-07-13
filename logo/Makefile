@@ -9,7 +9,7 @@ logo-500x500.svg: gen
 	./gen svg 500x500 logo-500x500.svg
 
 logo-70x70.png: gen
-	./gen png 70x70 logo-70x70.png
+	./gen png 450x45 logo-450x45.png
 
 gen: $(OBJS)
 	$(CC) -o gen $< $(LIBS)
