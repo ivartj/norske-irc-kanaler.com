@@ -28,7 +28,7 @@ func indexPage(page *page, req *http.Request) {
 	}
 
 	rows, err := page.Query(
-		"select * from channel_approved limit ? offset ?;",
+		"select * from channel_indexed limit ? offset ?;",
 		indexPageSize + 1, (pg - 1) * indexPageSize) 
 	if err != nil {
 		page.Fatalf("Failed to query index channels: %s", err.Error())

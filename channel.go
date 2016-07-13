@@ -31,6 +31,7 @@ type channel interface {
 	Weblink() string
 	Description() string
 	SubmitTime() time.Time
+	New() bool
 	Approved() bool
 	ApproveTime() time.Time
 	NumberOfUsers() int

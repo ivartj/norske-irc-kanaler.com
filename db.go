@@ -48,6 +48,7 @@ type dbChannel struct {
 	weblink string
 	description string
 	submit_time time.Time
+	new bool
 	approved bool
 	approve_time time.Time
 	numusers int
@@ -62,6 +63,7 @@ func (ch *dbChannel) Network() string { return ch.network }
 func (ch *dbChannel) Weblink() string { return ch.weblink }
 func (ch *dbChannel) Description() string { return ch.description }
 func (ch *dbChannel) SubmitTime() time.Time { return ch.submit_time }
+func (ch *dbChannel) New() bool { return ch.new }
 func (ch *dbChannel) Approved() bool { return ch.approved }
 func (ch *dbChannel) ApproveTime() time.Time { return ch.approve_time }
 func (ch *dbChannel) NumberOfUsers() int { return ch.numusers }
@@ -104,6 +106,7 @@ func dbScanChannel(scan dbScan) (*dbChannel, error) {
 		&ch.weblink,
 		&ch.description,
 		&submit_time,
+		&ch.new,
 		&ch.approved,
 		&approve_time,
 		&numusers,

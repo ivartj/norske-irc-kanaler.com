@@ -67,6 +67,7 @@
 			   rel="nofollow"
 			   class="channel-name channel-link">{{.Name}}</a>
 			<span class="channel-network">{{.Network}}</span>
+			{{if .New}}<span class="channel-new">Ny!</span>{{end}}
 			<div class="float-right">
 				[<a href="irc://{{.Network}}/{{.Name}}"
 				    title="Besøk kanalen ved hjelp av en applikasjon på ditt system"
@@ -83,8 +84,8 @@
 
 		{{if (q "admin")}}
 		<div class="channel-actions">
-			<a href="/edit?name={{.Name}}&network={{.Network}}">rediger</a> -
-			{{if not .Approved}}<a href="/approve?name={{.Name}}&network={{.Network}}">godkjen</a> -{{end}}
+			<a href="/edit?name={{.Name}}&amp;network={{.Network}}">rediger</a> -
+			{{if not .Approved}}<a href="/approve?name={{.Name}}&amp;network={{.Network}}&amp;nonce={{q "auth-nonce"}}">godkjen</a> -{{end}}
 			<a href="/delete?name={{.Name}}&amp;network={{.Network}}&amp;nonce={{q "auth-nonce"}}">slett</a>
 		</div>
 		{{if not .Error }}
