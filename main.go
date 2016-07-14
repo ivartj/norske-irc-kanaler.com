@@ -179,6 +179,8 @@ func (ctx *mainContext) makeHandler(pageFn func(*page, *http.Request)) func(web.
 			page.SetField("site-stylesheet-modtime", info.ModTime().Unix())
 		}
 
+		ctx.auth.InitPage(pgCtx, req)
+
 		pageFn(pgCtx, req)
 	}
 }
