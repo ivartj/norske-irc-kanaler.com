@@ -16,6 +16,7 @@ type Site struct {
 	dirs map[string]func(Page, *http.Request)
 	tpl *template.Template
 	fieldData map[string]interface{}
+	errorHandler func(Page, *http.Request, error)
 }
 
 func NewTemplate() *template.Template {
@@ -92,6 +93,10 @@ func (ctx *Site) getHandler(p string) (func(Page, *http.Request), bool) {
 	return nil, false
 }
 
+func (ctx *Site) SetErrorHandler(errorHandler func(Page, *http.Request, error)) {
+	ctx.errorHandler = errorHandler
+}
+
 func (ctx *Site) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	subfn, ok := ctx.getHandler(req.URL.Path)
@@ -104,16 +109,19 @@ func (ctx *Site) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	subctx := pageNew(ctx, w)
 
 	defer func() {
-		x := recover()
-		if x == nil {
+		err, ok := recover().(error)
+		if !ok {
 			return
 		}
-		err := subctx.rollback()
+		if ctx.errorHandler != nil {
+			ctx.errorHandler(subctx, req, err)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		err = subctx.rollback()
 		if err != nil {
 			log.Fatalf("Failed to rollback transaction: %s.\n", err.Error())
 		}
-		// TODO: Serve own error page
-		panic(x)
 	}()
 	subfn(subctx, req)
 	err := subctx.commit()

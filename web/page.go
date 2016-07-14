@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"errors"
 	"net/http"
+	"bytes"
 )
 
 type Page interface{
@@ -134,9 +135,15 @@ func (ctx *page) ExecuteTemplate(name string) {
 
 	})
 
-	err = tpl.ExecuteTemplate(ctx, name, nil)
+	// Buffer the output to catch errors before any calls to ResponseWriter.WriteHeader
+	buf := bytes.NewBuffer([]byte{})
+	err = tpl.ExecuteTemplate(buf, name, nil)
 	if err != nil {
 		ctx.Fatalf("Failed to execute template: %s", err.Error())
+	}
+	_, err = buf.WriteTo(ctx)
+	if err != nil {
+		ctx.Fatalf("Failed to write buffered content: %s", err.Error())
 	}
 }
 
