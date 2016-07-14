@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"strings"
 	"html/template"
+	"net/http"
+	"os"
 )
 
 type page struct {
@@ -14,10 +16,28 @@ type page struct {
 	main *mainContext
 }
 
-func pageNew(ctx *mainContext, webPage web.Page) *page {
-	return &page{
-		main: ctx,
-		Page: webPage,
+func pageHandler(ctx *mainContext, pageFn func (*page, *http.Request)) func(web.Page, *http.Request) {
+	return func(webPage web.Page, req *http.Request) { 
+		pg := &page{
+			main: ctx,
+			Page: webPage,
+		}
+
+		if req.Referer() != "" {
+			pg.SetField("referer", req.Referer())
+		} else {
+			pg.SetField("referer", "/")
+		}
+
+		pg.SetField("site-stylesheet-modtime", "")
+		info, err := os.Stat(ctx.conf.AssetsPath() + "/static/styles.css")
+		if err == nil {
+			pg.SetField("site-stylesheet-modtime", info.ModTime().Unix())
+		}
+
+		ctx.auth.InitPage(pg, req)
+
+		pageFn(pg, req)
 	}
 }
 
@@ -39,4 +59,5 @@ func (page *page) AddMessage(format string, args ...interface{}) {
 	}
 	page.SetField("page-messages", append(msgs, template.HTML(bb.String())))
 }
+
 
