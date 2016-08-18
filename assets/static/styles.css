@@ -196,7 +196,11 @@ pre {
 }
 
 .channel-new {
-	color: #f00;
 	font-weight: bold;
+	display: inline-block;
+	color: #008800;
+	background-color: #99ff99;
+	border: 1px solid #44aa44;
+	padding: 0 0.2em;
 }
 
