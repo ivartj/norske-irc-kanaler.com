@@ -10,10 +10,6 @@ import (
 type confSet struct {
 	WebsiteTitle string `yaml:"website-title"`
 	WebsiteDescription string `yaml:"website-description"`
-	IRCBotEnable bool `yaml:"irc-bot-enable"`
-	IRCBotNickname string `yaml:"irc-bot-nickname"`
-	IRCBotRealname string `yaml:"irc-bot-realname"`
-	IRCBotQuitMessage string `yaml:"irc-bot-quit-message"`
 	ServeMethod string `yaml:"serve-method"`
 	FastcgiPath string `yaml:"fastcgi-path"`
 	HttpPort uint `yaml:"http-port"`
@@ -23,6 +19,7 @@ type confSet struct {
 	Approval bool `yaml:"approval"`
 	Password string `yaml:"password"`
 	ReloadTemplate bool `yaml:"reload-templates"`
+	IrssiLogsPath string `yaml:"irssi-logs-path"`
 }
 
 type conf struct {
@@ -31,10 +28,6 @@ type conf struct {
 
 func (cfg *conf) WebsiteTitle() string { return cfg.set.WebsiteTitle }
 func (cfg *conf) WebsiteDescription() string { return cfg.set.WebsiteDescription }
-func (cfg *conf) IRCBotEnable() bool { return cfg.set.IRCBotEnable }
-func (cfg *conf) IRCBotNickname() string { return cfg.set.IRCBotNickname }
-func (cfg *conf) IRCBotRealname() string { return cfg.set.IRCBotRealname }
-func (cfg *conf) IRCBotQuitMessage() string { return cfg.set.IRCBotQuitMessage }
 func (cfg *conf) ServeMethod() string { return cfg.set.ServeMethod }
 func (cfg *conf) FastcgiPath() string { return cfg.set.FastcgiPath }
 func (cfg *conf) HttpPort() uint { return cfg.set.HttpPort }
@@ -44,6 +37,7 @@ func (cfg *conf) LogPath() string { return cfg.set.LogPath }
 func (cfg *conf) Approval() bool { return cfg.set.Approval }
 func (cfg *conf) Password() string { return cfg.set.Password }
 func (cfg *conf) ReloadTemplate() bool { return cfg.set.ReloadTemplate }
+func (cfg *conf) IrssiLogsPath() string { return cfg.set.IrssiLogsPath }
 
 func confNew() *conf {
 	return &conf{}
@@ -103,24 +97,12 @@ func (cfg *conf) Validate() error {
 		return fmt.Errorf("Configuration error: Missing 'password' field value.\n")
 	}
 
-	if cfg.IRCBotNickname() == "" {
-		return fmt.Errorf("Configuration error: Missing 'irc-bot-nickname' field value.\n")
-	}
-
-	if cfg.IRCBotRealname() == "" {
-		return fmt.Errorf("Configuration error: Missing 'irc-bot-realname' field value.\n")
-	}
-
 	if cfg.WebsiteTitle() == "" {
 		return fmt.Errorf("Configuration error: Missing 'website-title' field value.\n")
 	}
 
 	if cfg.WebsiteDescription() == "" {
 		return fmt.Errorf("Configuration error: Missing 'website-description' field value.\n")
-	}
-
-	if cfg.IRCBotQuitMessage() == "" {
-		return fmt.Errorf("Configuration error: Missing 'irc-bot-quit-message' field value.\n")
 	}
 
 	return nil
