@@ -63,12 +63,12 @@ func mainCount(logfilename string) error {
 	}
 	defer logfile.Close()
 
-	numusers, err := irclog.NumUsers(logfile)
+	numusers, topic, err := irclog.ChannelStatus(logfile)
 	if err != nil {
 		return fmt.Errorf("Failed to count number of users from '%s': %s", logfilename, err.Error())
 	}
 
-	fmt.Println(numusers)
+	fmt.Println(numusers, topic)
 
 	return nil
 }
