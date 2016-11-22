@@ -1,10 +1,15 @@
 package main
 
 import (
+	"github.com/ivartj/norske-irc-kanaler.com/irc"
+	"github.com/ivartj/norske-irc-kanaler.com/chan-query"
+	"database/sql"
 	"strings"
 	"errors"
 	"net/url"
+	"bytes"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -37,6 +42,13 @@ type channel interface {
 	Error() string
 }
 
+func channelCheckLoop(ctx *mainContext) {
+	for {
+		channelCheckAll(ctx)
+		time.Sleep(time.Hour * 24 * 7)
+	}
+}
+
 func channelSuggestWebLink(name, server string) string {
 	switch server {
 	case "irc.freenode.net":
@@ -65,6 +77,103 @@ func channelStatusString(ch channel) (string, bool) {
 		status = "Feilmelding ved samling av informasjon: " + ch.Error() + " (" + timeAgo(ch.CheckTime()) + ")"
 		return status, false
 	}
+}
+
+func channelCheckAll(ctx *mainContext) {
+	defer func() {
+		err, isErr := recover().(error)
+		if isErr {
+			log.Printf("Error occurred while checking channels: %s\n", err.Error())
+		}
+	}()
+
+	db, err := sql.Open("sqlite3", ctx.conf.DatabasePath())
+	if err != nil {
+		log.Fatalf("Failed to open database: %s.\n", err.Error())
+	}
+	defer db.Close()
+
+	networks, err := dbGetNetworks(db)
+	if err != nil {
+		log.Fatalf("Failed to get network data from database: %s", err.Error())
+	}
+	chs, err := dbGetApprovedChannels(db, 0, 9999)
+	if err != nil {
+		log.Fatalf("Failed to get list of approved channel from database: %s", err.Error())
+	}
+
+	for _, network := range networks {
+		channelCheckServer(ctx, db, network, chs)
+	}
+}
+
+func channelCheckServer(ctx *mainContext, db *sql.DB, network *dbNetwork, chs []channel) {
+	defer func() {
+		err, isErr := recover().(error)
+		if isErr {
+			log.Printf("Error occurred while checking channels on '%s': %s\n", network.network, err.Error())
+		}
+	}()
+
+	network_chs := []channel{}
+	for _, ch := range chs {
+		if ch.Network() != network.network {
+			continue
+		}
+
+		if ch.Checked() {
+			dur := time.Now().Sub(ch.CheckTime())
+			if dur < time.Hour * 24 * 7 {
+				continue
+			}
+		}
+
+		network_chs = append(network_chs, ch)
+	}
+
+	if len(network_chs) == 0 {
+		return
+	}
+
+	log.Printf("Checking channels on %s.\n", network.network)
+
+	var bot *irc.Conn
+	var err error
+	for _, server := range network.servers {
+		bot, err = irc.Connect(server, ctx.conf.IRCBotNickname(), ctx.conf.IRCBotRealname(), nil)
+		if err != nil {
+			log.Printf("Failed to connect to %s: %s.\n", server, err.Error())
+			continue
+		}
+		defer bot.Disconnect()
+		break
+	}
+	if bot == nil {
+		log.Printf("Could not connect to any address associated with %s.\n", network.network)
+		return
+	}
+
+	for _, ch := range network_chs {
+		if ch.Network() != network.network {
+			continue
+		}
+
+		log.Printf("Checking %s@%s.\n", ch.Name(), ch.Network())
+		status, method, err := channelCheck(bot, ch.Name())
+		str := ""
+		if err != nil {
+			str = err.Error()
+			err = dbUpdateStatus(db, ch.Name(), ch.Network(), 0, "", "fail", str)
+		} else {
+			log.Printf("%s@%s %d Topic: %s\n", ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic)
+			err = dbUpdateStatus(db, ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic, method, str)
+		}
+		if err != nil {
+			log.Fatalf("Database error when updating channel status: %s.\n", err.Error())
+		}
+		time.Sleep(5 * time.Second)
+	}
+
 }
 
 func channelAddressCanonical(name, server string) (string, string) {
@@ -104,5 +213,20 @@ func channelAddressValidate(name, server string) error {
 	}
 
 	return nil
+}
+
+func channelCheck(bot *irc.Conn, name string) (*query.Result, string, error) {
+
+	log := bytes.NewBuffer([]byte{})
+
+	for _, method := range query.GetMethods() {
+		res, err := method.Query(bot, name)
+		if err == nil {
+			return res, method.Name(), nil
+		}
+		fmt.Fprintf(log, "method %s failed: %s\n", method.Name(), err.Error())
+	}
+
+	return nil, "", errors.New(log.String())
 }
 

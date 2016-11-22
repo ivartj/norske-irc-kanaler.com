@@ -190,6 +190,9 @@ func main() {
 	}
 	mainOpenLog(cfg)
 	ctx := mainNewContext(cfg)
+	if cfg.IRCBotEnable() {
+		go channelCheckLoop(ctx)
+	}
 	mainServeSite(ctx)
 }
 
