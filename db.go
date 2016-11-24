@@ -180,13 +180,13 @@ func dbEditChannel(c dbConn, originalName, originalServer string, name, network,
 	return nil
 }
 
-func dbUpdateStatus(c dbConn, name, network string, numusers int, topic, query_method, errmsg string) error {
+func dbUpdateStatus(c dbConn, name, network string, numusers int, topic, query_method, errmsg string, statusTime time.Time) error {
 	_, err := c.Exec(`
 		insert into channel_status
 			(channel_name, network, numusers, topic, query_method, errmsg, status_time)
 		values
-			(?, ?, ?, ?, ?, ?, datetime());
-	`, name, network, numusers, topic, query_method, errmsg)
+			(?, ?, ?, ?, ?, ?, ?);
+	`, name, network, numusers, topic, query_method, errmsg, statusTime.Format(dbTimeFmt))
 	if err != nil {
 		return fmt.Errorf("Failed to store channel status: %s", err.Error())
 	}

@@ -163,10 +163,10 @@ func channelCheckServer(ctx *mainContext, db *sql.DB, network *dbNetwork, chs []
 		str := ""
 		if err != nil {
 			str = err.Error()
-			err = dbUpdateStatus(db, ch.Name(), ch.Network(), 0, "", "fail", str)
+			err = dbUpdateStatus(db, ch.Name(), ch.Network(), 0, "", "fail", str, time.Now())
 		} else {
 			log.Printf("%s@%s %d Topic: %s\n", ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic)
-			err = dbUpdateStatus(db, ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic, method, str)
+			err = dbUpdateStatus(db, ch.Name(), ch.Network(), status.NumberOfUsers, status.Topic, method, str, time.Now())
 		}
 		if err != nil {
 			log.Fatalf("Database error when updating channel status: %s.\n", err.Error())

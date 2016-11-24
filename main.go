@@ -262,7 +262,7 @@ func mainIrssiLogs(ctx *mainContext) {
 		}
 
 		if cs.Time.After(ch.CheckTime()) {
-			err  = dbUpdateStatus(tx, ch.Name(), ch.Network(), cs.NumUsers, cs.Topic, "irssi-logs", "")
+			err  = dbUpdateStatus(tx, ch.Name(), ch.Network(), cs.NumUsers, cs.Topic, "irssi-logs", "", cs.Time)
 			if err != nil {
 				log.Fatalf("Error updating status for '%s@%s': %s", ch.Name(), ch.Network(), err.Error())
 			}
