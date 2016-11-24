@@ -23,6 +23,15 @@ type confSet struct {
 	Approval bool `yaml:"approval"`
 	Password string `yaml:"password"`
 	ReloadTemplate bool `yaml:"reload-templates"`
+	IrssiLogsPath string `yaml:"irssi-logs-path"`
+	IrssiLogsNetworkNames map[string][]string `yaml:"irssi-logs-network-names"`
+	ChannelStatusGatheringMethods []confChannelStatusGatheringMethod `yaml:"channel-status-gathering-methods"`
+}
+
+type confChannelStatusGatheringMethod struct{
+	Method string `yaml:"method"`
+	InitialTime string `yaml:"initial-time"`
+	Interval string `yaml:"interval"`
 }
 
 type conf struct {
@@ -44,6 +53,9 @@ func (cfg *conf) LogPath() string { return cfg.set.LogPath }
 func (cfg *conf) Approval() bool { return cfg.set.Approval }
 func (cfg *conf) Password() string { return cfg.set.Password }
 func (cfg *conf) ReloadTemplate() bool { return cfg.set.ReloadTemplate }
+func (cfg *conf) IrssiLogsPath() string { return cfg.set.IrssiLogsPath }
+func (cfg *conf) IrssiLogsNetworkNames() map[string][]string { return cfg.set.IrssiLogsNetworkNames }
+func (cfg *conf) ChannelStatusGatheringMethods() []confChannelStatusGatheringMethod { return cfg.set.ChannelStatusGatheringMethods }
 
 func confNew() *conf {
 	return &conf{}

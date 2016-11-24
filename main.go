@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/ivartj/norske-irc-kanaler.com/args"
 	"github.com/ivartj/norske-irc-kanaler.com/web"
+	"github.com/ivartj/norske-irc-kanaler.com/irssilog"
+	"github.com/ivartj/norske-irc-kanaler.com/sched"
 	"net"
 	"net/http"
 	"net/http/fcgi"
@@ -13,6 +15,7 @@ import (
 	"os"
 	"path"
 	"log"
+	"time"
 )
 
 var mainConfFilename string = ""
@@ -179,6 +182,100 @@ func mainServeSite(ctx *mainContext) {
 	log.Fatalf("Error serving site: %s.\n", err.Error())
 }
 
+func mainGatherChannelStatuses(ctx *mainContext) {
+
+	scheduler := sched.New()
+
+	for _, method := range ctx.conf.ChannelStatusGatheringMethods() {
+
+		interval, err := time.ParseDuration(method.Interval)
+		if err != nil {
+			log.Fatalf("Failed to parse the interval given for method '%s': %s", method.Method, err.Error())
+		}
+
+		initialTime := time.Now()
+		if method.InitialTime != "" {
+			initialTime, err = sched.Next(method.InitialTime)
+			if err != nil {
+				log.Fatalf("Failed to parse the initial time given for method '%s': %s", method.Method, err.Error())
+			}
+			
+		}
+
+		var do func() = nil
+
+		switch method.Method {
+
+		case "irssi-logs":
+			do = func() {
+				mainIrssiLogs(ctx)
+			}
+
+		}
+		if do == nil {
+			log.Fatalf("Unrecognized method, '%s'", method.Method)
+		}
+
+		scheduler.Schedule(do, initialTime, interval)
+	}
+
+	go scheduler.Run()
+}
+
+func mainIrssiLogs(ctx *mainContext) {
+
+	tx, err := ctx.db.Begin()
+	if err != nil {
+		log.Fatalf("Failed to initiate transaction: %s", err.Error())
+	}
+	defer tx.Rollback()
+
+	networks, err := dbGetNetworks(tx)
+	if err != nil {
+		log.Fatalf("Database error on retrieving networks: %s", err.Error())
+	}
+
+	networknames := map[string][]string{}
+	for _, network := range networks {
+		networknames[network.network] = network.servers
+	}
+	for network, _ := range ctx.conf.IrssiLogsNetworkNames() {
+		names, ok := networknames[network]
+		if !ok {
+			names = []string{}
+		}
+		networknames[network] = append(names, ctx.conf.IrssiLogsNetworkNames()[network]...)
+	}
+
+	chs, err := dbGetApprovedChannels(tx, 0, 9999)
+	if err != nil {
+		log.Fatalf("Database error on retrieving channels: %s", err.Error())
+	}
+
+	logctx := irssilog.New(ctx.conf.IrssiLogsPath(), networknames)
+
+	for _, ch := range chs {
+
+		cs, err := logctx.ChannelStatus(ch.Name(), ch.Network())
+		if err != nil {
+			log.Printf("Error retrieving '%s@%s' status from log reading: %s", ch.Name(), ch.Network(), err.Error())
+		}
+
+		if cs.Time.After(ch.CheckTime()) {
+			err  = dbUpdateStatus(tx, ch.Name(), ch.Network(), cs.NumUsers, cs.Topic, "irssi-logs", "")
+			if err != nil {
+				log.Fatalf("Error updating status for '%s@%s': %s", ch.Name(), ch.Network(), err.Error())
+			}
+		}
+
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Fatalf("Error on committing status updates from Irssi log reading: %s", err.Error())
+	}
+}
+
 func main() {
 	cfg := confNew()
 	mainArgs()
@@ -190,6 +287,9 @@ func main() {
 	}
 	mainOpenLog(cfg)
 	ctx := mainNewContext(cfg)
+
+	mainGatherChannelStatuses(ctx)
+
 	if cfg.IRCBotEnable() {
 		go channelCheckLoop(ctx)
 	}
