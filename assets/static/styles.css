@@ -98,6 +98,11 @@ fieldset, article {
 }
 
 .channel-status, .channel-error {
+	font-size: small;
+}
+
+.channel-status {
+	color: gray;
 }
 
 .channel-error {

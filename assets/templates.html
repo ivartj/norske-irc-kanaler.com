@@ -80,6 +80,11 @@
 			<div>
 				{{.Description}}
 			</div>
+			{{if not .Error }}
+			<div class="channel-status">
+				{{.Status}}
+			</div>
+			{{end}}
 		</div>
 
 		{{if (q "admin")}}
@@ -88,11 +93,7 @@
 			{{if not .Approved}}<a href="/approve?name={{.Name}}&amp;network={{.Network}}&amp;nonce={{q "auth-nonce"}}">godkjen</a> -{{end}}
 			<a href="/delete?name={{.Name}}&amp;network={{.Network}}&amp;nonce={{q "auth-nonce"}}">slett</a>
 		</div>
-		{{if not .Error }}
-		<div class="channel-status">
-			{{.Status}}
-		</div>
-		{{else}}
+		{{if .Error}}
 		<div class="channel-error">
 			{{.Status}}
 		</div>
