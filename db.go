@@ -186,7 +186,7 @@ func dbUpdateStatus(c dbConn, name, network string, numusers int, topic, query_m
 			(channel_name, network, numusers, topic, query_method, errmsg, status_time)
 		values
 			(?, ?, ?, ?, ?, ?, ?);
-	`, name, network, numusers, topic, query_method, errmsg, statusTime.Format(dbTimeFmt))
+	`, name, network, numusers, topic, query_method, errmsg, statusTime.UTC().Format(dbTimeFmt))
 	if err != nil {
 		return fmt.Errorf("Failed to store channel status: %s", err.Error())
 	}
