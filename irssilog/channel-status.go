@@ -39,6 +39,9 @@ var (
 
 	// 09:34 -!- FooNick changed the topic of #example to: Lorem ipsum dolor sit amet
 	regexTopic	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? changed the topic of .+? to: (.+)`)
+
+	// 09:34 < FooNick> hello
+	regexTimestamp	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2})`)
 )
 
 
@@ -159,6 +162,17 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 			}
 
 			numusers--
+
+		case regexTimestamp.MatchString(line):
+			submatches := regexTimestamp.FindStringSubmatch(line)
+			if len(submatches) != 2 {
+				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
+			}
+			strclock := submatches[1]
+			err := setClock(&t, strclock)
+			if err != nil {
+				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
+			}
 
 		}
 
