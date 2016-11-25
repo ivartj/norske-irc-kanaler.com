@@ -259,6 +259,7 @@ func mainIrssiLogs(ctx *mainContext) {
 		cs, err := logctx.ChannelStatus(ch.Name(), ch.Network())
 		if err != nil {
 			log.Printf("Error retrieving '%s@%s' status from log reading: %s", ch.Name(), ch.Network(), err.Error())
+			continue
 		}
 
 		if cs.Time.After(ch.CheckTime()) {
