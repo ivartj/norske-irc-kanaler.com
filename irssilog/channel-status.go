@@ -23,7 +23,6 @@ var (
 	regexDayChanged	= regexp.MustCompile(`^--- Day changed (.+)`)
 
 	timeFormatDayChanged = "Mon Jan _2 2006"
-	timeFormatClock = "15:04"
 
 	// 22:11 -!- Irssi: #example: Total of 113 nicks [6 ops, 0 halfops, 0 voices, 107 normal]
 	regexTotalNick	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Irssi: #.+?: Total of ([0-9]+) nicks`)
@@ -47,12 +46,13 @@ var (
 
 func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 
+	var err error
+
 	scan := bufio.NewScanner(log)
 	numusers := 0
 	topic := ""
 	t := time.Time{}
-
-	dateSet := true
+	date := time.Time{}
 
 	for scan.Scan() {
 
@@ -68,13 +68,12 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 			}
 
 			// TODO: Consider that the log is from a system with different timezone
-			var err error
-			t, err = time.Parse(time.ANSIC, submatches[1])
+			date, err = time.ParseInLocation(time.ANSIC, submatches[1], time.Local)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse the time given in '%s': %s", line, err.Error())
 			}
 
-			dateSet = true
+			t = date
 
 		case regexDayChanged.MatchString(line):
 
@@ -84,13 +83,12 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 			}
 
 			// TODO: Consider that the log is from a system with different timezone
-			var err error
-			t, err = time.Parse(timeFormatDayChanged, submatches[1])
+			date, err = time.ParseInLocation(timeFormatDayChanged, submatches[1], time.Local)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse the time given in '%s': %s", line, err.Error())
 			}
 
-			dateSet = true
+			t = date
 
 		case regexTotalNick.MatchString(line):
 
@@ -101,7 +99,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 			strclock := submatches[1]
 			strnumusers := submatches[2]
 
-			err := setClock(&t, strclock)
+			t, err = setClock(date, strclock)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
 			}
@@ -119,7 +117,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 			strclock := submatches[1]
 			topic = submatches[2]
 
-			err := setClock(&t, strclock)
+			t, err = setClock(date, strclock)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
 			}
@@ -130,7 +128,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
 			}
 			strclock := submatches[1]
-			err := setClock(&t, strclock)
+			t, err = setClock(date, strclock)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
 			}
@@ -143,7 +141,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
 			}
 			strclock := submatches[1]
-			err := setClock(&t, strclock)
+			t, err = setClock(date, strclock)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
 			}
@@ -156,7 +154,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
 			}
 			strclock := submatches[1]
-			err := setClock(&t, strclock)
+			t, err = setClock(date, strclock)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
 			}
@@ -169,7 +167,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
 			}
 			strclock := submatches[1]
-			err := setClock(&t, strclock)
+			t, err = setClock(date, strclock)
 			if err != nil {
 				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
 			}
@@ -182,21 +180,20 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 		return ChannelStatus{}, fmt.Errorf("Error on scanning line: %s", scan.Err().Error())
 	}
 
-	if !dateSet {
-		return ChannelStatus{}, fmt.Errorf("No date was found throughout the log")
+	if t.IsZero() {
+		return ChannelStatus{}, fmt.Errorf("No specific time was found throughout the log")
 	}
 
 	return ChannelStatus{Time: t, NumUsers: numusers, Topic: topic}, nil
 }
 
-func setClock(t *time.Time, strclock string) error {
+func setClock(date time.Time, strclock string) (time.Time, error) {
 	var hour, min int
 	_, err := fmt.Sscanf(strclock, "%d:%d", &hour, &min)
 	if err != nil {
-		return fmt.Errorf("Failed to scan '%s' as clock string: %s", strclock, err.Error())
+		return time.Time{}, fmt.Errorf("Failed to scan '%s' as clock string: %s", strclock, err.Error())
 	}
-	*t = t.Truncate(24 * time.Hour)
-	*t = t.Add(time.Hour * time.Duration(hour) + time.Minute * time.Duration(min))
-	return nil
+	t := date.Add(time.Hour * time.Duration(hour) + time.Minute * time.Duration(min))
+	return t, nil
 }
 
