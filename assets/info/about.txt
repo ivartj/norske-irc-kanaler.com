@@ -2,7 +2,7 @@
 
 Laget av [url=http://ivartj.org]ivartj[/url].
 
-Kanalene rangeres avhengig av hvor mange brukere som viser seg å være i kanalen ved automatiserte besøk, som gjøres ukentlig.
+Kanalene rangeres avhengig av hvor mange brukere som viser seg å være i kanalen ut ifra chatteloggene til en manuelt styrt bruker. Det brukes ikke lenger en automatisert bruker.
 
 Utviklet med programmeringsspråket [url=http://golang.org/]Go[/url].
 

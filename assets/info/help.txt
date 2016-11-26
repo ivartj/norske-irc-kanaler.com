@@ -1,13 +1,22 @@
 [h1]Hjelp med IRC-chat[/h1]
 
-Internet Relay Chat er et system som brukes til samtaler mellom flere personer, i såkalte kanaler, også kjent som "chatterom".
+IRC (Internet Relay Chat) er et system som brukes til samtaler mellom flere personer, i såkalte kanaler, også kjent som "chatterom". IRC ble først utviklet i 1988 av Jarkko Oikarinen, en finsk programmerer. Ettersom kommunikasjonsformen ble standardisert og beskrevet offentlig, kan andre utviklere implementere systemet uavhengig av et bestemt program eller en bestemt organisasjon. Enkeltbrukere har dermed et stort utvalg av klienter, tjenester og kan eventuelt sette opp en egen IRC-server.
 
-En alminnelig bruker benytter seg av et klientprogram for å koble seg opp til et IRC-nettverk hvor disse kanalene finner sted. Akkurat som man bruker et nettleserprogram til å lese websider, vil en IRC-bruker bruke et IRC-program for å koble seg på IRC-kanaler.
+En alminnelig bruker benytter et klientprogram for å koble seg opp til et IRC-nettverk hvor disse kanalene finner sted. Lignende som man bruker et nettleserprogram til å lese websider på en nettside, vil en IRC-bruker bruke en IRC-klient for å besøke IRC-kanaler på en IRC-server.
 
-På denne nettsiden fører de grønne lenkene til et web-basert IRC-program. Man kan også bruke programmer som man kan installere på egen datamaskin, som [url=http://www.kvirc.net/]KVIrc[/url]. Da må man vite addressen til IRC-nettverket hvor kanalen befinner seg på. Nettverksaddressen er på denne
-nettsiden skrevet i grått ved siden av kanalnavnet.
+På denne nettsiden fører de grønne lenkene til en web-basert IRC-klient. Man kan også bruke programmer som man kan installere på egen datamaskin, som [url=http://www.kvirc.net/]KVIrc[/url]. Da må man vite addressen til IRC-nettverket hvor kanalen befinner seg på. Nettverksaddressen er på denne nettsiden skrevet i grått ved siden av kanalnavnet. IRC-klienter finnes også som tilleggsfunksjoner i nettleseren Opera og epostklienten Thunderbird.
 
-For mer praktisk informasjon kan du skrive '/help' (uten apostrofene) i meldingsfeltet i et vanlig IRC-program.
+IRC-klienter er utformet ulikt avhengig av smak og behag, men de fleste har til felles at man kan kjøre en del felles kommandoer ved å skrive dem i meldingsfeltet:
 
-IRC ble først utviklet i 1988 av Jarkko Oikarinen, en finsk programmerer. Ettersom kommunikasjonsformen ble standardisert og beskrevet offentlig, kan andre utviklere implementere systemet uavhengig av et bestemt program eller en bestemt organisasjon.
+[b]/nick[/b] [i]brukernavn[/i] - Endre navnet ditt i samtaler.
+
+[b]/join[/b] [i]#kanal[/i] - Besøk den navngitte kanalen/chatterommet.
+
+[b]/server[/b] [i]nettverk[/i] - Besøk det navngitte IRC-nettverket.
+
+[b]/msg[/b] [i]bruker[/i] [i]melding[/i] - Send en privat melding til en gitt bruker.
+
+For flere kommandoer og hjelp med dem kan du skrive '/help' (uten apostrofene) i meldingsfeltet i et vanlig IRC-program.
+
+
 
