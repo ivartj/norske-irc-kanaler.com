@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ivartj/norske-irc-kanaler.com/irssilog"
+	irclog "github.com/ivartj/norske-irc-kanaler.com/irssilog"
 	"github.com/ivartj/norske-irc-kanaler.com/args"
 	"os"
 	"fmt"

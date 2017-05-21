@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 	"time"
+	"strings"
 )
 
 type ChannelStatus struct{
@@ -41,6 +42,12 @@ var (
 
 	// 09:34 < FooNick> hello
 	regexTimestamp	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2})`)
+
+	// 15:46 -!- Netsplit foohost <-> barhost quits: FooNick, BarNick
+	regexNetsplitQuits	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Netsplit .+? quits: (.+)`)
+
+	// 16:00 -!- Netsplit over, joins: FooNick, BarNick (+50 more)
+	regexNetsplitJoins	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Netsplit .+? joins: (.+)`)
 )
 
 
@@ -161,6 +168,37 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 
 			numusers--
 
+		case regexNetsplitQuits.MatchString(line):
+			submatches := regexNetsplitQuits.FindStringSubmatch(line)
+			if len(submatches) != 3 {
+				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
+			}
+			strclock := submatches[1]
+			quitsstr := submatches[2]
+
+			numusers -= countNetsplitQuits(quitsstr)
+
+			t, err = setClock(date, strclock)
+			if err != nil {
+				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
+			}
+
+		case regexNetsplitJoins.MatchString(line):
+			submatches := regexNetsplitJoins.FindStringSubmatch(line)
+			if len(submatches) != 3 {
+				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
+			}
+			strclock := submatches[1]
+			joinsstr := submatches[2]
+
+			numusers += countNetsplitJoins(joinsstr)
+
+			t, err = setClock(date, strclock)
+			if err != nil {
+				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
+			}
+
+		// Must be last case
 		case regexTimestamp.MatchString(line):
 			submatches := regexTimestamp.FindStringSubmatch(line)
 			if len(submatches) != 2 {
@@ -187,6 +225,21 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 	return ChannelStatus{Time: t, NumUsers: numusers, Topic: topic}, nil
 }
 
+// Given a string that may or may not contain "(+<num> more", returns <num> or
+// 0 if no such ending is found
+func howManyMore(str string) int {
+	submatches := regexHowManyMore.FindStringSubmatch(str)
+	if len(submatches) != 2 {
+		return 0
+	}
+	num, err := strconv.Atoi(submatches[1])
+	if err != nil {
+		return 0
+	}
+	return num
+}
+var regexHowManyMore = regexp.MustCompile(`.+? \(\+([0-9]+) more`)
+
 func setClock(date time.Time, strclock string) (time.Time, error) {
 	var hour, min int
 	_, err := fmt.Sscanf(strclock, "%d:%d", &hour, &min)
@@ -195,5 +248,34 @@ func setClock(date time.Time, strclock string) (time.Time, error) {
 	}
 	t := date.Add(time.Hour * time.Duration(hour) + time.Minute * time.Duration(min))
 	return t, nil
+}
+
+func countNetsplitQuits(quitstr string) int {
+	// FooNick, BarNick
+	// FooNick, BarNick, (+5 more, use /NETSPLIT to show all of them)
+
+	ncommas := strings.Count(quitstr, ",")
+
+	// Check for 'more' parentheses
+	more := howManyMore(quitstr)
+	if more != 0 {
+		// Parentheses will contain a comma, hence - 1
+		return ncommas + more - 1
+	} else {
+		return ncommas + 1
+	}
+}
+
+func countNetsplitJoins(joinsstr string) int {
+	// FooNick, BarNick
+	// FooNick, BarNick (+50 more)
+
+	ncommas := strings.Count(joinsstr, ",")
+	more := howManyMore(joinsstr)
+	if more != 0 {
+		return ncommas+1 + more
+	} else {
+		return ncommas+1
+	}
 }
 
