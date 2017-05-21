@@ -18,24 +18,28 @@ type ChannelStatus struct{
 
 var (
 	// --- Log opened Mon Aug 15 22:11:49 2016
-	regexLogOpened	= regexp.MustCompile(`^--- Log opened (.+)`)
+	regexLogOpened	= regexp.MustCompile(`^--- Log opened (.+? [0-9]+) ([0-9]{2}:[0-9]{2}).+`)
 
 	// --- Day changed Tue Aug 16 2016
 	regexDayChanged	= regexp.MustCompile(`^--- Day changed (.+)`)
 
 	timeFormatDayChanged = "Mon Jan _2 2006"
+	timeFormatLogOpened = "Mon Jan _2"
 
 	// 22:11 -!- Irssi: #example: Total of 113 nicks [6 ops, 0 halfops, 0 voices, 107 normal]
 	regexTotalNick	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Irssi: #.+?: Total of ([0-9]+) nicks`)
 
 	// 22:25 -!- FooNick [~BarUser@example-host] has joined #example
-	regexJoined	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[~.+?@.+?\] has joined`)
+	regexJoined	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has joined`)
 
 	// 22:39 -!- FooNick [~BarUser@example-host] has quit [Ping timeout: 246 seconds]
-	regexQuit	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[~.+?@.+?\] has quit`)
+	regexQuit	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has quit`)
 
 	// 18:16 -!- FooNick [~BarUser@example-host] has left #example [Leave message]
-	regexLeft	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[~.+?@.+?\] has left`)
+	regexLeft	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has left`)
+
+	// 18:16 -!- FooNick was kicked from #example by BarNick [Kick message]
+	regexKick	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? was kicked from #.+? by .+? \[.+?\]`)
 
 	// 09:34 -!- FooNick changed the topic of #example to: Lorem ipsum dolor sit amet
 	regexTopic	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? changed the topic of .+? to: (.+)`)
@@ -61,7 +65,7 @@ func GetChannelStatusFromLog(log io.Reader) (status ChannelStatus, err error) {
 
 	defer func() {
 		x := recover()
-		if x != nil {
+		if x == nil {
 			return
 		}
 		xerr, ok := x.(error)
@@ -79,15 +83,18 @@ func GetChannelStatusFromLog(log io.Reader) (status ChannelStatus, err error) {
 
 		case regexLogOpened.MatchString(line):
 
-			submatches := xExpectSubmatches(regexLogOpened, line, 2)
+			submatches := xExpectSubmatches(regexLogOpened, line, 3)
+
+			strdate := submatches[1]
+			strclock := submatches[2]
 
 			// TODO: Consider that the log is from a system with different timezone
-			date, err = time.ParseInLocation(time.ANSIC, submatches[1], time.Local)
+			date, err = time.ParseInLocation(timeFormatLogOpened, strdate, time.Local)
 			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse the time given in '%s': %s", line, err.Error())
+				return ChannelStatus{}, fmt.Errorf("Failed to parse the date given in '%s': %s", strdate, err.Error())
 			}
 
-			t = date
+			t = xSetClock(date, strclock)
 
 		case regexDayChanged.MatchString(line):
 
@@ -130,6 +137,13 @@ func GetChannelStatusFromLog(log io.Reader) (status ChannelStatus, err error) {
 
 		case regexQuit.MatchString(line):
 			submatches := xExpectSubmatches(regexQuit, line, 2)
+			strclock := submatches[1]
+			t = xSetClock(date, strclock)
+
+			numusers--
+
+		case regexKick.MatchString(line):
+			submatches := xExpectSubmatches(regexKick, line, 2)
 			strclock := submatches[1]
 			t = xSetClock(date, strclock)
 
@@ -187,8 +201,8 @@ func xErrorf(format string, args... interface{}) {
 
 func xExpectSubmatches(regex *regexp.Regexp, line string, nsubmatches int) (submatches []string) {
 	submatches = regex.FindStringSubmatch(line)
-	if len(submatches) == nsubmatches {
-		xErrorf("Expected %d submatches for line '%s' by regexp '%s'", nsubmatches, line, regex.String())
+	if len(submatches) != nsubmatches {
+		xErrorf("Expected %d and not %d submatches for line '%s' by regexp '%s'", nsubmatches, len(submatches), line, regex.String())
 	}
 	return submatches
 }
@@ -220,17 +234,16 @@ func xSetClock(date time.Time, strclock string) time.Time {
 
 func countNetsplitQuits(quitstr string) int {
 	// FooNick, BarNick
-	// FooNick, BarNick, (+5 more, use /NETSPLIT to show all of them)
+	// FooNick, BarNick (+5 more, use /NETSPLIT to show all of them)
 
 	ncommas := strings.Count(quitstr, ",")
 
 	// Check for 'more' parentheses
 	more := howManyMore(quitstr)
 	if more != 0 {
-		// Parentheses will contain a comma, hence - 1
-		return ncommas + more - 1
+		return ncommas-1 + more
 	} else {
-		return ncommas + 1
+		return ncommas+1
 	}
 }
 
