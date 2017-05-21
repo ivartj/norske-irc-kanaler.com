@@ -51,15 +51,25 @@ var (
 )
 
 
-func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
-
-	var err error
+func GetChannelStatusFromLog(log io.Reader) (status ChannelStatus, err error) {
 
 	scan := bufio.NewScanner(log)
 	numusers := 0
 	topic := ""
 	t := time.Time{}
 	date := time.Time{}
+
+	defer func() {
+		x := recover()
+		if x != nil {
+			return
+		}
+		xerr, ok := x.(error)
+		if !ok {
+			panic(x)
+		}
+		err = xerr
+	}()
 
 	for scan.Scan() {
 
@@ -69,10 +79,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 
 		case regexLogOpened.MatchString(line):
 
-			submatches := regexLogOpened.FindStringSubmatch(line)
-			if len(submatches) != 2 {
-				return ChannelStatus{}, fmt.Errorf("Failed to capture by regex the date from the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexLogOpened, line, 2)
 
 			// TODO: Consider that the log is from a system with different timezone
 			date, err = time.ParseInLocation(time.ANSIC, submatches[1], time.Local)
@@ -84,10 +91,7 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 
 		case regexDayChanged.MatchString(line):
 
-			submatches := regexDayChanged.FindStringSubmatch(line)
-			if len(submatches) != 2 {
-				return ChannelStatus{}, fmt.Errorf("Failed to capture by regex the date given in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexDayChanged, line, 2)
 
 			// TODO: Consider that the log is from a system with different timezone
 			date, err = time.ParseInLocation(timeFormatDayChanged, submatches[1], time.Local)
@@ -99,17 +103,11 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 
 		case regexTotalNick.MatchString(line):
 
-			submatches := regexTotalNick.FindStringSubmatch(line)
-			if len(submatches) != 3 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexTotalNick, line, 3)
 			strclock := submatches[1]
 			strnumusers := submatches[2]
 
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 			numusers, err = strconv.Atoi(strnumusers)
 			if err != nil {
@@ -117,98 +115,56 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 			}
 
 		case regexTopic.MatchString(line):
-			submatches := regexTopic.FindStringSubmatch(line)
-			if len(submatches) != 3 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexTopic, line, 3)
 			strclock := submatches[1]
 			topic = submatches[2]
 
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 		case regexJoined.MatchString(line):
-			submatches := regexJoined.FindStringSubmatch(line)
-			if len(submatches) != 2 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexJoined, line, 2)
 			strclock := submatches[1]
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 			numusers++
 
 		case regexQuit.MatchString(line):
-			submatches := regexQuit.FindStringSubmatch(line)
-			if len(submatches) != 2 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexQuit, line, 2)
 			strclock := submatches[1]
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 			numusers--
 
 		case regexLeft.MatchString(line):
-			submatches := regexLeft.FindStringSubmatch(line)
-			if len(submatches) != 2 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexLeft, line, 2)
 			strclock := submatches[1]
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 			numusers--
 
 		case regexNetsplitQuits.MatchString(line):
-			submatches := regexNetsplitQuits.FindStringSubmatch(line)
-			if len(submatches) != 3 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexNetsplitQuits, line, 3)
 			strclock := submatches[1]
 			quitsstr := submatches[2]
 
 			numusers -= countNetsplitQuits(quitsstr)
 
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 		case regexNetsplitJoins.MatchString(line):
-			submatches := regexNetsplitJoins.FindStringSubmatch(line)
-			if len(submatches) != 3 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexNetsplitJoins, line, 3)
 			strclock := submatches[1]
 			joinsstr := submatches[2]
 
 			numusers += countNetsplitJoins(joinsstr)
 
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 		// Must be last case
 		case regexTimestamp.MatchString(line):
-			submatches := regexTimestamp.FindStringSubmatch(line)
-			if len(submatches) != 2 {
-				return ChannelStatus{}, fmt.Errorf("Unexpected number of submatches in the line '%s'", line)
-			}
+			submatches := xExpectSubmatches(regexTimestamp, line, 2)
 			strclock := submatches[1]
-			t, err = setClock(date, strclock)
-			if err != nil {
-				return ChannelStatus{}, fmt.Errorf("Failed to parse timestamp on line '%s': %s", line, err.Error())
-			}
+			t = xSetClock(date, strclock)
 
 		}
 
@@ -223,6 +179,18 @@ func GetChannelStatusFromLog(log io.Reader) (ChannelStatus, error) {
 	}
 
 	return ChannelStatus{Time: t, NumUsers: numusers, Topic: topic}, nil
+}
+
+func xErrorf(format string, args... interface{}) {
+	panic(fmt.Errorf(format, args...))
+}
+
+func xExpectSubmatches(regex *regexp.Regexp, line string, nsubmatches int) (submatches []string) {
+	submatches = regex.FindStringSubmatch(line)
+	if len(submatches) == nsubmatches {
+		xErrorf("Expected %d submatches for line '%s' by regexp '%s'", nsubmatches, line, regex.String())
+	}
+	return submatches
 }
 
 // Given a string that may or may not contain "(+<num> more", returns <num> or
@@ -240,14 +208,14 @@ func howManyMore(str string) int {
 }
 var regexHowManyMore = regexp.MustCompile(`.+? \(\+([0-9]+) more`)
 
-func setClock(date time.Time, strclock string) (time.Time, error) {
+func xSetClock(date time.Time, strclock string) time.Time {
 	var hour, min int
 	_, err := fmt.Sscanf(strclock, "%d:%d", &hour, &min)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("Failed to scan '%s' as clock string: %s", strclock, err.Error())
+		xErrorf("Failed to scan '%s' as clock string: %s", strclock, err.Error())
 	}
 	t := date.Add(time.Hour * time.Duration(hour) + time.Minute * time.Duration(min))
-	return t, nil
+	return t
 }
 
 func countNetsplitQuits(quitstr string) int {
