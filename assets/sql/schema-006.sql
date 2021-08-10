@@ -22,8 +22,10 @@ select
 from
 	channel_status;
 
+pragma legacy_alter_table = 1;
 drop table channel_status;
 alter table channel_status_new rename to channel_status;
+pragma legacy_alter_table = 0;
 
 drop trigger server_to_network;
 

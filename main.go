@@ -117,6 +117,7 @@ func mainNewContext(cfg *conf) *mainContext {
 	err = dbInit(db, cfg.AssetsPath() + "/sql")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s.\n", err.Error())
+		os.Exit(1)
 	}
 
 	tpl, err := web.NewTemplate().ParseFiles(cfg.AssetsPath() + "/templates.html")
