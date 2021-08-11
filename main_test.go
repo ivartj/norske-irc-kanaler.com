@@ -14,4 +14,3 @@ func TestMain(t *testing.T) {
 
 	mainNewContext(cfg)
 }
-

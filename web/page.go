@@ -1,20 +1,20 @@
 package web
 
 import (
-	"database/sql"
-	"fmt"
-	"errors"
-	"net/http"
 	"bytes"
+	"database/sql"
+	"errors"
+	"fmt"
+	"net/http"
 )
 
-type Page interface{
+type Page interface {
 	http.ResponseWriter
 	Fatal(args ...interface{})
 	Fatalf(format string, args ...interface{})
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(query string, args ...interface{}) (*sql.Row)
+	QueryRow(query string, args ...interface{}) *sql.Row
 	ExecuteTemplate(name string)
 	SetField(fieldName string, value interface{})
 	SetFieldMap(m map[string]interface{})
@@ -22,17 +22,17 @@ type Page interface{
 }
 
 type page struct {
-	w http.ResponseWriter
-	db *sql.Tx
-	site *Site
+	w         http.ResponseWriter
+	db        *sql.Tx
+	site      *Site
 	fieldData map[string]interface{}
 }
 
 func pageNew(site *Site, w http.ResponseWriter) *page {
 
 	ctx := &page{
-		w: w,
-		site: site,
+		w:         w,
+		site:      site,
 		fieldData: map[string]interface{}{},
 	}
 
@@ -82,7 +82,7 @@ func (ctx *page) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return ctx.db.Query(query, args...)
 }
 
-func (ctx *page) QueryRow(query string, args ...interface{}) *sql.Row{
+func (ctx *page) QueryRow(query string, args ...interface{}) *sql.Row {
 	ctx.initDb()
 	return ctx.db.QueryRow(query, args...)
 }
@@ -117,7 +117,7 @@ func (ctx *page) ExecuteTemplate(name string) {
 	}
 
 	tpl.Funcs(map[string]interface{}{
-		"q" : func(fieldName string) (interface{}, error) {
+		"q": func(fieldName string) (interface{}, error) {
 
 			v, ok := ctx.fieldData[fieldName]
 			if ok {
@@ -132,7 +132,6 @@ func (ctx *page) ExecuteTemplate(name string) {
 			return nil, fmt.Errorf("No field data for field '%s'", fieldName)
 
 		},
-
 	})
 
 	// Buffer the output to catch errors before any calls to ResponseWriter.WriteHeader
@@ -164,4 +163,3 @@ func (ctx *page) GetField(name string) (interface{}, error) {
 	}
 	return ctx.site.GetField(name)
 }
-

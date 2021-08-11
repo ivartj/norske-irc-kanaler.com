@@ -1,31 +1,31 @@
 package bbgo
 
 import (
-	"io"
 	"errors"
 	"fmt"
 	"html"
+	"io"
 	"strings"
 )
 
 type parser struct {
-	input <-chan token
-	output io.Writer
+	input     <-chan token
+	output    io.Writer
 	blockRoll []*blockScope
-	newline bool
-	isInline bool
+	newline   bool
+	isInline  bool
 	blockLine *blockLineTag
 }
 
 type blockScope struct {
-	tag *blockTag
+	tag        *blockTag
 	inlineRoll []*inlineTag
-	blockLine *blockLineTag
+	blockLine  *blockLineTag
 }
 
 func newParser(input <-chan token, output io.Writer) *parser {
 	return &parser{
-		input: input,
+		input:  input,
 		output: output,
 		blockRoll: []*blockScope{
 			&blockScope{
@@ -36,7 +36,7 @@ func newParser(input <-chan token, output io.Writer) *parser {
 }
 
 func (p *parser) scope() *blockScope {
-	return p.blockRoll[len(p.blockRoll) - 1]
+	return p.blockRoll[len(p.blockRoll)-1]
 }
 
 func (p *parser) parse() (errval error) {
@@ -95,7 +95,7 @@ func (p *parser) openBlockLine(tag *blockLineTag) {
 	tag.printOpen(p.output)
 
 	for _, scope := range p.blockRoll {
-		for  _, inlineTag := range scope.inlineRoll{
+		for _, inlineTag := range scope.inlineRoll {
 			inlineTag.printOpen(p.output)
 		}
 	}
@@ -126,7 +126,7 @@ func (p *parser) closeBlockLine() {
 func (p *parser) openBlock(tag *blockTag) {
 	p.closeBlockLine()
 	p.blockRoll = append(p.blockRoll, &blockScope{
-		tag: tag,
+		tag:        tag,
 		inlineRoll: []*inlineTag{},
 	})
 	tag.printOpen(p.output)
@@ -137,8 +137,8 @@ func (p *parser) closeBlock() {
 	if len(p.blockRoll) <= 1 {
 		panic("Closing root scope")
 	}
-	p.blockRoll[len(p.blockRoll) - 1].tag.printClose(p.output)
-	p.blockRoll = p.blockRoll[:len(p.blockRoll) - 1]
+	p.blockRoll[len(p.blockRoll)-1].tag.printClose(p.output)
+	p.blockRoll = p.blockRoll[:len(p.blockRoll)-1]
 }
 
 func (p *parser) openInline(tag *inlineTag) {
@@ -157,14 +157,14 @@ func (p *parser) closeInline(name string) {
 		panic("Empty inline roll")
 	}
 
-	tag := p.scope().inlineRoll[rollLen - 1]
+	tag := p.scope().inlineRoll[rollLen-1]
 	if tag.name != name {
 		panic(fmt.Errorf("\"%s\" != \"%s\"", tag.name, name))
 	}
 
 	tag.printClose(p.output)
 
-	p.scope().inlineRoll = p.scope().inlineRoll[:rollLen - 1]
+	p.scope().inlineRoll = p.scope().inlineRoll[:rollLen-1]
 }
 
 func (p *parser) processOpenTag(name, arg string) {
@@ -214,7 +214,7 @@ func (p *parser) processCloseTag(name string) {
 }
 
 func getCloseTagName(tag []rune) string {
-	return string(tag[2:len(tag)-1])
+	return string(tag[2 : len(tag)-1])
 }
 
 func getOpenTagNameAndArg(tag []rune) (name string, arg string) {
@@ -223,7 +223,7 @@ func getOpenTagNameAndArg(tag []rune) (name string, arg string) {
 
 	for i, r = range tag[1:] {
 		if r == ']' || r == '=' {
-			name = strings.ToLower(string(tag[1:i+1]))
+			name = strings.ToLower(string(tag[1 : i+1]))
 			break
 		}
 	}
@@ -275,4 +275,3 @@ func (p *parser) next() (token, bool) {
 
 	return t, false
 }
-

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
 	"net/http"
 	"net/url"
+	"testing"
 )
 
 func TestEditPage(t *testing.T) {
@@ -26,13 +26,13 @@ func TestEditPage(t *testing.T) {
 
 	req.AddCookie(sessionCookie)
 	req.Form = url.Values(map[string][]string{
-		"original-name" : []string{ "#test" },
-		"original-network" : []string{ "irc.example.com" },
+		"original-name":    []string{"#test"},
+		"original-network": []string{"irc.example.com"},
 
-		"name" : []string{ "#fest" },
-		"network" : []string{ "irc.example.com" },
-		"weblink" : []string{ channelSuggestWebLink("#fest", "irc.example.com") },
-		"description" : []string{ "Festkanalen." },
+		"name":        []string{"#fest"},
+		"network":     []string{"irc.example.com"},
+		"weblink":     []string{channelSuggestWebLink("#fest", "irc.example.com")},
+		"description": []string{"Festkanalen."},
 	})
 
 	rw := testNewResponseWriter()
@@ -54,4 +54,3 @@ func TestEditPage(t *testing.T) {
 	}
 
 }
-

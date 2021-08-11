@@ -1,19 +1,19 @@
 package main
 
 import (
-	irclog "github.com/ivartj/norske-irc-kanaler.com/irssilog"
-	"github.com/ivartj/norske-irc-kanaler.com/args"
-	"os"
 	"fmt"
+	"github.com/ivartj/norske-irc-kanaler.com/args"
+	irclog "github.com/ivartj/norske-irc-kanaler.com/irssilog"
+	"os"
 	"strings"
 )
 
 const (
-	mainProgramName = "irssilog-status"
+	mainProgramName    = "irssilog-status"
 	mainProgramVersion = "0.1-SNAPSHOT"
 )
 
-type mainChannel struct{
+type mainChannel struct {
 	name, network string
 }
 
@@ -83,7 +83,7 @@ func mainArgs() {
 			}
 			name := namenetwork[0]
 			network := namenetwork[1]
-			mainConfChannels = append(mainConfChannels, mainChannel{name: name, network: network}) 
+			mainConfChannels = append(mainConfChannels, mainChannel{name: name, network: network})
 		}
 
 	}
@@ -111,4 +111,3 @@ func main() {
 		fmt.Println(cs.NumUsers, cs.Topic)
 	}
 }
-

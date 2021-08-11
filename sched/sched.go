@@ -2,18 +2,19 @@ package sched
 
 import (
 	"container/heap"
-	"time"
 	"fmt"
+	"time"
 )
 
-type op struct{
-	do func()
+type op struct {
+	do           func()
 	scheduleTime time.Time
-	interval time.Duration
+	interval     time.Duration
 }
 
 type opHeap []*op
-func (oh opHeap) Len() int { return len(oh) }
+
+func (oh opHeap) Len() int      { return len(oh) }
 func (oh opHeap) Swap(i, j int) { oh[i], oh[j] = oh[j], oh[i] }
 
 func (oh opHeap) Less(i, j int) bool {
@@ -32,10 +33,9 @@ func (oh *opHeap) Pop() interface{} {
 	return x
 }
 
-
-type Scheduler struct{
-	heap *opHeap
-	stop bool
+type Scheduler struct {
+	heap              *opHeap
+	stop              bool
 	anythingScheduled bool
 }
 
@@ -50,9 +50,9 @@ func New() *Scheduler {
 
 func (s *Scheduler) Schedule(do func(), initialTime time.Time, interval time.Duration) {
 	o := &op{
-		do: do,
+		do:           do,
 		scheduleTime: initialTime,
-		interval: interval,
+		interval:     interval,
 	}
 	s.anythingScheduled = true
 	heap.Push(s.heap, o)
@@ -85,4 +85,3 @@ func (s *Scheduler) Run() error {
 func (s *Scheduler) Stop() {
 	s.stop = true
 }
-

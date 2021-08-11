@@ -1,20 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ivartj/norske-irc-kanaler.com/args"
 	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
-	"fmt"
-	"os"
 	"io"
+	"os"
 )
 
 const (
-	mainName = "bbgo"
+	mainName    = "bbgo"
 	mainVersion = "1.0"
 )
 
 var (
-	mainInput io.Reader = os.Stdin
+	mainInput  io.Reader = os.Stdin
 	mainOutput io.Writer = os.Stdout
 )
 
@@ -45,7 +45,8 @@ func mainParseArguments(argv []string) {
 		}
 
 		switch tok.Arg() {
-		case "-h": fallthrough
+		case "-h":
+			fallthrough
 		case "--help":
 			mainUsage(os.Stdout)
 			os.Exit(0)
@@ -54,7 +55,8 @@ func mainParseArguments(argv []string) {
 			fmt.Printf("%s version %s\n", mainName, mainVersion)
 			os.Exit(0)
 
-		case "-o": fallthrough
+		case "-o":
+			fallthrough
 		case "--output":
 			if conf.outputFilename.isSet() {
 				fmt.Fprintf(os.Stderr, "Can't specify more than one output file.\n")
@@ -105,4 +107,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-

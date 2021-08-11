@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
 	"net/http"
 	"net/url"
+	"testing"
 )
 
 func TestAdminPage(t *testing.T) {
@@ -31,7 +31,7 @@ func TestAdminPage(t *testing.T) {
 		t.Fatalf("Failed to create test request.\n")
 	}
 	req.Form = url.Values(map[string][]string{
-		"password" : []string { testConf.Password() },
+		"password": []string{testConf.Password()},
 	})
 
 	ctx.site.ServeHTTP(rw, req)
@@ -59,4 +59,3 @@ func TestAdminPage(t *testing.T) {
 		t.Fatalf("Status code on authenticated /admin request not 200 OK, but %s.\n", resp.Status)
 	}
 }
-

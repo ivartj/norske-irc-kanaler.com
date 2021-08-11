@@ -1,28 +1,28 @@
 package main
 
 import (
-	"github.com/ivartj/norske-irc-kanaler.com/irc"
-	"github.com/ivartj/norske-irc-kanaler.com/chan-query"
-	"database/sql"
-	"strings"
-	"errors"
-	"net/url"
 	"bytes"
+	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/ivartj/norske-irc-kanaler.com/chan-query"
+	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"log"
+	"net/url"
+	"strings"
 	"time"
 )
 
 var channelIllegalChars map[byte]string = map[byte]string{
 
-// rfc2812 2.3.1 Message format in Augmented BNF
-	'\x00' : "null-terminator",
-	'\a' : "bjelletegnet",
-	'\n' : "linjebrekk",
-	'\r' : "linjeskift",
-	' ' : "mellomrom",
-	',' : "komma",
-	':' : "kolon",
+	// rfc2812 2.3.1 Message format in Augmented BNF
+	'\x00': "null-terminator",
+	'\a':   "bjelletegnet",
+	'\n':   "linjebrekk",
+	'\r':   "linjeskift",
+	' ':    "mellomrom",
+	',':    "komma",
+	':':    "kolon",
 }
 
 type channel interface {
@@ -123,7 +123,7 @@ func channelCheckServer(ctx *mainContext, db *sql.DB, network *dbNetwork, chs []
 
 		if ch.Checked() {
 			dur := time.Now().Sub(ch.CheckTime())
-			if dur < time.Hour * 24 * 7 {
+			if dur < time.Hour*24*7 {
 				continue
 			}
 		}
@@ -229,4 +229,3 @@ func channelCheck(bot *irc.Conn, name string) (*query.Result, string, error) {
 
 	return nil, "", errors.New(log.String())
 }
-

@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 	"net/http"
@@ -9,12 +9,13 @@ type submitErrorInvalid string
 type submitErrorAlreadyIn string
 type submitErrorApproval string
 
-func (err submitErrorExcluded) Error() string { return string(err) }
-func (err submitErrorInvalid) Error() string { return string(err) }
+func (err submitErrorExcluded) Error() string  { return string(err) }
+func (err submitErrorInvalid) Error() string   { return string(err) }
 func (err submitErrorAlreadyIn) Error() string { return string(err) }
-func (err submitErrorApproval) Error() string { return string(err) }
+func (err submitErrorApproval) Error() string  { return string(err) }
 
 type submitOk string
+
 func (err submitOk) Error() string { return string(err) }
 
 func submitChannel(page *page, name, server, weblink, description string) error {
@@ -66,12 +67,12 @@ func submitPage(page *page, req *http.Request) {
 	description := req.FormValue("description")
 
 	page.SetFieldMap(map[string]interface{}{
-		"submit-name" : name,
-		"submit-network" : network,
-		"submit-weblink" : weblink,
-		"submit-description" : description,
+		"submit-name":        name,
+		"submit-network":     network,
+		"submit-weblink":     weblink,
+		"submit-description": description,
 
-		"remove-form" : false,
+		"remove-form": false,
 	})
 
 	if req.Method == "POST" {
@@ -87,4 +88,3 @@ func submitPage(page *page, req *http.Request) {
 
 	page.ExecuteTemplate("submit")
 }
-

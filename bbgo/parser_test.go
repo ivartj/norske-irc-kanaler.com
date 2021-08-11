@@ -1,9 +1,9 @@
 package bbgo
 
 import (
+	"os"
 	"strings"
 	"testing"
-	"os"
 )
 
 func TestGetOpenTagNameAndArg(t *testing.T) {
@@ -39,4 +39,3 @@ func TestParser(t *testing.T) {
 		t.Error(err)
 	}
 }
-

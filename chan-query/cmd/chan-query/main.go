@@ -1,20 +1,20 @@
 package main
 
 import (
-	"github.com/ivartj/norske-irc-kanaler.com/args"
-	"github.com/ivartj/norske-irc-kanaler.com/irc"
-	query "github.com/ivartj/norske-irc-kanaler.com/chan-query"
-	"os"
 	"fmt"
+	"github.com/ivartj/norske-irc-kanaler.com/args"
+	query "github.com/ivartj/norske-irc-kanaler.com/chan-query"
+	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	mainName		= "chan-query"
-	mainVersion		= "1.0"
+	mainName    = "chan-query"
+	mainVersion = "1.0"
 )
 
 func mainPrintUsage(w io.Writer) {
@@ -53,12 +53,12 @@ Options:
 }
 
 var (
-	confChannels = make(map[string][]string)
-	confNickname = "norbot5123"
-	confUsername = "norbot"
-	confTimeout = time.Second * 2
-	confQueryMethods = []*query.Method {}
-	confDebugIRC = false
+	confChannels     = make(map[string][]string)
+	confNickname     = "norbot5123"
+	confUsername     = "norbot"
+	confTimeout      = time.Second * 2
+	confQueryMethods = []*query.Method{}
+	confDebugIRC     = false
 )
 
 func mainParseArgs() {
@@ -184,8 +184,8 @@ func queryChannelsOnServer(server string, channels []string) {
 			fmt.Fprintf(os.Stderr, "  %s\n", err.Error())
 		}
 
-next:
-		if i + 1 != len(channels) {
+	next:
+		if i+1 != len(channels) {
 			time.Sleep(confTimeout)
 		}
 	}
@@ -198,4 +198,3 @@ func main() {
 		queryChannelsOnServer(server, channels)
 	}
 }
-

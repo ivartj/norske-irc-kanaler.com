@@ -8,9 +8,9 @@ import (
 	"net/url"
 )
 
-type auth struct{
+type auth struct {
 	sessionID string
-	nonce string
+	nonce     string
 }
 
 func (a *auth) NewSession() error {
@@ -56,7 +56,7 @@ func (a *auth) Guard(pageFn func(*page, *http.Request)) func(*page, *http.Reques
 			return
 		}
 		// TODO: Check if appropriate status code.
-		http.Redirect(page, req, "/login?redirect=" + url.QueryEscape(req.URL.Path), 307)
+		http.Redirect(page, req, "/login?redirect="+url.QueryEscape(req.URL.Path), 307)
 	}
 }
 
@@ -72,4 +72,3 @@ func (a *auth) Logout() {
 	a.sessionID = ""
 	a.nonce = ""
 }
-

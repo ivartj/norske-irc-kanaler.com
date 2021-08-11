@@ -34,7 +34,7 @@ func TestNext(T *testing.T) {
 	if actual != expected {
 		T.Errorf("'%s' did not match expected '%s'.\n", actual, expected)
 	}
-		
+
 	t, err = time.Parse(time.ANSIC, "Mon Jan 2 15:04:05 2006")
 	if err != nil {
 		panic(err)
@@ -49,4 +49,3 @@ func TestNext(T *testing.T) {
 		T.Errorf("'%s' did not match expected '%s'.\n", actual, expected)
 	}
 }
-

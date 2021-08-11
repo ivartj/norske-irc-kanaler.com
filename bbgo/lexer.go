@@ -1,26 +1,26 @@
 package bbgo
 
 import (
-	"io"
 	"bufio"
-	"runtime"
 	"fmt"
-	"unicode/utf8"
+	"io"
+	"runtime"
 	"unicode"
+	"unicode/utf8"
 )
 
 type lexer struct {
-	pos int
+	pos    int
 	lexeme []rune
-	input *bufio.Reader
-	output chan <-token
-	atEOF bool
+	input  *bufio.Reader
+	output chan<- token
+	atEOF  bool
 }
 
 func lex(r io.Reader) <-chan token {
 	ch := make(chan token, 100)
 	l := &lexer{
-		input: bufio.NewReader(r),
+		input:  bufio.NewReader(r),
 		output: ch,
 		lexeme: []rune{},
 	}
@@ -42,7 +42,7 @@ func (l *lexer) stop() {
 	runtime.Goexit()
 }
 
-func (l *lexer) fail(format string, args... interface{}) {
+func (l *lexer) fail(format string, args ...interface{}) {
 	l.output <- token{
 		typ: errorToken,
 		raw: []rune(fmt.Sprintf(format, args...)),
@@ -54,7 +54,7 @@ func (l *lexer) fail(format string, args... interface{}) {
 func (l *lexer) next() (rune, bool) {
 	if l.pos < len(l.lexeme) {
 		l.pos++
-		return l.lexeme[l.pos - 1], false
+		return l.lexeme[l.pos-1], false
 	}
 
 	r, _, err := l.input.ReadRune()
@@ -90,11 +90,10 @@ func (l *lexer) peek() (rune, bool) {
 }
 
 func (l *lexer) emit(typ tokenType) {
-	l.output <- token{ typ, l.lexeme[:l.pos] }
+	l.output <- token{typ, l.lexeme[:l.pos]}
 	l.lexeme = l.lexeme[l.pos:]
 	l.pos = 0
 }
-
 
 type lexerStateFn func() lexerStateFn
 
@@ -191,12 +190,18 @@ func (l *lexer) stateSingleTagArgument() lexerStateFn {
 
 		switch {
 		case r == '\\':
-			if !escape { escapeNext = true }
+			if !escape {
+				escapeNext = true
+			}
 		case r == '[':
-			if escape { continue }
+			if escape {
+				continue
+			}
 			return l.stateText
 		case r == ']':
-			if escape { continue }
+			if escape {
+				continue
+			}
 			l.emit(openTagToken)
 			return l.stateStart
 		case unicode.IsPrint(r):
@@ -227,7 +232,7 @@ func (l *lexer) stateText() lexerStateFn {
 			l.emit(textToken)
 			return l.stateStart
 		default:
-			
+
 		}
 	}
 }
@@ -240,10 +245,9 @@ type token struct {
 }
 
 const (
-	errorToken tokenType 	= iota
+	errorToken tokenType = iota
 	openTagToken
 	closeTagToken
 	textToken
 	newlineToken
 )
-

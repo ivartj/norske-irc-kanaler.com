@@ -1,9 +1,9 @@
 package bbgo
 
 import (
-	"io"
 	"fmt"
 	"html"
+	"io"
 )
 
 const (
@@ -15,27 +15,26 @@ const (
 )
 
 var inlineTagTypes = map[string]InlineTagType{
-	"i" : &italicsTagType{},
-	"b" : &boldTagType{},
-	"url" : &urlTagType{},
+	"i":   &italicsTagType{},
+	"b":   &boldTagType{},
+	"url": &urlTagType{},
 }
 
 var blockTagTypes = map[string]BlockTagType{
-	"quote" : &quoteTagType{},
+	"quote": &quoteTagType{},
 }
 
 var blockLineTagTypes = map[string]BlockLineTagType{
-	"h1" : &simpleBlockLineTagType{"h1"},
-	"h2" : &simpleBlockLineTagType{"h2"},
-	"h3" : &simpleBlockLineTagType{"h3"},
+	"h1": &simpleBlockLineTagType{"h1"},
+	"h2": &simpleBlockLineTagType{"h2"},
+	"h3": &simpleBlockLineTagType{"h3"},
 }
 
 var inlineContentTagTypes = map[string]InlineContentTagType{
-	"img" : &imgTagType{},
+	"img": &imgTagType{},
 }
 
-var blockContentTagTypes = map[string]BlockContentTagType{
-}
+var blockContentTagTypes = map[string]BlockContentTagType{}
 
 type InlineTagType interface {
 	PrintOpen(w io.Writer, arg string)
@@ -53,11 +52,11 @@ type BlockLineTagType interface {
 }
 
 type InlineContentTagType interface {
-	Print(w io.Writer, arg, content string) 
+	Print(w io.Writer, arg, content string)
 }
 
 type BlockContentTagType interface {
-	Print(w io.Writer, arg, content string) 
+	Print(w io.Writer, arg, content string)
 }
 
 func RegisterInlineTagType(name string, tagType InlineTagType) {
@@ -81,7 +80,7 @@ type imgTagType struct{}
 func (img *imgTagType) Print(w io.Writer, arg, content string) {
 	// TODO: Further sanitation
 	fmt.Fprintf(w, "<img src=\"%s\" alt=\"\" />", html.EscapeString(content))
-} 
+}
 
 type quoteTagType struct{}
 
@@ -128,7 +127,7 @@ func (url *urlTagType) PrintClose(w io.Writer, arg string) {
 }
 
 type blockTag struct {
-	typ BlockTagType
+	typ       BlockTagType
 	name, arg string
 }
 
@@ -145,7 +144,7 @@ func (tag *blockTag) printClose(w io.Writer) {
 }
 
 type inlineTag struct {
-	typ InlineTagType
+	typ       InlineTagType
 	name, arg string
 }
 
@@ -163,7 +162,7 @@ func (tag *inlineTag) printClose(w io.Writer) {
 }
 
 type blockLineTag struct {
-	typ BlockLineTagType
+	typ       BlockLineTagType
 	name, arg string
 }
 
@@ -190,4 +189,3 @@ func (tag *simpleBlockLineTagType) PrintOpen(w io.Writer, arg string) {
 func (tag *simpleBlockLineTagType) PrintClose(w io.Writer, arg string) {
 	fmt.Fprintf(w, "</%s>", tag.name)
 }
-

@@ -51,16 +51,15 @@ func editPage(page *page, req *http.Request) {
 	}
 
 	page.SetFieldMap(map[string]interface{}{
-		"edit-name" : name,
-		"edit-network" : network,
-		"edit-weblink" : weblink,
-		"edit-description" : description,
+		"edit-name":        name,
+		"edit-network":     network,
+		"edit-weblink":     weblink,
+		"edit-description": description,
 
-		"edit-original-name" : originalName,
-		"edit-original-network" : originalNetwork,
+		"edit-original-name":    originalName,
+		"edit-original-network": originalNetwork,
 	})
 
 	page.ExecuteTemplate("edit")
 
 }
-

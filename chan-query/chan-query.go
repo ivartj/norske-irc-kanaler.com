@@ -1,23 +1,23 @@
 package query
 
 import (
-	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"fmt"
+	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"strconv"
 	"strings"
 )
 
 var (
 	ListMethod = &Method{
-		name: "list",
-		query: listQuery,
+		name:        "list",
+		query:       listQuery,
 		description: "Employs the LIST IRC protocol command.",
 	}
 	JoinMethod = &Method{
-		name: "join",
-		query: joinQuery,
+		name:        "join",
+		query:       joinQuery,
 		description: "Attempts to get channel information by joining the channel.",
-	 }
+	}
 )
 
 func GetMethods() []*Method {
@@ -37,15 +37,15 @@ func GetMethodByName(name string) (*Method, bool) {
 }
 
 type Result struct {
-	Name string
-	Server string
+	Name          string
+	Server        string
 	NumberOfUsers int
-	Topic string
+	Topic         string
 }
 
 type Method struct {
-	name string
-	query func(*irc.Conn, string)(*Result, error)
+	name        string
+	query       func(*irc.Conn, string) (*Result, error)
 	description string
 }
 
@@ -104,7 +104,8 @@ func listQuery(conn *irc.Conn, channelName string) (*Result, error) {
 			}
 			goto ret
 
-		case "401": fallthrough
+		case "401":
+			fallthrough
 		case "403":
 			return nil, fmt.Errorf("No such channel, '%s'", channelName)
 
@@ -114,7 +115,7 @@ func listQuery(conn *irc.Conn, channelName string) (*Result, error) {
 ret:
 	return &Result{
 		NumberOfUsers: numusers,
-		Topic: topic,
+		Topic:         topic,
 	}, nil
 }
 
@@ -142,17 +143,18 @@ func joinQuery(conn *irc.Conn, channelName string) (*Result, error) {
 		switch ev.Code {
 		case "353":
 			if len(ev.Args) != 0 {
-				numusers += len(strings.Split(ev.Args[len(ev.Args) - 1], " "))
+				numusers += len(strings.Split(ev.Args[len(ev.Args)-1], " "))
 			}
 
 		case "332":
-			topic = ev.Args[len(ev.Args) - 1]
+			topic = ev.Args[len(ev.Args)-1]
 			receivedTopic = true
 
 		case "366":
 			receivedNames = true
 
-		case "422": continue
+		case "422":
+			continue
 		case "331":
 			receivedTopic = true
 		}
@@ -167,7 +169,6 @@ func joinQuery(conn *irc.Conn, channelName string) (*Result, error) {
 
 	return &Result{
 		NumberOfUsers: numusers,
-		Topic: topic,
+		Topic:         topic,
 	}, nil
 }
-

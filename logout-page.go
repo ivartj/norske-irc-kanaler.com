@@ -11,7 +11,6 @@ func logoutPage(page *page, req *http.Request) {
 		page.main.auth.Logout()
 		page.AddMessage("Logout successful.")
 	}
-		
+
 	page.ExecuteTemplate("message")
 }
-

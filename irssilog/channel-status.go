@@ -3,57 +3,56 @@ package irssilog
 import (
 	"bufio"
 	"fmt"
-	"regexp"
 	"io"
+	"regexp"
 	"strconv"
-	"time"
 	"strings"
+	"time"
 )
 
-type ChannelStatus struct{
-	Time time.Time
+type ChannelStatus struct {
+	Time     time.Time
 	NumUsers int
-	Topic string
+	Topic    string
 }
 
 var (
 	// --- Log opened Mon Aug 15 22:11:49 2016
-	regexLogOpened	= regexp.MustCompile(`^--- Log opened (.+? [0-9]+) ([0-9]{2}:[0-9]{2}).+`)
+	regexLogOpened = regexp.MustCompile(`^--- Log opened (.+? [0-9]+) ([0-9]{2}:[0-9]{2}).+`)
 
 	// --- Day changed Tue Aug 16 2016
-	regexDayChanged	= regexp.MustCompile(`^--- Day changed (.+)`)
+	regexDayChanged = regexp.MustCompile(`^--- Day changed (.+)`)
 
 	timeFormatDayChanged = "Mon Jan _2 2006"
-	timeFormatLogOpened = "Mon Jan _2"
+	timeFormatLogOpened  = "Mon Jan _2"
 
 	// 22:11 -!- Irssi: #example: Total of 113 nicks [6 ops, 0 halfops, 0 voices, 107 normal]
-	regexTotalNick	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Irssi: #.+?: Total of ([0-9]+) nicks`)
+	regexTotalNick = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Irssi: #.+?: Total of ([0-9]+) nicks`)
 
 	// 22:25 -!- FooNick [~BarUser@example-host] has joined #example
-	regexJoined	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has joined`)
+	regexJoined = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has joined`)
 
 	// 22:39 -!- FooNick [~BarUser@example-host] has quit [Ping timeout: 246 seconds]
-	regexQuit	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has quit`)
+	regexQuit = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has quit`)
 
 	// 18:16 -!- FooNick [~BarUser@example-host] has left #example [Leave message]
-	regexLeft	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has left`)
+	regexLeft = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? \[.+?@.+?\] has left`)
 
 	// 18:16 -!- FooNick was kicked from #example by BarNick [Kick message]
-	regexKick	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? was kicked from #.+? by .+? \[.+?\]`)
+	regexKick = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? was kicked from #.+? by .+? \[.+?\]`)
 
 	// 09:34 -!- FooNick changed the topic of #example to: Lorem ipsum dolor sit amet
-	regexTopic	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? changed the topic of .+? to: (.+)`)
+	regexTopic = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- .+? changed the topic of .+? to: (.+)`)
 
 	// 09:34 < FooNick> hello
-	regexTimestamp	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2})`)
+	regexTimestamp = regexp.MustCompile(`^([0-9]{2}:[0-9]{2})`)
 
 	// 15:46 -!- Netsplit foohost <-> barhost quits: FooNick, BarNick
-	regexNetsplitQuits	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Netsplit .+? quits: (.+)`)
+	regexNetsplitQuits = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Netsplit .+? quits: (.+)`)
 
 	// 16:00 -!- Netsplit over, joins: FooNick, BarNick (+50 more)
-	regexNetsplitJoins	= regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Netsplit .+? joins: (.+)`)
+	regexNetsplitJoins = regexp.MustCompile(`^([0-9]{2}:[0-9]{2}) -!- Netsplit .+? joins: (.+)`)
 )
-
 
 func GetChannelStatusFromLog(log io.Reader) (status ChannelStatus, err error) {
 
@@ -195,7 +194,7 @@ func GetChannelStatusFromLog(log io.Reader) (status ChannelStatus, err error) {
 	return ChannelStatus{Time: t, NumUsers: numusers, Topic: topic}, nil
 }
 
-func xErrorf(format string, args... interface{}) {
+func xErrorf(format string, args ...interface{}) {
 	panic(fmt.Errorf(format, args...))
 }
 
@@ -220,6 +219,7 @@ func howManyMore(str string) int {
 	}
 	return num
 }
+
 var regexHowManyMore = regexp.MustCompile(`.+? \(\+([0-9]+) more`)
 
 func xSetClock(date time.Time, strclock string) time.Time {
@@ -228,7 +228,7 @@ func xSetClock(date time.Time, strclock string) time.Time {
 	if err != nil {
 		xErrorf("Failed to scan '%s' as clock string: %s", strclock, err.Error())
 	}
-	t := date.Add(time.Hour * time.Duration(hour) + time.Minute * time.Duration(min))
+	t := date.Add(time.Hour*time.Duration(hour) + time.Minute*time.Duration(min))
 	return t
 }
 
@@ -241,9 +241,9 @@ func countNetsplitQuits(quitstr string) int {
 	// Check for 'more' parentheses
 	more := howManyMore(quitstr)
 	if more != 0 {
-		return ncommas-1 + more
+		return ncommas - 1 + more
 	} else {
-		return ncommas+1
+		return ncommas + 1
 	}
 }
 
@@ -254,9 +254,8 @@ func countNetsplitJoins(joinsstr string) int {
 	ncommas := strings.Count(joinsstr, ",")
 	more := howManyMore(joinsstr)
 	if more != 0 {
-		return ncommas+1 + more
+		return ncommas + 1 + more
 	} else {
-		return ncommas+1
+		return ncommas + 1
 	}
 }
-

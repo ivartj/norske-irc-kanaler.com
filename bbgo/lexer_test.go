@@ -1,9 +1,9 @@
 package bbgo
 
 import (
-	"testing"
-	"strings"
 	"fmt"
+	"strings"
+	"testing"
 )
 
 func TestLexer(t *testing.T) {

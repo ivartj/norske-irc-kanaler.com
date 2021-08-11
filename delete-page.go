@@ -21,4 +21,3 @@ func deletePage(page *page, req *http.Request) {
 	page.AddMessage("%s@%s har blitt slettet.", name, network)
 	page.ExecuteTemplate("delete")
 }
-

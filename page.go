@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/ivartj/norske-irc-kanaler.com/web"
-	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
-	"fmt"
 	"bytes"
-	"strings"
+	"fmt"
+	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
+	"github.com/ivartj/norske-irc-kanaler.com/web"
 	"html/template"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type page struct {
@@ -16,8 +16,8 @@ type page struct {
 	main *mainContext
 }
 
-func pageHandler(ctx *mainContext, pageFn func (*page, *http.Request)) func(web.Page, *http.Request) {
-	return func(webPage web.Page, req *http.Request) { 
+func pageHandler(ctx *mainContext, pageFn func(*page, *http.Request)) func(web.Page, *http.Request) {
+	return func(webPage web.Page, req *http.Request) {
 		pg := &page{
 			main: ctx,
 			Page: webPage,
@@ -59,5 +59,3 @@ func (page *page) AddMessage(format string, args ...interface{}) {
 	}
 	page.SetField("page-messages", append(msgs, template.HTML(bb.String())))
 }
-
-

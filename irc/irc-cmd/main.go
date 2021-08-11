@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ircnorge/irc"
 	"fmt"
+	"ircnorge/irc"
 )
 
 func main() {

@@ -1,33 +1,33 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"fmt"
 	"net/http"
 	"net/url"
-	"fmt"
-	"bytes"
-	"bufio"
 	"strings"
 )
 
 var testConf = &conf{confSet{
-	WebsiteTitle: "Norske IRC-kanaler",
+	WebsiteTitle:       "Norske IRC-kanaler",
 	WebsiteDescription: "Oversikt over norske IRC-kanaler.",
-	DatabasePath: ":memory:",
-	AssetsPath: "./assets",
-	Password: "lutefisk",
+	DatabasePath:       ":memory:",
+	AssetsPath:         "./assets",
+	Password:           "lutefisk",
 }}
 
-type testResponseWriter struct{
+type testResponseWriter struct {
 	headerWritten bool
-	header http.Header
-	buf *bytes.Buffer
+	header        http.Header
+	buf           *bytes.Buffer
 }
 
 func testNewResponseWriter() *testResponseWriter {
 	return &testResponseWriter{
 		headerWritten: false,
-		header: http.Header(map[string][]string{}),
-		buf: bytes.NewBuffer([]byte{}),
+		header:        http.Header(map[string][]string{}),
+		buf:           bytes.NewBuffer([]byte{}),
 	}
 }
 
@@ -78,9 +78,9 @@ func testSubmitChannel(ctx *mainContext, name, network, weblink, description str
 		return fmt.Errorf("Failed to create test request: %s", err.Error())
 	}
 	req.Form = url.Values(map[string][]string{
-		"name" : []string{ name },
-		"network" : []string{ network },
-		"description" : []string{ description },
+		"name":        []string{name},
+		"network":     []string{network},
+		"description": []string{description},
 	})
 
 	rw := testNewResponseWriter()
@@ -106,7 +106,7 @@ func testLogin(ctx *mainContext) (sessionCookie *http.Cookie, err error) {
 		return nil, fmt.Errorf("Failed to create test request")
 	}
 	req.Form = url.Values(map[string][]string{
-		"password" : []string{ ctx.conf.Password() },
+		"password": []string{ctx.conf.Password()},
 	})
 
 	ctx.site.ServeHTTP(rw, req)
@@ -127,4 +127,3 @@ func testLogin(ctx *mainContext) (sessionCookie *http.Cookie, err error) {
 
 	return sessionCookie, nil
 }
-

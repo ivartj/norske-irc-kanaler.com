@@ -2,26 +2,26 @@ package web
 
 import (
 	"database/sql"
-	"net/http"
+	"errors"
+	"fmt"
 	"html/template"
 	"log"
-	"fmt"
-	"errors"
+	"net/http"
 	"path"
 )
 
 type Site struct {
-	db *sql.DB
-	pages map[string]func(Page, *http.Request)
-	dirs map[string]func(Page, *http.Request)
-	tpl *template.Template
-	fieldData map[string]interface{}
+	db           *sql.DB
+	pages        map[string]func(Page, *http.Request)
+	dirs         map[string]func(Page, *http.Request)
+	tpl          *template.Template
+	fieldData    map[string]interface{}
 	errorHandler func(Page, *http.Request, error)
 }
 
 func NewTemplate() *template.Template {
 	return template.New("").Funcs(template.FuncMap(map[string]interface{}{
-		"q" : func(fieldName string) (interface{}, error) {
+		"q": func(fieldName string) (interface{}, error) {
 			return nil, errors.New("The q template dummy function was called")
 		},
 	}))
@@ -30,10 +30,10 @@ func NewTemplate() *template.Template {
 func NewSite(db *sql.DB, tpl *template.Template) *Site {
 
 	ctx := &Site{
-		db: db,
-		pages: map[string]func(Page, *http.Request){},
-		dirs: map[string]func(Page, *http.Request){},
-		tpl: tpl,
+		db:        db,
+		pages:     map[string]func(Page, *http.Request){},
+		dirs:      map[string]func(Page, *http.Request){},
+		tpl:       tpl,
 		fieldData: map[string]interface{}{},
 	}
 
@@ -74,17 +74,17 @@ func (ctx *Site) getHandler(p string) (func(Page, *http.Request), bool) {
 	}
 
 	for _, v := range []map[string]func(Page, *http.Request){ctx.pages, ctx.dirs} {
-		h, ok = v[p + "/"]
+		h, ok = v[p+"/"]
 		if ok {
 			return func(page Page, req *http.Request) {
-				http.Redirect(page, req, p + "/", http.StatusMovedPermanently)
+				http.Redirect(page, req, p+"/", http.StatusMovedPermanently)
 			}, true
 		}
 	}
 
 	for p != "/" {
 		p = path.Dir(p)
-		h, ok = ctx.dirs[p + "/"]
+		h, ok = ctx.dirs[p+"/"]
 		if ok {
 			return h, true
 		}
@@ -134,4 +134,3 @@ func (ctx *Site) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (ctx *Site) Begin() (*sql.Tx, error) {
 	return ctx.db.Begin()
 }
-

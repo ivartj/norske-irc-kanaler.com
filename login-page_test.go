@@ -11,4 +11,3 @@ func TestLoginPage(t *testing.T) {
 		t.Fatalf("Failed to log in: %s.\n", err.Error())
 	}
 }
-

@@ -1,15 +1,15 @@
 package irc
 
 import (
-	"net"
-	"fmt"
-	"time"
 	"bufio"
 	"bytes"
-	"strings"
 	"errors"
+	"fmt"
 	"io"
+	"net"
+	"strings"
 	"sync"
+	"time"
 )
 
 type HandleFunc func(*Conn, *Event)
@@ -20,15 +20,15 @@ var defaultHandlers map[string]HandleFunc = map[string]HandleFunc{
 
 type Conn struct {
 	net.Conn
-	irclog io.Writer
+	irclog      io.Writer
 	irclogMutex sync.Mutex
-	server string
-	nick, user string
-	scan *bufio.Scanner
-	Events <-chan *Event
-	events chan<- *Event
-	handlers map[string]HandleFunc
-	closed bool
+	server      string
+	nick, user  string
+	scan        *bufio.Scanner
+	Events      <-chan *Event
+	events      chan<- *Event
+	handlers    map[string]HandleFunc
+	closed      bool
 }
 
 func pingHandler(c *Conn, ev *Event) {
@@ -41,7 +41,7 @@ func pingHandler(c *Conn, ev *Event) {
 
 func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
 	// TODO: Do not add port if it is present in address
-	sock, err := net.DialTimeout("tcp", address + ":6667", time.Second * 30)
+	sock, err := net.DialTimeout("tcp", address+":6667", time.Second*30)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to '%s': %s", address, err.Error())
 	}
@@ -51,17 +51,17 @@ func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
 
 	ch := make(chan *Event)
 	c := &Conn{
-		Conn: sock,
-		irclog: irclog,
+		Conn:        sock,
+		irclog:      irclog,
 		irclogMutex: sync.Mutex{},
-		server: address,
-		nick: nick,
-		user: user,
-		scan: scan,
-		Events: ch,
-		events: ch,
-		handlers: make(map[string]HandleFunc),
-		closed: false,
+		server:      address,
+		nick:        nick,
+		user:        user,
+		scan:        scan,
+		Events:      ch,
+		events:      ch,
+		handlers:    make(map[string]HandleFunc),
+		closed:      false,
 	}
 	c.SendRawf("NICK %s", nick)
 	c.SendRawf("USER %s 0 * :%s", nick, user)
@@ -150,7 +150,8 @@ func msgScan(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		return len(data), data[start:end], nil
 	}
 
-	for end = start + 1; end < len(data) && data[end] != ' '; end++ {}
+	for end = start + 1; end < len(data) && data[end] != ' '; end++ {
+	}
 
 	return end, data[start:end], nil
 }
@@ -158,9 +159,9 @@ func msgScan(data []byte, atEOF bool) (advance int, token []byte, err error) {
 func (c *Conn) receiveMessages() {
 	var err error
 	const (
-		stPrefix int	= iota
-		stCode int	= iota
-		stArgs int	= iota
+		stPrefix int = iota
+		stCode   int = iota
+		stArgs   int = iota
 	)
 
 	for {
@@ -235,7 +236,6 @@ func (c *Conn) Disconnect() {
 
 type Event struct {
 	Prefix string
-	Code string
-	Args []string
+	Code   string
+	Args   []string
 }
-

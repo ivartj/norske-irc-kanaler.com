@@ -1,33 +1,33 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/ivartj/norske-irc-kanaler.com/args"
-	"github.com/ivartj/norske-irc-kanaler.com/web"
 	"github.com/ivartj/norske-irc-kanaler.com/irssilog"
 	"github.com/ivartj/norske-irc-kanaler.com/sched"
+	"github.com/ivartj/norske-irc-kanaler.com/web"
+	"html/template"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/http/fcgi"
-	"html/template"
-	"database/sql"
-	"fmt"
-	"io"
 	"os"
 	"path"
-	"log"
 	"time"
 )
 
 var mainConfFilename string = ""
 
 const (
-	mainName		= "norske-irc-kanaler.com"
-	mainVersion		= "1.0"
+	mainName    = "norske-irc-kanaler.com"
+	mainVersion = "1.0"
 )
 
 func mainUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
-	fmt.Fprintf(out,  "  %s CONFIGURATION_FILE\n", mainName)
+	fmt.Fprintf(out, "  %s CONFIGURATION_FILE\n", mainName)
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Description:")
 	fmt.Fprintln(out, "  Serves website that inspects and advertises")
@@ -87,7 +87,7 @@ func mainChangeDirectory() {
 }
 
 func mainOpenLog(cfg *conf) {
-	if(cfg.LogPath() == "") {
+	if cfg.LogPath() == "" {
 		return
 	}
 	f, err := os.Create(cfg.LogPath())
@@ -103,7 +103,7 @@ type mainContext struct {
 	auth *auth
 	conf *conf
 	site *web.Site
-	db *sql.DB
+	db   *sql.DB
 }
 
 func mainNewContext(cfg *conf) *mainContext {
@@ -114,7 +114,7 @@ func mainNewContext(cfg *conf) *mainContext {
 		os.Exit(1)
 	}
 
-	err = dbInit(db, cfg.AssetsPath() + "/sql")
+	err = dbInit(db, cfg.AssetsPath()+"/sql")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s.\n", err.Error())
 		os.Exit(1)
@@ -130,16 +130,16 @@ func mainNewContext(cfg *conf) *mainContext {
 	ctx := &mainContext{
 		conf: cfg,
 		site: site,
-		db: db,
+		db:   db,
 		auth: &auth{},
 	}
 
 	ctx.site.SetFieldMap(map[string]interface{}{
-		"site-title" : cfg.WebsiteTitle(),
-		"site-description" : cfg.WebsiteDescription(),
-		"page-title" : "",
-		"page-messages" : []template.HTML{},
-		"admin" : false,
+		"site-title":       cfg.WebsiteTitle(),
+		"site-description": cfg.WebsiteDescription(),
+		"page-title":       "",
+		"page-messages":    []template.HTML{},
+		"admin":            false,
 	})
 
 	auth := ctx.auth
@@ -171,7 +171,7 @@ func mainServeSite(ctx *mainContext) {
 	var err error
 	switch ctx.conf.ServeMethod() {
 	case "http":
-		err = http.ListenAndServe(":" + fmt.Sprint(ctx.conf.HttpPort()), ctx.site)
+		err = http.ListenAndServe(":"+fmt.Sprint(ctx.conf.HttpPort()), ctx.site)
 	case "fcgi":
 		l, err := net.Listen("unix", ctx.conf.FastcgiPath())
 		if err != nil {
@@ -200,7 +200,7 @@ func mainGatherChannelStatuses(ctx *mainContext) {
 			if err != nil {
 				log.Fatalf("Failed to parse the initial time given for method '%s': %s", method.Method, err.Error())
 			}
-			
+
 		}
 
 		var do func() = nil
@@ -264,7 +264,7 @@ func mainIrssiLogs(ctx *mainContext) {
 		}
 
 		if cs.Time.After(ch.CheckTime()) {
-			err  = dbUpdateStatus(tx, ch.Name(), ch.Network(), cs.NumUsers, cs.Topic, "irssi-logs", "", cs.Time)
+			err = dbUpdateStatus(tx, ch.Name(), ch.Network(), cs.NumUsers, cs.Topic, "irssi-logs", "", cs.Time)
 			if err != nil {
 				log.Fatalf("Error updating status for '%s@%s': %s", ch.Name(), ch.Network(), err.Error())
 			}
@@ -297,4 +297,3 @@ func main() {
 	}
 	mainServeSite(ctx)
 }
-

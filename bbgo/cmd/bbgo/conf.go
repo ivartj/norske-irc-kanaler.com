@@ -2,11 +2,11 @@ package main
 
 type confSetting struct {
 	isSet_ bool
-	value string
+	value  string
 }
 
 var conf struct {
-	inputFilename confSetting
+	inputFilename  confSetting
 	outputFilename confSetting
 }
 
@@ -22,4 +22,3 @@ func (s confSetting) set(val string) {
 func (s confSetting) isSet() bool {
 	return s.isSet_
 }
-

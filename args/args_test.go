@@ -21,11 +21,11 @@ func TestTokenizer(t *testing.T) {
 	tok := NewTokenizer(argv)
 
 	var (
-		optHelp, optVersion bool
+		optHelp, optVersion    bool
 		optX, optZ, optV, optF bool
-		optOutput, optInput bool
-		optConfig bool
-		pos1, pos2 bool
+		optOutput, optInput    bool
+		optConfig              bool
+		pos1, pos2             bool
 	)
 
 	for tok.Next() {
@@ -51,10 +51,14 @@ func TestTokenizer(t *testing.T) {
 			case "--version":
 				optVersion = true
 
-			case "-x": optX = true
-			case "-z": optZ = true
-			case "-v": optV = true
-			case "-f": optF = true
+			case "-x":
+				optX = true
+			case "-z":
+				optZ = true
+			case "-v":
+				optV = true
+			case "-f":
+				optF = true
 
 			case "-o", "--output":
 				optOutput = true
@@ -97,16 +101,37 @@ func TestTokenizer(t *testing.T) {
 		t.Fatalf("Unexpected error after Tokenizer.Next(): %s\n", err.Error())
 	}
 
-	if !optHelp { t.Error("Expected help option not encountered.\n") }
-	if !optVersion { t.Error("Expected version option not encountered.\n") }
-	if !optX { t.Error("Expected x option not encountered.\n") }
-	if !optZ { t.Error("Expected z option not encountered.\n") }
-	if !optV { t.Error("Expected v option not encountered.\n") }
-	if !optF { t.Error("Expected f option not encountered.\n") }
-	if !optOutput { t.Error("Expected output option not encountered.\n") }
-	if !optInput { t.Error("Expected input option not encountered.\n") }
-	if !optConfig { t.Error("Expected config option not encountered.\n") }
-	if !pos1 { t.Error("Expected first positional not encountered.\n") }
-	if !pos2 { t.Error("Expected second positional not encountered.\n") }
+	if !optHelp {
+		t.Error("Expected help option not encountered.\n")
+	}
+	if !optVersion {
+		t.Error("Expected version option not encountered.\n")
+	}
+	if !optX {
+		t.Error("Expected x option not encountered.\n")
+	}
+	if !optZ {
+		t.Error("Expected z option not encountered.\n")
+	}
+	if !optV {
+		t.Error("Expected v option not encountered.\n")
+	}
+	if !optF {
+		t.Error("Expected f option not encountered.\n")
+	}
+	if !optOutput {
+		t.Error("Expected output option not encountered.\n")
+	}
+	if !optInput {
+		t.Error("Expected input option not encountered.\n")
+	}
+	if !optConfig {
+		t.Error("Expected config option not encountered.\n")
+	}
+	if !pos1 {
+		t.Error("Expected first positional not encountered.\n")
+	}
+	if !pos2 {
+		t.Error("Expected second positional not encountered.\n")
+	}
 }
-

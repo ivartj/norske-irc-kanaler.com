@@ -1,12 +1,12 @@
 package irssilog
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestCountNetsplitQuits(t *testing.T) {
-	
+
 	str1 := "FooNick, BarNick"
 	str2 := "FooNick, BarNick, (+5 more, use /NETSPLIT to show all of them)"
 
@@ -86,4 +86,3 @@ func TestGetChannelStatusFromLog(t *testing.T) {
 	}
 
 }
-

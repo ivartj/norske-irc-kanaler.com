@@ -1,12 +1,12 @@
 package main
 
 import (
-	"net/http"
-	"html/template"
-	"os"
-	"path"
 	"bytes"
 	"github.com/ivartj/norske-irc-kanaler.com/bbgo"
+	"html/template"
+	"net/http"
+	"os"
+	"path"
 )
 
 func infoDir(page *page, req *http.Request) {
@@ -28,4 +28,3 @@ func infoDir(page *page, req *http.Request) {
 
 	page.ExecuteTemplate("info")
 }
-

@@ -9,4 +9,3 @@ func Process(src io.Reader, dest io.Writer) error {
 	p := newParser(ch, dest)
 	return p.parse()
 }
-

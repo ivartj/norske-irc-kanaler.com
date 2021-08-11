@@ -20,8 +20,8 @@ func loginPage(page *page, req *http.Request) {
 				page.Fatalf("Failed to create new session: %s", err.Error())
 			}
 			http.SetCookie(page, &http.Cookie{
-				Name: "session-id",
-				Value: page.main.auth.SessionID(),
+				Name:     "session-id",
+				Value:    page.main.auth.SessionID(),
 				HttpOnly: true,
 			})
 			page.AddMessage("Innloggin vellykket.")
@@ -39,4 +39,3 @@ func loginPage(page *page, req *http.Request) {
 
 	page.ExecuteTemplate("login")
 }
-

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"time"
 	"fmt"
 	"math"
+	"time"
 )
 
 func timeAgo(t time.Time) string {
@@ -29,4 +29,3 @@ func timeAgo(t time.Time) string {
 		return "innen 1 minutt siden"
 	}
 }
-

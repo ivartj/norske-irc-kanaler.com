@@ -1,61 +1,63 @@
 package main
 
 import (
-	yaml "gopkg.in/yaml.v1"
-	"os"
-	"io/ioutil"
 	"fmt"
+	yaml "gopkg.in/yaml.v1"
+	"io/ioutil"
+	"os"
 )
 
 type confSet struct {
-	WebsiteTitle string `yaml:"website-title"`
-	WebsiteDescription string `yaml:"website-description"`
-	IRCBotEnable bool `yaml:"irc-bot-enable"`
-	IRCBotNickname string `yaml:"irc-bot-nickname"`
-	IRCBotRealname string `yaml:"irc-bot-realname"`
-	IRCBotQuitMessage string `yaml:"irc-bot-quit-message"`
-	ServeMethod string `yaml:"serve-method"`
-	FastcgiPath string `yaml:"fastcgi-path"`
-	HttpPort uint `yaml:"http-port"`
-	DatabasePath string `yaml:"database-path"`
-	AssetsPath string `yaml:"assets-path"`
-	LogPath string `yaml:"log-path"`
-	Approval bool `yaml:"approval"`
-	Password string `yaml:"password"`
-	ReloadTemplate bool `yaml:"reload-templates"`
-	IrssiLogsPath string `yaml:"irssi-logs-path"`
-	IrssiLogsNetworkNames map[string][]string `yaml:"irssi-logs-network-names"`
+	WebsiteTitle                  string                             `yaml:"website-title"`
+	WebsiteDescription            string                             `yaml:"website-description"`
+	IRCBotEnable                  bool                               `yaml:"irc-bot-enable"`
+	IRCBotNickname                string                             `yaml:"irc-bot-nickname"`
+	IRCBotRealname                string                             `yaml:"irc-bot-realname"`
+	IRCBotQuitMessage             string                             `yaml:"irc-bot-quit-message"`
+	ServeMethod                   string                             `yaml:"serve-method"`
+	FastcgiPath                   string                             `yaml:"fastcgi-path"`
+	HttpPort                      uint                               `yaml:"http-port"`
+	DatabasePath                  string                             `yaml:"database-path"`
+	AssetsPath                    string                             `yaml:"assets-path"`
+	LogPath                       string                             `yaml:"log-path"`
+	Approval                      bool                               `yaml:"approval"`
+	Password                      string                             `yaml:"password"`
+	ReloadTemplate                bool                               `yaml:"reload-templates"`
+	IrssiLogsPath                 string                             `yaml:"irssi-logs-path"`
+	IrssiLogsNetworkNames         map[string][]string                `yaml:"irssi-logs-network-names"`
 	ChannelStatusGatheringMethods []confChannelStatusGatheringMethod `yaml:"channel-status-gathering-methods"`
 }
 
-type confChannelStatusGatheringMethod struct{
-	Method string `yaml:"method"`
+type confChannelStatusGatheringMethod struct {
+	Method      string `yaml:"method"`
 	InitialTime string `yaml:"initial-time"`
-	Interval string `yaml:"interval"`
+	Interval    string `yaml:"interval"`
 }
 
 type conf struct {
 	set confSet
 }
 
-func (cfg *conf) WebsiteTitle() string { return cfg.set.WebsiteTitle }
-func (cfg *conf) WebsiteDescription() string { return cfg.set.WebsiteDescription }
-func (cfg *conf) IRCBotEnable() bool { return cfg.set.IRCBotEnable }
-func (cfg *conf) IRCBotNickname() string { return cfg.set.IRCBotNickname }
-func (cfg *conf) IRCBotRealname() string { return cfg.set.IRCBotRealname }
-func (cfg *conf) IRCBotQuitMessage() string { return cfg.set.IRCBotQuitMessage }
-func (cfg *conf) ServeMethod() string { return cfg.set.ServeMethod }
-func (cfg *conf) FastcgiPath() string { return cfg.set.FastcgiPath }
-func (cfg *conf) HttpPort() uint { return cfg.set.HttpPort }
-func (cfg *conf) DatabasePath() string { return cfg.set.DatabasePath }
-func (cfg *conf) AssetsPath() string { return cfg.set.AssetsPath }
-func (cfg *conf) LogPath() string { return cfg.set.LogPath }
-func (cfg *conf) Approval() bool { return cfg.set.Approval }
-func (cfg *conf) Password() string { return cfg.set.Password }
-func (cfg *conf) ReloadTemplate() bool { return cfg.set.ReloadTemplate }
-func (cfg *conf) IrssiLogsPath() string { return cfg.set.IrssiLogsPath }
+func (cfg *conf) WebsiteTitle() string                       { return cfg.set.WebsiteTitle }
+func (cfg *conf) WebsiteDescription() string                 { return cfg.set.WebsiteDescription }
+func (cfg *conf) IRCBotEnable() bool                         { return cfg.set.IRCBotEnable }
+func (cfg *conf) IRCBotNickname() string                     { return cfg.set.IRCBotNickname }
+func (cfg *conf) IRCBotRealname() string                     { return cfg.set.IRCBotRealname }
+func (cfg *conf) IRCBotQuitMessage() string                  { return cfg.set.IRCBotQuitMessage }
+func (cfg *conf) ServeMethod() string                        { return cfg.set.ServeMethod }
+func (cfg *conf) FastcgiPath() string                        { return cfg.set.FastcgiPath }
+func (cfg *conf) HttpPort() uint                             { return cfg.set.HttpPort }
+func (cfg *conf) DatabasePath() string                       { return cfg.set.DatabasePath }
+func (cfg *conf) AssetsPath() string                         { return cfg.set.AssetsPath }
+func (cfg *conf) LogPath() string                            { return cfg.set.LogPath }
+func (cfg *conf) Approval() bool                             { return cfg.set.Approval }
+func (cfg *conf) Password() string                           { return cfg.set.Password }
+func (cfg *conf) ReloadTemplate() bool                       { return cfg.set.ReloadTemplate }
+func (cfg *conf) IrssiLogsPath() string                      { return cfg.set.IrssiLogsPath }
 func (cfg *conf) IrssiLogsNetworkNames() map[string][]string { return cfg.set.IrssiLogsNetworkNames }
-func (cfg *conf) ChannelStatusGatheringMethods() []confChannelStatusGatheringMethod { return cfg.set.ChannelStatusGatheringMethods }
+func (cfg *conf) ChannelStatusGatheringMethods() []confChannelStatusGatheringMethod {
+	return cfg.set.ChannelStatusGatheringMethods
+}
 
 func confNew() *conf {
 	return &conf{}
@@ -137,4 +139,3 @@ func (cfg *conf) Validate() error {
 
 	return nil
 }
-

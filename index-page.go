@@ -1,9 +1,9 @@
 package main
 
 import (
-	"strconv"
-	"net/http"
 	"fmt"
+	"net/http"
+	"strconv"
 )
 
 const (
@@ -29,7 +29,7 @@ func indexPage(page *page, req *http.Request) {
 
 	rows, err := page.Query(
 		"select * from channel_indexed limit ? offset ?;",
-		indexPageSize + 1, (pg - 1) * indexPageSize) 
+		indexPageSize+1, (pg-1)*indexPageSize)
 	if err != nil {
 		page.Fatalf("Failed to query index channels: %s", err.Error())
 	}
@@ -46,13 +46,12 @@ func indexPage(page *page, req *http.Request) {
 	}
 
 	page.SetFieldMap(map[string]interface{}{
-		"more-prev" : pg > 1,
-		"more-next" : moreNext,
-		"page-next" : pg + 1,
-		"page-prev" : pg - 1,
-		"channels" : chs,
+		"more-prev": pg > 1,
+		"more-next": moreNext,
+		"page-next": pg + 1,
+		"page-prev": pg - 1,
+		"channels":  chs,
 	})
 
 	page.ExecuteTemplate("index")
 }
-

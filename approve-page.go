@@ -35,7 +35,7 @@ func approvePage(page *page, req *http.Request) {
 
 	rows, err := page.Query(
 		"select * from channel_unapproved limit ? offset ?;",
-		approvePageSize + 1, (pg - 1) * approvePageSize) 
+		approvePageSize+1, (pg-1)*approvePageSize)
 	if err != nil {
 		page.Fatalf("Failed to query unapproved channels: %s", err.Error())
 	}
@@ -52,13 +52,12 @@ func approvePage(page *page, req *http.Request) {
 	}
 
 	page.SetFieldMap(map[string]interface{}{
-		"more-next" : moreNext,
-		"more-prev" : pg > 1,
-		"page-next" : pg + 1,
-		"page-prev" : pg - 1,
-		"channels" : chs,
+		"more-next": moreNext,
+		"more-prev": pg > 1,
+		"page-next": pg + 1,
+		"page-prev": pg - 1,
+		"channels":  chs,
 	})
 
 	page.ExecuteTemplate("approve")
 }
-

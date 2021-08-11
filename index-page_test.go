@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
-	"strings"
 	"net/http"
+	"strings"
+	"testing"
 )
 
 func TestIndexPage(t *testing.T) {
@@ -14,4 +14,3 @@ func TestIndexPage(t *testing.T) {
 	}
 	ctx.site.ServeHTTP(testNewResponseWriter(), req)
 }
-

@@ -6,10 +6,10 @@ import (
 )
 
 type Tokenizer struct {
-	argv []string
-	idx, off int
-	arg string
-	err error
+	argv          []string
+	idx, off      int
+	arg           string
+	err           error
 	noMoreOptions bool
 }
 
@@ -80,7 +80,7 @@ func (tok *Tokenizer) Next() bool {
 	//
 	//   arg = -o=parameter
 	//   off = ^
-	if strings.HasPrefix(tok.arg, "-") && !strings.HasPrefix(tok.arg, "--"){
+	if strings.HasPrefix(tok.arg, "-") && !strings.HasPrefix(tok.arg, "--") {
 		if tok.off == 0 {
 			tok.off++
 		}
@@ -131,7 +131,7 @@ func (tok *Tokenizer) TakeParameter() (string, error) {
 	}
 
 	if runeIndex(param, '=') == tok.off {
-		param = string([]rune(param)[tok.off + 1:])
+		param = string([]rune(param)[tok.off+1:])
 		tok.idx++
 		tok.off = 0
 		return param, nil
@@ -150,8 +150,9 @@ func (tok *Tokenizer) TakeParameter() (string, error) {
 // strings.Index works by bytes, not runes
 func runeIndex(s string, r rune) int {
 	for i, v := range []rune(s) {
-		if r == v { return i }
+		if r == v {
+			return i
+		}
 	}
 	return -1
 }
-

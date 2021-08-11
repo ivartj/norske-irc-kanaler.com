@@ -49,12 +49,11 @@ func excludePage(page *page, req *http.Request) {
 	}
 
 	page.SetFieldMap(map[string]interface{}{
-		"exclude-name" : name,
-		"exclude-network" : network,
-		"exclude-reason" : reason,
-		"exclusions" : exclusions,
+		"exclude-name":    name,
+		"exclude-network": network,
+		"exclude-reason":  reason,
+		"exclusions":      exclusions,
 	})
 
 	page.ExecuteTemplate("exclude")
 }
-

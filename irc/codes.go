@@ -4,7 +4,7 @@ import "fmt"
 
 var CodeMap map[string]string = map[string]string{
 
-// errors
+	// errors
 	"401": "No such nick/channel",
 	"402": "No such server",
 	"403": "No such channel",
@@ -69,7 +69,6 @@ var CodeMap map[string]string = map[string]string{
 
 	"501": "Unknown MODE flag",
 	"502": "Cannot change mode for other users",
-
 }
 
 func CodeIsError(code string) bool {
@@ -85,4 +84,3 @@ func CodeString(code string) string {
 	}
 	return fmt.Sprintf("%s (%s)", str, code)
 }
-

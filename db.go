@@ -2,13 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rubenv/sql-migrate"
-	"fmt"
-	"time"
+	"html/template"
 	"io"
 	"log"
-	"html/template"
+	"time"
 )
 
 const dbTimeFmt string = "2006-01-02 15:04:05"
@@ -29,7 +29,7 @@ func dbInit(c *sql.DB, migrationsDir string) error {
 	}
 
 	n, err := migrate.Exec(c, "sqlite3", migrations, migrate.Up)
-	log.Printf("Applied %d migrations.\n", n);
+	log.Printf("Applied %d migrations.\n", n)
 	if err != nil {
 		return fmt.Errorf("Error on applying migrations: %s", err.Error())
 	}
@@ -41,33 +41,33 @@ func dbInit(c *sql.DB, migrationsDir string) error {
 type dbChannel struct {
 	channel
 	channel_name string
-	network string
-	weblink string
-	description string
-	submit_time time.Time
-	new bool
-	approved bool
+	network      string
+	weblink      string
+	description  string
+	submit_time  time.Time
+	new          bool
+	approved     bool
 	approve_time time.Time
-	numusers int
-	topic string
-	checked bool
-	check_time time.Time
-	errmsg string
+	numusers     int
+	topic        string
+	checked      bool
+	check_time   time.Time
+	errmsg       string
 }
 
-func (ch *dbChannel) Name() string { return ch.channel_name }
-func (ch *dbChannel) Network() string { return ch.network }
-func (ch *dbChannel) Weblink() string { return ch.weblink }
-func (ch *dbChannel) Description() string { return ch.description }
-func (ch *dbChannel) SubmitTime() time.Time { return ch.submit_time }
-func (ch *dbChannel) New() bool { return ch.new }
-func (ch *dbChannel) Approved() bool { return ch.approved }
+func (ch *dbChannel) Name() string           { return ch.channel_name }
+func (ch *dbChannel) Network() string        { return ch.network }
+func (ch *dbChannel) Weblink() string        { return ch.weblink }
+func (ch *dbChannel) Description() string    { return ch.description }
+func (ch *dbChannel) SubmitTime() time.Time  { return ch.submit_time }
+func (ch *dbChannel) New() bool              { return ch.new }
+func (ch *dbChannel) Approved() bool         { return ch.approved }
 func (ch *dbChannel) ApproveTime() time.Time { return ch.approve_time }
-func (ch *dbChannel) NumberOfUsers() int { return ch.numusers }
-func (ch *dbChannel) Topic() string { return ch.topic }
-func (ch *dbChannel) Checked() bool { return ch.checked }
-func (ch *dbChannel) CheckTime() time.Time { return ch.check_time }
-func (ch *dbChannel) Error() string { return ch.errmsg }
+func (ch *dbChannel) NumberOfUsers() int     { return ch.numusers }
+func (ch *dbChannel) Topic() string          { return ch.topic }
+func (ch *dbChannel) Checked() bool          { return ch.checked }
+func (ch *dbChannel) CheckTime() time.Time   { return ch.check_time }
+func (ch *dbChannel) Error() string          { return ch.errmsg }
 
 func (ch *dbChannel) Status() string {
 	str, _ := channelStatusString(ch)
@@ -81,20 +81,20 @@ func dbScanChannels(rows *sql.Rows) ([]channel, error) {
 		if err != nil {
 			return nil, err
 		}
-		chs = append(chs , ch)
+		chs = append(chs, ch)
 	}
 	return chs, nil
 }
 
 func dbScanChannel(scan dbScan) (*dbChannel, error) {
 	var (
-		ch dbChannel
-		submit_time string
+		ch           dbChannel
+		submit_time  string
 		approve_time string
-		numusers sql.NullInt64
-		topic sql.NullString
-		check_time sql.NullString
-		errmsg sql.NullString
+		numusers     sql.NullInt64
+		topic        sql.NullString
+		check_time   sql.NullString
+		errmsg       sql.NullString
 	)
 
 	err := scan.Scan(
@@ -241,12 +241,12 @@ func dbGetChannels(c dbConn, off, len int, tablename string) ([]channel, error) 
 		select
 			*
 		from
-			` + table + `
+			`+table+`
 		limit
 			?
 		offset
 			?;
-	`, len, off);
+	`, len, off)
 
 	if err == io.EOF {
 		return []channel{}, nil
@@ -315,7 +315,7 @@ func dbGetServers(c dbConn) ([]*dbServer, error) {
 			server, network
 		from
 			server_all;
-	`);
+	`)
 
 	if err == io.EOF {
 		return []*dbServer{}, nil
@@ -356,7 +356,6 @@ func dbAddServer(c dbConn, server, network string) error {
 	}
 	return nil
 }
-
 
 func dbAddChannel(c dbConn, name, network, weblink, description string, approved bool) error {
 	_, err := c.Exec(`
@@ -473,8 +472,8 @@ type dbExclusion struct {
 	name, network, reason string
 }
 
-func (ex *dbExclusion) Name() string { return ex.name }
-func (ex *dbExclusion) Network() string { return ex.network }
+func (ex *dbExclusion) Name() string          { return ex.name }
+func (ex *dbExclusion) Network() string       { return ex.network }
 func (ex *dbExclusion) Reason() template.HTML { return template.HTML(ex.reason) }
 
 func dbGetExclusions(c dbConn) ([]*dbExclusion, error) {
@@ -483,7 +482,7 @@ func dbGetExclusions(c dbConn) ([]*dbExclusion, error) {
 			channel_name, network, exclude_reason
 		from
 			channel_excluded;
-	`);
+	`)
 
 	if err == io.EOF {
 		return []*dbExclusion{}, nil
@@ -523,4 +522,3 @@ func dbDeleteExclusion(c dbConn, name, network string) error {
 	}
 	return nil
 }
-

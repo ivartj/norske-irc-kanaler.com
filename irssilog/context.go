@@ -1,20 +1,20 @@
 package irssilog
 
 import (
-	"os"
 	"fmt"
-	"strings"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
-type Context struct{
-	logdir string
+type Context struct {
+	logdir       string
 	networkNames map[string][]string
 }
 
 func New(logdir string, networkNames map[string][]string) *Context {
 	return &Context{
-		logdir: logdir,
+		logdir:       logdir,
 		networkNames: networkNames,
 	}
 }
@@ -23,7 +23,7 @@ func (ctx *Context) ChannelStatus(channel, network string) (ChannelStatus, error
 
 	networkNames, ok := ctx.networkNames[network]
 	if !ok {
-		networkNames = []string{ network }
+		networkNames = []string{network}
 	}
 
 	f, err := os.Open(ctx.logdir)
@@ -47,7 +47,7 @@ func (ctx *Context) ChannelStatus(channel, network string) (ChannelStatus, error
 			if strings.ToLower(filename) == strings.ToLower(networkname) {
 				networkdir = filename
 
-				channelfilename := filepath.Join(ctx.logdir, networkdir, channel + ".log")
+				channelfilename := filepath.Join(ctx.logdir, networkdir, channel+".log")
 				channelfile, err := os.Open(channelfilename)
 				if err != nil {
 					latestErr = fmt.Errorf("Failed to open '%s': %s", channelfilename, err.Error())
@@ -71,7 +71,7 @@ func (ctx *Context) ChannelStatus(channel, network string) (ChannelStatus, error
 
 		}
 
-nextfile:
+	nextfile:
 	}
 
 	if !statusFound && latestErr != nil {
@@ -79,9 +79,8 @@ nextfile:
 	}
 
 	if !statusFound {
-		return ChannelStatus{}, fmt.Errorf("No status could be retrieved for %s@%s", channel, network) 
+		return ChannelStatus{}, fmt.Errorf("No status could be retrieved for %s@%s", channel, network)
 	}
 
 	return status, nil
 }
-

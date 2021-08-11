@@ -24,4 +24,3 @@ func TestSubmitPage(t *testing.T) {
 		t.Fatalf("Retrieved channel %s@%s not the submitted channel.\n", ch.Name(), ch.Network())
 	}
 }
-

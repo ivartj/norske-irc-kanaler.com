@@ -18,10 +18,9 @@ func adminPage(page *page, req *http.Request) {
 	}
 
 	page.SetFieldMap(map[string]interface{}{
-		"number-for-approval" : numUnapproved,
-		"number-excluded" : numExcluded,
+		"number-for-approval": numUnapproved,
+		"number-excluded":     numExcluded,
 	})
 
 	page.ExecuteTemplate("admin")
 }
-

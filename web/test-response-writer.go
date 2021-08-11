@@ -1,22 +1,22 @@
 package web
 
 import (
-	"net/http"
 	"bytes"
 	"fmt"
+	"net/http"
 )
 
-type TestResponseWriter struct{
+type TestResponseWriter struct {
 	headerWritten bool
-	header http.Header
-	buf *bytes.Buffer
+	header        http.Header
+	buf           *bytes.Buffer
 }
 
 func NewTestResponseWriter() *TestResponseWriter {
 	return &TestResponseWriter{
 		headerWritten: false,
-		header: http.Header(map[string][]string{}),
-		buf: bytes.NewBuffer([]byte{}),
+		header:        http.Header(map[string][]string{}),
+		buf:           bytes.NewBuffer([]byte{}),
 	}
 }
 
@@ -55,4 +55,3 @@ func (w *TestResponseWriter) writeHeader(code int) error {
 	}
 	return nil
 }
-

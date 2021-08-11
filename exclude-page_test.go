@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
 	"net/http"
 	"net/url"
+	"testing"
 )
 
 func TestExcludePage(t *testing.T) {
@@ -23,9 +23,9 @@ func TestExcludePage(t *testing.T) {
 
 	req.AddCookie(sessionCookie)
 	req.Form = url.Values(map[string][]string{
-		"name" : []string{ "#test" },
-		"network" : []string{ "irc.example.com" },
-		"exclude-reason" : []string{ "Too much trout-slapping." },
+		"name":           []string{"#test"},
+		"network":        []string{"irc.example.com"},
+		"exclude-reason": []string{"Too much trout-slapping."},
 	})
 	ctx.site.ServeHTTP(rw, req)
 
@@ -39,4 +39,3 @@ func TestExcludePage(t *testing.T) {
 	}
 
 }
-

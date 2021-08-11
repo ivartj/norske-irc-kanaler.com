@@ -1,12 +1,12 @@
 package web
 
 import (
-	"testing"
-	"net/http"
-	"strings"
-	"os"
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
+	"net/http"
+	"os"
+	"strings"
+	"testing"
 )
 
 const tplText = `
@@ -48,7 +48,7 @@ func submitPage(ctx Page, req *http.Request) {
 	ctx.ExecuteTemplate("index")
 }
 
-type dummyResponseWriter struct{
+type dummyResponseWriter struct {
 	header http.Header
 }
 
@@ -66,7 +66,7 @@ func (w *dummyResponseWriter) Write(bs []byte) (int, error) {
 	return os.Stdout.Write(bs)
 }
 
-func (w *dummyResponseWriter) WriteHeader(code int) { }
+func (w *dummyResponseWriter) WriteHeader(code int) {}
 
 func TestSite(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
@@ -86,8 +86,8 @@ func TestSite(t *testing.T) {
 	site.HandlePage("/", indexPage)
 	site.HandlePage("/submit", submitPage)
 	site.SetFieldMap(map[string]interface{}{
-		"page-title" : "",
-		"site-title" : "The Greatest Site",
+		"page-title": "",
+		"site-title": "The Greatest Site",
 	})
 
 	req, err := http.NewRequest("GET", "/", strings.NewReader(""))
@@ -98,4 +98,3 @@ func TestSite(t *testing.T) {
 	req, err = http.NewRequest("POST", "/submit", strings.NewReader(""))
 	site.ServeHTTP(newDummyResponseWriter(), req)
 }
-

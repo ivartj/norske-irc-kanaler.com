@@ -1,10 +1,10 @@
 package sched
 
 import (
-	"time"
 	"fmt"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // Takes a time string in one of the following forms:
@@ -22,13 +22,13 @@ func Next(str string) (time.Time, error) {
 var regexWeekdayClock = regexp.MustCompile(`^(.+?) ([0-9]{2}):([0-9]{2})`)
 var regexClock = regexp.MustCompile(`([0-9]{2}):([0-9]{2})`)
 var weekdays = map[string]time.Weekday{
-	"Sunday": time.Sunday,
-	"Monday": time.Monday,
-	"Tuesday": time.Tuesday,
+	"Sunday":    time.Sunday,
+	"Monday":    time.Monday,
+	"Tuesday":   time.Tuesday,
 	"Wednesday": time.Wednesday,
-	"Thursday": time.Thursday,
-	"Friday": time.Friday,
-	"Saturday": time.Saturday,
+	"Thursday":  time.Thursday,
+	"Friday":    time.Friday,
+	"Saturday":  time.Saturday,
 }
 
 func NextFollowing(str string, start time.Time) (time.Time, error) {
@@ -55,14 +55,14 @@ func NextFollowing(str string, start time.Time) (time.Time, error) {
 		if err != nil || min >= 60 {
 			return time.Time{}, fmt.Errorf("Invalid minute, '%s'", submatches[3])
 		}
-		
+
 		dayOffset := (time.Weekday(7) + weekday - t.Weekday()) % time.Weekday(7)
 		t = t.Add(time.Duration(dayOffset) * time.Hour * time.Duration(24))
 		t = t.Truncate(time.Duration(24) * time.Hour)
-		t = t.Add(time.Duration(hour) * time.Hour + time.Duration(min) * time.Minute)
+		t = t.Add(time.Duration(hour)*time.Hour + time.Duration(min)*time.Minute)
 
 		if t.Before(start) {
-			t = t.Add(time.Duration(24 * 7) * time.Hour)
+			t = t.Add(time.Duration(24*7) * time.Hour)
 		}
 
 		return t, nil
@@ -84,7 +84,7 @@ func NextFollowing(str string, start time.Time) (time.Time, error) {
 		}
 
 		t = t.Truncate(time.Duration(24) * time.Hour)
-		t = t.Add(time.Duration(hour) * time.Hour + time.Duration(min) * time.Minute)
+		t = t.Add(time.Duration(hour)*time.Hour + time.Duration(min)*time.Minute)
 
 		if t.Before(start) {
 			t = t.Add(time.Duration(24) * time.Hour)
@@ -95,4 +95,3 @@ func NextFollowing(str string, start time.Time) (time.Time, error) {
 
 	return time.Time{}, fmt.Errorf("Unrecognized time format, '%s'", str)
 }
-
