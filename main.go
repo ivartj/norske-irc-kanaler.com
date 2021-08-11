@@ -236,6 +236,9 @@ func mainIrssiLogs(ctx *mainContext) {
 		log.Fatalf("Database error on retrieving networks: %s", err.Error())
 	}
 
+	// networknames is a mapping from main network addresses (like
+	// irc.libera.chat) to names that may be used for the network in Irssi
+	// (like Libera)
 	networknames := map[string][]string{}
 	for _, network := range networks {
 		networknames[network.network] = network.servers
