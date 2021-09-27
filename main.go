@@ -209,7 +209,10 @@ func mainGatherChannelStatuses(ctx *mainContext) {
 
 		case "irssi-logs":
 			do = func() {
-				mainIrssiLogs(ctx)
+				err := mainIrssiLogs(ctx)
+				if err != nil {
+					log.Print(err)
+				}
 			}
 
 		}
@@ -223,17 +226,17 @@ func mainGatherChannelStatuses(ctx *mainContext) {
 	go scheduler.Run()
 }
 
-func mainIrssiLogs(ctx *mainContext) {
+func mainIrssiLogs(ctx *mainContext) error {
 
 	tx, err := ctx.db.Begin()
 	if err != nil {
-		log.Fatalf("Failed to initiate transaction: %s", err.Error())
+		return fmt.Errorf("Failed to initiate transaction: %w", err)
 	}
 	defer tx.Rollback()
 
 	networks, err := dbGetNetworks(tx)
 	if err != nil {
-		log.Fatalf("Database error on retrieving networks: %s", err.Error())
+		return fmt.Errorf("Database error on retrieving networks: %w", err)
 	}
 
 	// networknames is a mapping from main network addresses (like
@@ -253,7 +256,7 @@ func mainIrssiLogs(ctx *mainContext) {
 
 	chs, err := dbGetApprovedChannels(tx, 0, 9999)
 	if err != nil {
-		log.Fatalf("Database error on retrieving channels: %s", err.Error())
+		return fmt.Errorf("Database error on retrieving channels: %w", err)
 	}
 
 	logctx := irssilog.New(ctx.conf.IrssiLogsPath(), networknames)
@@ -269,7 +272,7 @@ func mainIrssiLogs(ctx *mainContext) {
 		if cs.Time.After(ch.CheckTime()) {
 			err = dbUpdateStatus(tx, ch.Name(), ch.Network(), cs.NumUsers, cs.Topic, "irssi-logs", "", cs.Time)
 			if err != nil {
-				log.Fatalf("Error updating status for '%s@%s': %s", ch.Name(), ch.Network(), err.Error())
+				return fmt.Errorf("Error updating status for '%s@%s': %w", ch.Name(), ch.Network(), err)
 			}
 		}
 
@@ -277,8 +280,10 @@ func mainIrssiLogs(ctx *mainContext) {
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatalf("Error on committing status updates from Irssi log reading: %s", err.Error())
+		return fmt.Errorf("Error on committing status updates from Irssi log reading: %w", err)
 	}
+
+	return nil
 }
 
 func main() {
