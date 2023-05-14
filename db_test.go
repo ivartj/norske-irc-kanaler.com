@@ -31,15 +31,15 @@ func TestDbGetNetworks(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	dbAddServer(db, "b.foo.example.com", "foonet")
+	err = dbAddServer(db, "b.foo.example.com", "foonet")
 	if err != nil {
 		panic(err)
 	}
-	dbAddServer(db, "a.bar.example.com", "barnet")
+	err = dbAddServer(db, "a.bar.example.com", "barnet")
 	if err != nil {
 		panic(err)
 	}
-	dbAddServer(db, "b.bar.example.com", "barnet")
+	err = dbAddServer(db, "b.bar.example.com", "barnet")
 	if err != nil {
 		panic(err)
 	}
