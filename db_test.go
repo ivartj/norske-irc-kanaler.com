@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/samber/lo"
 	"os"
 	"testing"
 )
@@ -53,9 +54,12 @@ func TestDbGetNetworks(t *testing.T) {
 	// Assert
 	if len(networks) != 2 {
 		t.Errorf("Expected two networks, but there was %d.\n", len(networks))
-		t.Logf("The networks are:\n")
-		for _, network := range networks {
-			t.Logf("  %s\n", network.network)
-		}
+	}
+	foonet, ok := lo.Find(networks, func(network *dbNetwork) bool { return network.network == "foonet" })
+	if !ok {
+		t.Fatalf("expected but could not find the foonet network.\n")
+	}
+	if len(foonet.servers) != 2 {
+		t.Fatalf("expected foonet to have two servers, but it had %d.\n", len(foonet.servers))
 	}
 }
