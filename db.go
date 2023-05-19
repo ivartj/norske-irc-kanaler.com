@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/ivartj/norske-irc-kanaler.com/util"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rubenv/sql-migrate"
-	"github.com/samber/lo"
 	"html/template"
 	"io"
 	"log"
@@ -291,13 +291,14 @@ func dbGetNetworks(c dbConn) ([]*dbNetwork, error) {
 		return nil, err
 	}
 
-	var network2servers map[string][]*dbServer = lo.GroupBy(servers, func(server *dbServer) string { return server.network })
-	var networks []*dbNetwork = lo.MapToSlice(network2servers, func(network string, servers []*dbServer) *dbNetwork {
-		return &dbNetwork{
-			network: network,
-			servers: lo.Map(servers, func(server *dbServer, _ int) string { return server.server }),
-		}
-	})
+	var network2servers map[string][]*dbServer = util.GroupBy(servers, func(server *dbServer) string { return server.network })
+	networks := make([]*dbNetwork, 0, len(network2servers))
+	for networkname, servers := range network2servers {
+		networks = append(networks, &dbNetwork{
+			network: networkname,
+			servers: util.Map(servers, func(s *dbServer) string { return s.server }),
+		})
+	}
 
 	return networks, nil
 }

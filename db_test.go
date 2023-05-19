@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/samber/lo"
+	"github.com/ivartj/norske-irc-kanaler.com/util"
 	"os"
 	"testing"
 )
@@ -55,11 +55,16 @@ func TestDbGetNetworks(t *testing.T) {
 	if len(networks) != 2 {
 		t.Errorf("Expected two networks, but there was %d.\n", len(networks))
 	}
-	foonet, ok := lo.Find(networks, func(network *dbNetwork) bool { return network.network == "foonet" })
-	if !ok {
+	foonets := util.Filter(networks, func(network *dbNetwork) bool { return network.network == "foonet" })
+	if len(foonets) == 0 {
 		t.Fatalf("expected but could not find the foonet network.\n")
 	}
+	foonet := foonets[0]
 	if len(foonet.servers) != 2 {
-		t.Fatalf("expected foonet to have two servers, but it had %d.\n", len(foonet.servers))
+		t.Errorf("expected foonet to have two servers, but it had %d.\n", len(foonet.servers))
+		t.Logf("foonet servers:\n")
+		for _, server := range foonet.servers {
+			t.Logf(" - %s\n", server)
+		}
 	}
 }
