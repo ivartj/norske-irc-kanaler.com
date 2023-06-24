@@ -60,8 +60,8 @@ func TestDbGetNetworks(t *testing.T) {
 		t.Fatalf("expected but could not find the foonet network.\n")
 	}
 	foonet := foonets[0]
-	if len(foonet.servers) != 2 {
-		t.Errorf("expected foonet to have two servers, but it had %d.\n", len(foonet.servers))
+	if len(foonet.servers) != 3 {
+		t.Errorf("expected foonet to have three servers, but it had %d.\n", len(foonet.servers))
 		t.Logf("foonet servers:\n")
 		for _, server := range foonet.servers {
 			t.Logf(" - %s\n", server)
