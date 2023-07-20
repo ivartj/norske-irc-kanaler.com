@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -39,9 +40,22 @@ func pingHandler(c *Conn, ev *Event) {
 	c.SendRaw(reply)
 }
 
+var addressWithPort = regexp.MustCompile("[a-zA-Z0-9\\.-]+:[0-9]+")
+
 func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
-	// TODO: Do not add port if it is present in address
-	sock, err := net.DialTimeout("tcp", address+":6667", time.Second*30)
+	return connect(address, nick, user, false, "", irclog)
+}
+
+func ConnectWithPassword(address, nick, user, password string, irclog io.Writer) (*Conn, error) {
+	return connect(address, nick, user, true, password, irclog)
+}
+
+func connect(address, nick, user string, usePassword bool, password string, irclog io.Writer) (*Conn, error) {
+	if !addressWithPort.MatchString(address) {
+		address = address + ":6667"
+	}
+
+	sock, err := net.DialTimeout("tcp", address, time.Second*30)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to '%s': %s", address, err.Error())
 	}
@@ -63,11 +77,18 @@ func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
 		handlers:    make(map[string]HandleFunc),
 		closed:      false,
 	}
+	if usePassword {
+		c.SendRawf("PASS %s", password)
+	}
 	c.SendRawf("NICK %s", nick)
-	c.SendRawf("USER %s 0 * :%s", nick, user)
+	c.SendRawf("USER %s 0 * :%s", user, nick)
 
 	go c.receiveMessages()
 	_, err = c.WaitUntil("001") // Wait until welcome code
+	if err != nil {
+		c.Disconnect()
+		return nil, err
+	}
 
 	return c, nil
 }
@@ -175,7 +196,7 @@ func (c *Conn) receiveMessages() {
 		}
 		scanline := c.scan.Bytes()
 		if c.irclog != nil {
-			fmt.Fprintln(c.irclog, string(scanline))
+			fmt.Fprintln(c.irclog, "<==", string(scanline))
 		}
 
 		words := bufio.NewScanner(bytes.NewReader(scanline))
@@ -223,15 +244,15 @@ func (c *Conn) SendRawf(format string, args ...interface{}) {
 	s := fmt.Sprintf(format, args...)
 	fmt.Fprintf(c, "%s\r\n", s)
 	if c.irclog != nil {
-		fmt.Fprintf(c.irclog, "=> %s\n", s)
+		fmt.Fprintf(c.irclog, "==> %s\n", s)
 	}
 }
 
 func (c *Conn) Disconnect() {
 	// TODO: Could probably be done more gracefully
 	c.SendRaw("QUIT")
+	c.closed = true // this line has to before c.Close(), or else we have to put a mutex around these statements
 	c.Close()
-	c.closed = true
 }
 
 type Event struct {
