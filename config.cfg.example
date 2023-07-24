@@ -12,3 +12,18 @@ assets-path: assets
 log-path: log
 approval: no
 password: lutefisk
+channel-status-gathering-methods: [{
+  "method": "znc",
+  "interval": "1h"
+}]
+znc-host: example.com
+znc-user: ivartj
+znc-password: "secret"
+znc-tls-fingerprint: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+znc-network-names: {
+  "irc.efnet.org": "efnet",
+  "irc.freenode.net": "freenode",
+  "irc.undernet.org": "undernet",
+  "irc.libera.chat": "libera",
+  "irc.dal.net": "dalnet"
+}
