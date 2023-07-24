@@ -1,11 +1,16 @@
 package main
 
 import (
+	"crypto/sha1"
+	"crypto/tls"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"github.com/ivartj/norske-irc-kanaler.com/args"
+	"github.com/ivartj/norske-irc-kanaler.com/irc"
 	"github.com/ivartj/norske-irc-kanaler.com/irssilog"
 	"github.com/ivartj/norske-irc-kanaler.com/sched"
+	"github.com/ivartj/norske-irc-kanaler.com/util"
 	"github.com/ivartj/norske-irc-kanaler.com/web"
 	"html/template"
 	"io"
@@ -15,6 +20,8 @@ import (
 	"net/http/fcgi"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -215,6 +222,14 @@ func mainGatherChannelStatuses(ctx *mainContext) {
 				}
 			}
 
+		case "znc":
+			do = func() {
+				err := mainZncMethod(ctx)
+				if err != nil {
+					log.Print(err)
+				}
+			}
+
 		}
 		if do == nil {
 			log.Fatalf("Unrecognized method, '%s'", method.Method)
@@ -281,6 +296,128 @@ func mainIrssiLogs(ctx *mainContext) error {
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("Error on committing status updates from Irssi log reading: %w", err)
+	}
+
+	return nil
+}
+
+func mainZncGatherChannelStatus(ctx *mainContext, conn *irc.Conn, channel channel) error {
+	conn.SendRawf("LIST %s", channel.Name())
+	ev, err := conn.WaitUntil("322", "323") // RPL_LIST, RPL_LISTEND
+	if err != nil {
+		return fmt.Errorf("Error while executing the IRC LIST command: %w", err)
+	}
+	if ev.Code == "323" {
+		return fmt.Errorf("Empty data in response to LIST command")
+	} else {
+		_, err = conn.WaitUntil("323") // RPL_LISTEND
+		if err != nil {
+			log.Printf("Error while while waiting for 323 RPL_LISTEND: %s\n", err)
+		}
+	}
+	var numUsers int64 = 0
+	if len(ev.Args) >= 3 {
+		numUsers, err = strconv.ParseInt(ev.Args[2], 10, 32)
+		if err != nil {
+			return fmt.Errorf("Failed to parse the number of users for channel %s: %w", channel.Name(), err)
+		}
+	} else {
+		return fmt.Errorf("Number of users was not included in RPL_LIST response")
+	}
+	topic := ""
+	if len(ev.Args) == 4 {
+		topic = ev.Args[3]
+	}
+	err = dbUpdateStatus(ctx.db, channel.Name(), channel.Network(), int(numUsers), topic, "znc", "", time.Now())
+	if err != nil {
+		return fmt.Errorf("Error updating status for '%s@%s': %w", channel.Name(), channel.Network(), err)
+	}
+	return nil
+}
+
+func mainZncNewConn(ctx *mainContext, network string) (*irc.Conn, error) {
+	var netConn net.Conn
+	var err error
+	zncAddress := ctx.conf.ZncHost()
+	if ctx.conf.ZncPort() != 0 { // TODO: allow use of 0 port
+		zncAddress += fmt.Sprintf(":%d", ctx.conf.ZncPort())
+	} else {
+		zncAddress += fmt.Sprintf(":1025") // default znc port
+	}
+	tlsFingerprint := ctx.conf.ZncTlsFingerprint()
+	if tlsFingerprint == "" {
+		netConn, err = net.Dial("tcp", zncAddress)
+	} else {
+		config := &tls.Config{InsecureSkipVerify: true}
+		config.VerifyConnection = func(cs tls.ConnectionState) error {
+			sha1bytes := sha1.Sum(cs.PeerCertificates[0].Raw)
+			sha1string := hex.EncodeToString(sha1bytes[:])
+			sha1string = strings.ToLower(sha1string)
+			tlsFingerprint = strings.ToLower(tlsFingerprint)
+			if sha1string != tlsFingerprint {
+				return fmt.Errorf("Expected SHA1 fingerprint '%s' does not match actual fingerprint '%s'", tlsFingerprint, sha1string)
+			}
+			return nil
+		}
+		netConn, err = tls.Dial("tcp", zncAddress, config)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	zncNetworkName, ok := ctx.conf.ZncNetworkNames()[network]
+	if !ok {
+		return nil, fmt.Errorf("No ZNC network name configured for network '%s'", network)
+	}
+	nick := ctx.conf.ZncUser()
+	user := fmt.Sprintf("%s/%s", ctx.conf.ZncUser(), zncNetworkName)
+	ircConn, err := irc.New(netConn, &irc.Config{
+		Nick:     nick,
+		User:     user,
+		Password: ctx.conf.ZncPassword(),
+		Log:      log.Writer(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error connecting to ZNC for network %s: %w", network, err)
+	}
+
+	return ircConn, nil
+}
+
+func mainZncGatherNetworkStatus(ctx *mainContext, network string, channels []channel) error {
+	conn, err := mainZncNewConn(ctx, network)
+	if err != nil {
+		return err
+	}
+	defer conn.Disconnect()
+
+	for _, channel := range channels {
+		err = mainZncGatherChannelStatus(ctx, conn, channel)
+		if err != nil {
+			log.Printf("Failed to get channel status for %s/%s: %s\n", channel.Network(), channel.Name(), err)
+		}
+	}
+
+	return nil
+}
+
+func mainZncMethod(ctx *mainContext) error {
+	// TODO: This method is in large part copied from mainIrssiLogs. More code sharing is possible.
+
+	chs, err := dbGetApprovedChannels(ctx.db, 0, 9999)
+	if err != nil {
+		return fmt.Errorf("Database error on retrieving channels: %w", err)
+	}
+
+	var network2channels map[string][]channel = util.GroupBy(chs, func(ch channel) string {
+		return ch.Network()
+	})
+
+	for network, channels := range network2channels {
+		err = mainZncGatherNetworkStatus(ctx, network, channels)
+		if err != nil {
+			log.Printf("Failed to gather status for network %s: %s\n", network, err)
+		}
 	}
 
 	return nil

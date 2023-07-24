@@ -30,6 +30,14 @@ type Conn struct {
 	events      chan<- *Event
 	handlers    map[string]HandleFunc
 	closed      bool
+	timeout     time.Duration
+}
+
+type Config struct {
+	Nick     string
+	User     string
+	Password string    // optional
+	Log      io.Writer // optional
 }
 
 func pingHandler(c *Conn, ev *Event) {
@@ -42,15 +50,22 @@ func pingHandler(c *Conn, ev *Event) {
 
 var addressWithPort = regexp.MustCompile("[a-zA-Z0-9\\.-]+:[0-9]+")
 
-func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
-	return connect(address, nick, user, false, "", irclog)
+func New(conn net.Conn, config *Config) (*Conn, error) {
+	if config.Nick == "" {
+		return nil, fmt.Errorf("no nick specified for the IRC session")
+	}
+	if config.User == "" {
+		return nil, fmt.Errorf("no user specified for the IRC session")
+	}
+	log := config.Log
+	if log == nil {
+		log = io.Discard
+	}
+	usePassword := config.Password != ""
+	return connect(conn, conn.RemoteAddr().String(), config.Nick, config.User, usePassword, config.Password, log)
 }
 
-func ConnectWithPassword(address, nick, user, password string, irclog io.Writer) (*Conn, error) {
-	return connect(address, nick, user, true, password, irclog)
-}
-
-func connect(address, nick, user string, usePassword bool, password string, irclog io.Writer) (*Conn, error) {
+func getSocket(address string) (net.Conn, error) {
 	if !addressWithPort.MatchString(address) {
 		address = address + ":6667"
 	}
@@ -60,6 +75,26 @@ func connect(address, nick, user string, usePassword bool, password string, ircl
 		return nil, fmt.Errorf("Failed to connect to '%s': %s", address, err.Error())
 	}
 
+	return sock, nil
+}
+
+func Connect(address, nick, user string, irclog io.Writer) (*Conn, error) {
+	sock, err := getSocket(address)
+	if err != nil {
+		return nil, err
+	}
+	return connect(sock, address, nick, user, false, "", irclog)
+}
+
+func ConnectWithPassword(address, nick, user, password string, irclog io.Writer) (*Conn, error) {
+	sock, err := getSocket(address)
+	if err != nil {
+		return nil, err
+	}
+	return connect(sock, address, nick, user, true, password, irclog)
+}
+
+func connect(sock net.Conn, address, nick, user string, usePassword bool, password string, irclog io.Writer) (*Conn, error) {
 	scan := bufio.NewScanner(sock)
 	scan.Split(bufio.ScanLines)
 
@@ -76,6 +111,7 @@ func connect(address, nick, user string, usePassword bool, password string, ircl
 		events:      ch,
 		handlers:    make(map[string]HandleFunc),
 		closed:      false,
+		timeout:     time.Second * 10,
 	}
 	if usePassword {
 		c.SendRawf("PASS %s", password)
@@ -84,7 +120,7 @@ func connect(address, nick, user string, usePassword bool, password string, ircl
 	c.SendRawf("USER %s 0 * :%s", user, nick)
 
 	go c.receiveMessages()
-	_, err = c.WaitUntil("001") // Wait until welcome code
+	_, err := c.WaitUntil("001") // Wait until welcome code
 	if err != nil {
 		c.Disconnect()
 		return nil, err
@@ -126,25 +162,29 @@ func (c *Conn) SetHandler(code string, handler HandleFunc) {
 }
 
 func (c *Conn) WaitUntil(codes ...string) (*Event, error) {
-	var ev *Event
-	for ev = range c.Events {
-		for _, v := range codes {
-			if ev.Code == v {
-				goto ret
+	timeout := time.After(c.timeout)
+	for {
+		select {
+		case <-timeout:
+			return nil, errors.New("timeout")
+		case ev, ok := <-c.Events:
+			if !ok {
+				return nil, io.EOF
+			}
+			for _, v := range codes {
+				if ev.Code == v {
+					return ev, nil
+				}
+			}
+			if CodeIsError(ev.Code) {
+				return nil, errors.New(CodeString(ev.Code))
+			}
+			err := c.handle(ev)
+			if err != nil {
+				return nil, err
 			}
 		}
-		if CodeIsError(ev.Code) {
-			return nil, errors.New(CodeString(ev.Code))
-		}
-		err := c.handle(ev)
-		if err != nil {
-			return nil, err
-		}
 	}
-	return nil, io.EOF
-
-ret:
-	return ev, nil
 }
 
 func msgScan(data []byte, atEOF bool) (advance int, token []byte, err error) {

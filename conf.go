@@ -25,6 +25,12 @@ type confSet struct {
 	ReloadTemplate                bool                               `yaml:"reload-templates"`
 	IrssiLogsPath                 string                             `yaml:"irssi-logs-path"`
 	IrssiLogsNetworkNames         map[string][]string                `yaml:"irssi-logs-network-names"`
+	ZncHost                       string                             `yaml:"znc-host"`
+	ZncPort                       uint                               `yaml:"znc-port"`
+	ZncTlsFingerprint             string                             `yaml:"znc-tls-fingerprint"`
+	ZncUser                       string                             `yaml:"znc-user"`
+	ZncPassword                   string                             `yaml:"znc-password"`
+	ZncNetworkNames               map[string]string                  `yaml:"znc-network-names"`
 	ChannelStatusGatheringMethods []confChannelStatusGatheringMethod `yaml:"channel-status-gathering-methods"`
 }
 
@@ -55,6 +61,12 @@ func (cfg *conf) Password() string                           { return cfg.set.Pa
 func (cfg *conf) ReloadTemplate() bool                       { return cfg.set.ReloadTemplate }
 func (cfg *conf) IrssiLogsPath() string                      { return cfg.set.IrssiLogsPath }
 func (cfg *conf) IrssiLogsNetworkNames() map[string][]string { return cfg.set.IrssiLogsNetworkNames }
+func (cfg *conf) ZncHost() string                            { return cfg.set.ZncHost }
+func (cfg *conf) ZncPort() uint                              { return cfg.set.ZncPort }
+func (cfg *conf) ZncTlsFingerprint() string                  { return cfg.set.ZncTlsFingerprint }
+func (cfg *conf) ZncUser() string                            { return cfg.set.ZncUser }
+func (cfg *conf) ZncPassword() string                        { return cfg.set.ZncPassword }
+func (cfg *conf) ZncNetworkNames() map[string]string         { return cfg.set.ZncNetworkNames }
 func (cfg *conf) ChannelStatusGatheringMethods() []confChannelStatusGatheringMethod {
 	return cfg.set.ChannelStatusGatheringMethods
 }

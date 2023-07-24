@@ -9,9 +9,9 @@ import (
 
 // Takes a time string in one of the following forms:
 //
-//  * 15:04
+//   - 15:04
 //
-//  * Monday 15:04
+//   - Monday 15:04
 //
 // Returns the next time that matches the given specification.
 func Next(str string) (time.Time, error) {
