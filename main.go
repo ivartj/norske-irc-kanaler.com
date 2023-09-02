@@ -256,7 +256,7 @@ func mainIrssiLogs(ctx *mainContext) error {
 	for _, network := range networks {
 		networknames[network.network] = network.servers
 	}
-	for network, _ := range ctx.conf.IrssiLogsNetworkNames() {
+	for network := range ctx.conf.IrssiLogsNetworkNames() {
 		names, ok := networknames[network]
 		if !ok {
 			names = []string{}

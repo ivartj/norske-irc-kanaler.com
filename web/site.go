@@ -82,7 +82,7 @@ func (ctx *Site) getHandler(p string) (func(Page, *http.Request), bool) {
 		}
 	}
 
-	for p != "/" {
+	for p != path.Dir(p) {
 		p = path.Dir(p)
 		h, ok = ctx.dirs[p+"/"]
 		if ok {
